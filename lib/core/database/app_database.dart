@@ -34,6 +34,8 @@ class InMemoryAppDatabase implements AppDatabase {
       DatabaseTables.certificateFields,
       DatabaseTables.certificateLayouts,
       DatabaseTables.certificates,
+      DatabaseTables.generationJobs,
+      DatabaseTables.generationItems,
       DatabaseTables.verificationRecords,
       DatabaseTables.settings,
     ])

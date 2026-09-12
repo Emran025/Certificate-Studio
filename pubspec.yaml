@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  certificate_crypto:
+    path: packages/certificate_crypto
   flutter_secure_storage: ^9.2.4
   shared_preferences: ^2.5.3
 

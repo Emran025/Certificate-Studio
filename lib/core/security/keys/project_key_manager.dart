@@ -10,6 +10,7 @@ class ProjectKeyManager implements ProjectKeyService {
 
   Future<bool> hasKey(String projectId) async => (await _storage.read(_keyName(projectId))) != null;
 
+  @override
   Future<void> initialize(String projectId) async {
     if (await hasKey(projectId)) return;
     await _storage.write(_keyName(projectId), _generateKey());

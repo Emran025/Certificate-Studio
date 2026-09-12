@@ -30,7 +30,9 @@ void main() {
       keyManager: InstitutionKeyManager(storage),
     ));
     await tester.enterText(find.byType(TextFormField).first, 'Al-Noor Academy');
-    await tester.tap(find.text('Continue to workspace'));
+    final button = find.text('Continue to workspace');
+    await tester.ensureVisible(button);
+    await tester.tap(button);
     await tester.pumpAndSettle();
 
     expect(await database.query(DatabaseTables.institutions), hasLength(1));

@@ -29,7 +29,9 @@ void main() {
     final useCase = CreateProject(ProjectRepositoryImpl(database), ProjectKeyManager(InMemoryKeyStorage()));
 
     await tester.pumpWidget(MaterialApp(home: CreateProjectScreen(institutionId: 'academy-001', createProject: useCase)));
-    await tester.tap(find.text('Continue'));
+    final button = find.text('Continue');
+    await tester.ensureVisible(button);
+    await tester.tap(button);
     await tester.pump();
 
     expect(find.text('Project name is required.'), findsOneWidget);

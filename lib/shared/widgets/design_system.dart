@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../themes/app_colors.dart';
-import '../themes/app_radius.dart';
 import '../themes/app_spacing.dart';
 
 class AppPrimaryButton extends StatelessWidget {
@@ -82,7 +81,7 @@ class AppSectionHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: Text(title, style: Theme.of(context).textTheme.titleLarge)),
-        if (action != null) action!,
+        ?action,
       ],
     );
   }

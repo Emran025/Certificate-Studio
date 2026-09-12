@@ -32,4 +32,15 @@ void main() {
     final changed = Map<String, dynamic>.from(envelope)..['ciphertext'] = '${envelope['ciphertext']}A';
     expect(() => decryptBytes(changed, key, aad: aad), throwsA(anything));
   });
+
+  test('versioned QR payload round trip and tamper rejection', () async {
+    final pair = await CertificateKeyPair.fromSeed(List<int>.generate(32, (i) => i));
+    final document = utf8.encode('qr certificate');
+    final record = await createVerificationRecord({'institution_id': 'i', 'project_id': 'p', 'certificate_id': 'c'}, document, pair.privateKey);
+    final payload = encodeVerificationQrPayload(record);
+    expect(payload.startsWith(qrScheme), isTrue);
+    expect(await verifyQrPayload(payload, document, pair.publicKey), predicate<VerificationResult>((result) => result.isValid));
+    expect((await verifyQrPayload(payload, utf8.encode('changed'), pair.publicKey)).status, VerificationStatus.invalidDocument);
+    expect(() => decodeVerificationQrPayload(payload.replaceFirst(qrScheme, 'https://invalid/')), throwsFormatException);
+  });
 }

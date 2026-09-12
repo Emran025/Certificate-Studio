@@ -92,3 +92,16 @@ def test_certificate_record_signs_hash_and_rejects_tampering():
     changed["course"] = "Other"
     assert not verify_record(changed, document, pair.public_key)
     assert not verify_record(record, document, KeyPair.generate().public_key)
+
+
+def test_qr_payload_round_trip_and_tamper_rejection():
+    from certificate_crypto import decode_qr_payload, encode_qr_payload, verify_qr_payload
+    pair = KeyPair.generate()
+    document = b"qr certificate"
+    record = create_record({"institution_id": "i", "project_id": "p", "certificate_id": "c"}, document, pair.private_key)
+    payload = encode_qr_payload(record)
+    assert decode_qr_payload(payload) == record
+    assert verify_qr_payload(payload, document, pair.public_key)
+    assert not verify_qr_payload(payload, b"changed", pair.public_key)
+    with pytest.raises(ValueError):
+        decode_qr_payload(payload.replace("cstudio://verify/v1/", "https://invalid/"))

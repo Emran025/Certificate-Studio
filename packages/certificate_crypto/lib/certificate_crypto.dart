@@ -6,3 +6,4 @@ export 'src/encryption.dart';
 export 'src/hash.dart';
 export 'src/keys.dart';
 export 'src/signing.dart';
+export 'src/verification.dart';

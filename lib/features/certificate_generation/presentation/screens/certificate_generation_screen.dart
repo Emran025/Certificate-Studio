@@ -103,7 +103,7 @@ class _CertificateGenerationScreenState
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Create signed offline verification records for every imported recipient.',
+                'Create signed PDF and high-resolution PNG certificates with offline verification records.',
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: AppSpacing.xl),

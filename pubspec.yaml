@@ -34,7 +34,7 @@ dependencies:
     path: packages/certificate_crypto
   flutter_secure_storage: ^9.2.4
   shared_preferences: ^2.5.3
-  image: ^4.5.4
+  image: ^4.3.0
   pdf: ^3.11.3
   excel: ^4.0.6
   file_picker: ^8.1.7

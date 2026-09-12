@@ -56,7 +56,7 @@ class DataImportRepositoryImpl implements DataImportRepository {
       if (values.every((value) => value.trim().isEmpty)) continue;
       rows.add({
         for (var index = 0; index < columns.length; index++)
-          columns[index] = index < values.length ? values[index].trim() : '',
+          columns[index]: index < values.length ? values[index].trim() : '',
       });
     }
     return ImportedTable(columns: columns, rows: rows);
@@ -132,7 +132,7 @@ class DataImportRepositoryImpl implements DataImportRepository {
     final value = cell?.value;
     return switch (value) {
       null => '',
-      TextCellValue(:final value) => value,
+      TextCellValue(:final value) => value.text ?? value.toString(),
       FormulaCellValue(:final formula) => formula,
       IntCellValue(:final value) => value.toString(),
       DoubleCellValue(:final value) => value.toString(),

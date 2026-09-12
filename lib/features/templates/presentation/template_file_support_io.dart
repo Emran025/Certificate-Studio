@@ -26,7 +26,7 @@ String? validateTemplatePath(String path) {
   if (value.isEmpty) return 'Required';
   if (!File(value).existsSync()) return 'File does not exist';
   final extension = value.toLowerCase().split('.').last;
-  return ['png', 'jpg', 'jpeg', 'webp', 'pdf'].contains(extension)
+  return ['png', 'jpg', 'jpeg', 'webp'].contains(extension)
       ? null
-      : 'Use PNG, JPG, WEBP, or PDF';
+      : 'Use PNG, JPG, or WEBP image';
 }

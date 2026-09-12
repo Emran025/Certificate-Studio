@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
@@ -115,7 +116,7 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Register a local background image, preview it, and use it as this project’s certificate canvas.',
+                  'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.',
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -128,7 +129,7 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
                 if (_templates.isEmpty)
                   const AppSurfaceCard(
                     child: Text(
-                      'No templates saved yet. Add a PNG, JPG, WEBP, or PDF background to continue.',
+                      'No templates saved yet. Add a PNG, JPG, or WEBP background image to continue.',
                     ),
                   )
                 else
@@ -273,6 +274,7 @@ class _TemplateDialogState extends State<_TemplateDialog> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _path = TextEditingController();
+  String? _selectedFileName;
   final _width = TextEditingController(text: '1920');
   final _height = TextEditingController(text: '1080');
   final _dpi = TextEditingController(text: '300');
@@ -299,13 +301,36 @@ class _TemplateDialogState extends State<_TemplateDialog> {
           child: Column(
             children: [
               _field(_name, 'Template name'),
-              _field(
-                _path,
-                'Local file path',
-                validator: (value) {
-                  return validateTemplatePath(value ?? '');
-                },
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _field(
+                      _path,
+                      'Background image',
+                      readOnly: true,
+                      validator: (value) => validateTemplatePath(value ?? ''),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: OutlinedButton.icon(
+                      onPressed: _chooseBackground,
+                      icon: const Icon(Icons.folder_open_outlined),
+                      label: const Text('Choose image'),
+                    ),
+                  ),
+                ],
               ),
+              if (_selectedFileName != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _selectedFileName!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
               Row(
                 children: [
                   Expanded(child: _field(_width, 'Width', number: true)),
@@ -325,7 +350,6 @@ class _TemplateDialogState extends State<_TemplateDialog> {
                         DropdownMenuItem(value: 'png', child: Text('PNG')),
                         DropdownMenuItem(value: 'jpg', child: Text('JPG')),
                         DropdownMenuItem(value: 'webp', child: Text('WEBP')),
-                        DropdownMenuItem(value: 'pdf', child: Text('PDF')),
                       ],
                       onChanged: (value) =>
                           setState(() => _format = value ?? 'png'),
@@ -363,16 +387,41 @@ class _TemplateDialogState extends State<_TemplateDialog> {
     ],
   );
 
+  Future<void> _chooseBackground() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: false,
+    );
+    final file = result?.files.single;
+    final path = file?.path;
+    if (path == null || path.isEmpty || !mounted) return;
+    setState(() {
+      _path.text = path;
+      _selectedFileName = file!.name;
+      final extension = file.extension?.toLowerCase();
+      if (extension == 'jpg' || extension == 'jpeg') {
+        _format = 'jpg';
+      } else if (extension == 'webp') {
+        _format = 'webp';
+      } else {
+        _format = 'png';
+      }
+    });
+  }
+
   Widget _field(
     TextEditingController controller,
     String label, {
     bool number = false,
+    bool readOnly = false,
     String? Function(String?)? validator,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
     child: TextFormField(
       controller: controller,
       keyboardType: number ? TextInputType.number : TextInputType.text,
+      readOnly: readOnly,
       decoration: InputDecoration(labelText: label),
       validator:
           validator ??

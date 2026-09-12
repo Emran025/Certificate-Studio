@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:excel/excel.dart';
+
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
 import '../../domain/entities/imported_table.dart';
@@ -29,6 +31,32 @@ class DataImportRepositoryImpl implements DataImportRepository {
       rows.add({
         for (var index = 0; index < columns.length; index++)
           columns[index]: index < cells.length ? cells[index].trim() : '',
+      });
+    }
+    return ImportedTable(columns: columns, rows: rows);
+  }
+
+  @override
+  ImportedTable parseExcel(List<int> bytes) {
+    final workbook = Excel.decodeBytes(bytes);
+    if (workbook.tables.isEmpty) {
+      return const ImportedTable(columns: [], rows: []);
+    }
+    final sheet = workbook.tables.values.first;
+    if (sheet.rows.isEmpty) {
+      return const ImportedTable(columns: [], rows: []);
+    }
+
+    final columns = _uniqueHeaders([
+      for (final cell in sheet.rows.first) _cellText(cell),
+    ]);
+    final rows = <Map<String, String>>[];
+    for (final cells in sheet.rows.skip(1)) {
+      final values = [for (final cell in cells) _cellText(cell)];
+      if (values.every((value) => value.trim().isEmpty)) continue;
+      rows.add({
+        for (var index = 0; index < columns.length; index++)
+          columns[index] = index < values.length ? values[index].trim() : '',
       });
     }
     return ImportedTable(columns: columns, rows: rows);
@@ -98,6 +126,21 @@ class DataImportRepositoryImpl implements DataImportRepository {
       result.add(candidate);
     }
     return result;
+  }
+
+  String _cellText(Data? cell) {
+    final value = cell?.value;
+    return switch (value) {
+      null => '',
+      TextCellValue(:final value) => value,
+      FormulaCellValue(:final formula) => formula,
+      IntCellValue(:final value) => value.toString(),
+      DoubleCellValue(:final value) => value.toString(),
+      BoolCellValue(:final value) => value.toString(),
+      DateCellValue() => value.toString(),
+      DateTimeCellValue() => value.toString(),
+      TimeCellValue() => value.toString(),
+    };
   }
 
   List<String> _parseLine(String line, String delimiter) {

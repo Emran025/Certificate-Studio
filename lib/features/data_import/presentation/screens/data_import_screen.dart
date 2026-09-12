@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -10,6 +11,7 @@ import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
 import '../../data/repositories/data_import_repository_impl.dart';
 import '../../domain/entities/imported_table.dart';
+import '../../domain/usecases/import_excel.dart';
 import '../../domain/usecases/paste_table.dart';
 
 class DataImportScreen extends StatefulWidget {
@@ -28,6 +30,7 @@ class DataImportScreen extends StatefulWidget {
 
 class _DataImportScreenState extends State<DataImportScreen> {
   late final PasteTable _pasteTable;
+  late final ImportExcel _importExcel;
   final _controller = TextEditingController();
   ImportedTable _table = const ImportedTable(columns: [], rows: []);
   Map<String, String> _mapping = {};
@@ -40,6 +43,7 @@ class _DataImportScreenState extends State<DataImportScreen> {
     super.initState();
     final repository = DataImportRepositoryImpl(widget.database);
     _pasteTable = PasteTable(repository);
+    _importExcel = ImportExcel(repository);
     _load(repository);
   }
 
@@ -112,6 +116,46 @@ class _DataImportScreenState extends State<DataImportScreen> {
     }
   }
 
+  Future<void> _pickExcelFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xlsx'],
+      withData: true,
+    );
+    final file = result?.files.single;
+    if (file == null) return;
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      setState(() => _error = 'The selected workbook could not be read.');
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      final table = await _importExcel(
+        projectId: widget.projectId,
+        bytes: bytes,
+      );
+      if (!mounted) return;
+      setState(() {
+        _table = table;
+        _mapping = {
+          for (final column in table.columns) column: _suggestClass(column),
+        };
+        _controller.clear();
+      });
+      await _saveMapping();
+    } on FormatException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'We could not import this workbook.');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,7 +185,7 @@ class _DataImportScreenState extends State<DataImportScreen> {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Paste a spreadsheet copied from Excel or another table. The first row becomes the column names.',
+                        'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.',
                         style: Theme.of(context).textTheme.bodyMedium
                             ?.copyWith(color: AppColors.textSecondary),
                       ),
@@ -163,6 +207,12 @@ class _DataImportScreenState extends State<DataImportScreen> {
                             const SizedBox(height: AppSpacing.md),
                             Row(
                               children: [
+                                AppSecondaryButton(
+                                  label: 'Choose Excel file',
+                                  icon: Icons.table_view_outlined,
+                                  onPressed: _saving ? null : _pickExcelFile,
+                                ),
+                                const SizedBox(width: AppSpacing.md),
                                 AppSecondaryButton(
                                   label: 'Paste from clipboard',
                                   icon: Icons.content_paste,

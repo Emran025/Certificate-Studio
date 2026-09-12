@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../data_import/presentation/screens/data_import_screen.dart';
+import '../../../certificate_designer/presentation/screens/certificate_designer_screen.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
 import '../../domain/entities/project.dart';
@@ -62,7 +63,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                       icon: Icons.design_services_outlined,
                       title: 'Design',
                       description: 'Place fields on the certificate canvas.',
-                      onPressed: () => _showComingNext(context, 'Certificate designer'),
+                      onPressed: () => Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => CertificateDesignerScreen(database: database, projectId: project.id, projectName: project.name))),
                     ),
                     _ProjectAction(
                       icon: Icons.play_circle_outline,

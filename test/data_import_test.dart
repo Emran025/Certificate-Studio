@@ -1,3 +1,4 @@
+import 'package:excel/excel.dart';
 import 'package:certificate_studio/core/database/app_database.dart';
 import 'package:certificate_studio/features/data_import/data/repositories/data_import_repository_impl.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,6 +24,29 @@ void main() {
 
     expect(restored.columns, ['class', 'name', 'grade']);
     expect(restored.rows, [
+      {'class': 'A001', 'name': 'Ahmed Ali', 'grade': '95'},
+    ]);
+  });
+
+  test('parses the first worksheet from an XLSX workbook', () {
+    final workbook = Excel.createExcel();
+    final sheet = workbook[workbook.getDefaultSheet()!];
+    sheet.appendRow([
+      TextCellValue('class'),
+      TextCellValue('name'),
+      TextCellValue('grade'),
+    ]);
+    sheet.appendRow([
+      TextCellValue('A001'),
+      TextCellValue('Ahmed Ali'),
+      IntCellValue(95),
+    ]);
+
+    final repository = DataImportRepositoryImpl(InMemoryAppDatabase());
+    final table = repository.parseExcel(workbook.encode()!);
+
+    expect(table.columns, ['class', 'name', 'grade']);
+    expect(table.rows, [
       {'class': 'A001', 'name': 'Ahmed Ali', 'grade': '95'},
     ]);
   });

@@ -21,6 +21,21 @@ Widget templatePreview(String path) {
   );
 }
 
+Widget templateCanvasPreview(String path) {
+  final file = File(path);
+  if (!file.existsSync()) {
+    return const Center(child: Icon(Icons.image_not_supported_outlined, size: 40));
+  }
+  return Image.file(
+    file,
+    width: double.infinity,
+    height: double.infinity,
+    fit: BoxFit.contain,
+    errorBuilder: (_, __, ___) =>
+        const Center(child: Icon(Icons.image_not_supported_outlined, size: 40)),
+  );
+}
+
 String? validateTemplatePath(String path) {
   final value = path.trim();
   if (value.isEmpty) return 'Required';

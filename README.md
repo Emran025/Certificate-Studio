@@ -1554,6 +1554,738 @@ The project's license will be defined according to the project's distribution an
 
 ---
 
+---
+
+# 44. User Experience Deep Dive
+
+This section provides a comprehensive walkthrough of the user experience from the perspective of a first-time user and a returning user.
+
+## 44.1 First Launch Experience
+
+A new user opening Certificate Studio for the first time will encounter a carefully designed onboarding sequence that avoids information overload while collecting only what is necessary.
+
+The welcome screen presents a clear value proposition without requiring any configuration. The user sees a single primary action:
+
+```text
+Welcome to Certificate Studio
+
+Create, sign, generate and verify
+institution-issued certificates offline.
+
+[ Get Started ]
+```
+
+Clicking Get Started leads to the Institution Setup step — the one-time configuration that establishes the organizational identity used for signing all certificates produced with this installation.
+
+## 44.2 Institution Setup
+
+The institution setup collects:
+
+- Institution name (displayed on certificates and in verification results)
+- Institution ID (auto-generated, used internally for cryptographic identity)
+- Logo (optional, used in certificates and the UI)
+- Contact information (optional)
+
+The signing key pair is generated automatically in the background. The user never sees raw key material during setup. The status is shown simply as:
+
+```text
+Security
+
+Your institution signing identity
+will be created locally.
+
+[ Create Institution ]
+```
+
+After setup, the user arrives at the Home screen with a clear invitation to create their first project.
+
+## 44.3 Creating a New Project (New Project Wizard)
+
+Project creation uses a step-by-step wizard to guide users through the minimum required configuration.
+
+### Step 1 — Project Information
+
+The user enters basic project metadata:
+
+- Project name
+- Description (optional)
+- Certificate type (Course / Training / Achievement / Participation / Custom)
+
+The UI does not ask for technical configuration at this stage.
+
+### Step 2 — Certificate Template
+
+The user selects a certificate background image.
+
+Options available:
+
+- Browse the local template library
+- Import a new image file (PNG, JPG, WEBP)
+- Drag and drop an image directly (on Desktop)
+
+The template acts as the visual foundation of the certificate. Text, fields, signatures, and QR codes are layered on top of the template during design.
+
+### Step 3 — Recipient Data
+
+The user imports recipient data at project creation or can skip and add it later.
+
+Data entry methods:
+
+- Upload an Excel file (.xlsx)
+- Paste a copied spreadsheet table directly
+- Skip for now
+
+When data is imported, the application shows an immediate preview:
+
+```text
+Imported successfully
+
+42 students
+5 columns
+0 invalid rows
+
+[ View Data ]  [ Edit Data ]  [ Continue ]
+```
+
+## 44.4 Project Workspace
+
+After the wizard, the user enters the Project Workspace. This workspace persists across sessions. The user can return at any time and jump directly to any section without repeating the wizard.
+
+The workspace is organized as a sidebar navigation with seven sections:
+
+### Overview (Dashboard)
+
+The overview shows the current readiness state of the project:
+
+```text
+Programming Course 2026
+
+Project Readiness
+
+✓ Template
+✓ Recipient Data (42 records)
+✓ Field Mapping
+✓ Design
+✓ Security
+
+Certificates: 42 generated
+
+Quick Actions
+[ Edit Design ]  [ Manage Data ]  [ Generate Certificates ]
+```
+
+The readiness indicators prevent the user from needing to remember where they stopped. The application always shows the current state of each configuration component.
+
+### Data
+
+The Data section provides a live spreadsheet view of all imported recipients. It behaves like a lightweight data table with:
+
+- Search across all columns
+- Sort by any column
+- Filter by column values
+- Edit individual cells
+- Add rows manually
+- Delete rows
+- Validation indicators (missing required values highlighted)
+
+The data table is not a full spreadsheet editor. It is scoped specifically to the kinds of edits needed when preparing certificate data.
+
+### Design (Certificate Designer)
+
+The Designer is the most important screen in the application.
+
+It provides a WYSIWYG canvas where users position and configure every dynamic element of the certificate.
+
+The Designer is organized into three panels:
+
+**Left Panel — Elements and Layers**
+
+The Elements panel provides buttons to add new certificate elements:
+
+- Data Field (connects to an imported data column)
+- Static Text (fixed text on every certificate)
+- Image (institutional logo, decorative elements)
+- Signature (visual signature image)
+- QR Code (verification QR code, auto-generated)
+
+The Layers panel shows all elements in stack order and allows reordering by drag and drop.
+
+**Center Panel — Certificate Canvas**
+
+The canvas displays the certificate template with all positioned elements overlaid.
+
+Canvas tools:
+
+- Zoom in / out (keyboard shortcut and slider)
+- Grid overlay (togglable)
+- Ruler (horizontal and vertical)
+- Snap to grid
+- Smart alignment guides (snap to center, edges, and other elements)
+- Safe margin guides
+
+Element manipulation on canvas:
+
+- Drag to move
+- Corner handles to resize
+- Right-click for context menu
+- Multi-select with Shift+Click or drag selection box
+
+**Right Panel — Properties**
+
+The Properties panel is contextual. Its content changes based on what is currently selected:
+
+Nothing selected:
+```text
+Properties
+Select an element to edit its properties.
+```
+
+Data Field selected:
+```text
+Field: Student Name
+
+Source:  Student Name (Excel column)
+
+Font:    Cairo
+Size:    32
+Weight:  Bold
+Color:   #1A1A1A
+Align:   Center
+
+Direction: Auto (RTL/LTR)
+Overflow:  Shrink
+
+Position
+X: 420    Y: 280
+
+Size
+W: 600    H: 80
+
+[ Duplicate ]  [ Delete ]
+[ Lock ]       [ Hide ]
+```
+
+QR Code selected:
+```text
+QR Code
+
+Content: Certificate Verification (automatic)
+
+Size:  180 x 180
+Error correction: High
+
+✓ Include certificate ID
+✓ Include verification metadata
+```
+
+Signature selected:
+```text
+Signature
+
+Image: director_signature.png
+Opacity: 100%
+
+Position X / Y
+Size W / H
+```
+
+**Adding a Data Field — The Core Designer Interaction**
+
+The most important Designer interaction is adding a data field connected to imported recipient data.
+
+The user clicks "+ Data Field" and a picker appears:
+
+```text
+Add Data Field
+
+Available columns:
+
+● Student Name
+○ Course
+○ Grade
+○ Date
+○ Instructor
+○ Certificate ID
+
+[ Add Field ]
+```
+
+The user selects "Student Name" and clicks Add Field. A box appears on the canvas at a default position, already connected to the Student Name column. The preview inside the box shows the first student's name.
+
+The user drags the box to the correct position and adjusts size as needed.
+
+Internally:
+```text
+field.type = data
+field.source = student_name_column
+```
+
+No placeholder syntax is visible to the user at any point.
+
+### Preview
+
+The Preview section renders the complete certificate for a specific recipient, combining the template, all field values, signatures, and QR code.
+
+The user can scroll through recipients:
+
+```text
+Preview
+
+Student: [ Ahmed Ali  ▼ ]
+
+        < Previous    1 / 42    Next >
+
++----------------------------------+
+|                                  |
+|          CERTIFICATE             |
+|                                  |
+|             Ahmed Ali            |
+|                                  |
+|           Flutter 2026           |
+|                                  |
++----------------------------------+
+
+[ Edit Design ]       [ Generate ]
+```
+
+The preview is the primary tool for catching problems before generation:
+
+- Names that are too long for their box
+- Incorrect font or alignment for Arabic text
+- Missing data in specific rows
+- Wrong field positions
+
+### Generate
+
+The Generate section configures and triggers batch certificate production.
+
+The user sets:
+
+- Output formats (PDF / High-resolution image / both)
+- Filename pattern (e.g., {student_name}_{course})
+- Export organization (individual files / per-recipient folders / ZIP)
+
+Before generation, the application runs a pre-generation validation:
+
+```text
+Pre-generation Check
+
+✓ Template exists
+✓ 42 students loaded
+✓ All required fields mapped
+✓ Fonts available
+✓ Signature available
+✓ Security keys valid
+
+⚠ 3 students have missing phone numbers
+  Phone is not required for generation.
+
+[ Generate 42 Certificates ]
+```
+
+During generation, a live progress view is shown:
+
+```text
+Generating Certificates
+
+████████████████░░░░  82%
+
+35 / 42
+
+✓ Ahmed Ali
+✓ Mohammed Hassan
+✓ Ali Ahmed
+⟳ Abdullah Saleh
+
+Estimated remaining: 8 seconds
+
+[ Run in Background ]
+```
+
+Errors are presented per record:
+
+```text
+⚠ 2 certificates failed
+
+Ahmed Ali          ✓
+Mohammed Hassan    ✕ Missing date
+Ali Ahmed          ✓
+
+[ Review Errors ]    [ Continue Successful ]
+```
+
+### Certificates
+
+The Certificates section is the certificate library for this project. All generated certificates appear here with their current status.
+
+```text
+Certificates — 42 generated
+
+Search: [ ________________ ]
+
+Filter: [ All ] [ Valid ] [ Errors ]
+
++------------------------------------------------+
+| CERT-00001  Ahmed Ali      ✓ Ready    [Share]  |
+| CERT-00002  Mohammed       ✓ Ready    [Share]  |
+| CERT-00003  Ali Hassan     ✓ Ready    [Share]  |
++------------------------------------------------+
+```
+
+Clicking a certificate opens its detail view:
+
+```text
++----------------------------------+
+|                                  |
+|          Ahmed Ali               |
+|                                  |
++----------------------------------+
+
+Certificate ID
+CERT-2026-00001
+
+Status
+✓ Authentic
+
+Security
+✓ Digital Signature
+✓ Integrity
+✓ QR Code
+
+Files
+[ PDF ]   [ Image ]
+
+[ Share ]  [ Export ]  [ Regenerate ]
+```
+
+### Export
+
+The Export section provides batch export options:
+
+- Export all certificates as individual files
+- Export as a structured ZIP archive
+- Export the project configuration file (.cstudio)
+
+## 44.5 Verification
+
+Verification is a first-class, standalone feature accessible from the main navigation.
+
+Anyone (not just the certificate creator) can verify a certificate using this screen.
+
+```text
+Verify Certificate
+
+Drop certificate here
+
+or
+
+[ Select PDF / Image ]
+
+or
+
+[ Scan QR Code ]
+
+or
+
+Certificate ID
+[ ________________ ]
+
+[ Verify ]
+```
+
+A valid certificate produces:
+
+```text
+              ✓ VERIFIED
+
+Certificate ID
+CERT-2026-00042
+
+Issued by
+Al-Noor Academy
+
+Project
+Flutter Training 2026
+
+Recipient
+Ahmed Ali
+
+Integrity
+✓ Valid
+
+Digital Signature
+✓ Valid
+
+Status
+✓ Authentic
+```
+
+A modified certificate produces:
+
+```text
+              ✕ INVALID
+
+Certificate integrity check failed.
+
+The document may have been modified
+after it was issued.
+```
+
+Verification works fully offline when the public key material is available locally. No internet connection is required.
+
+## 44.6 WhatsApp Sharing
+
+When a recipient has a phone number in their imported data, the application presents a WhatsApp sharing option alongside the standard system share:
+
+```text
+Share Certificate
+
+Ahmed Ali
++967XXXXXXXXX
+
+[ System Share ]
+[ WhatsApp ]
+```
+
+The WhatsApp integration opens the WhatsApp application with the recipient's phone number and the certificate file pre-attached. The user confirms sending within WhatsApp. The application does not send automatically without user confirmation.
+
+When no phone number is available:
+
+```text
+Phone number unavailable
+
+[ Enter number manually ]
+[ System Share only ]
+```
+
+## 44.7 Project Export and Import
+
+A project can be exported to a portable file:
+
+```text
+Export Project
+
+This will include:
+
+✓ Template
+✓ Fonts
+✓ Field layout
+✓ Data mapping
+✓ Project settings
+✓ Security configuration
+
+Generated certificates will NOT be included.
+
+[ Export Project ]
+```
+
+The resulting file (e.g., Flutter_Course_2026.cstudio) can be transferred to another device.
+
+Importing on the other device:
+
+```text
+Import Project
+
+Flutter_Course_2026.cstudio
+
+Project: Flutter Training 2026
+
+Template      ✓
+Fonts         ✓
+Layout        ✓
+Mappings      ✓
+Security      ✓
+
+[ Import Project ]
+```
+
+After import, the project is ready for use on the new device without any manual reconfiguration.
+
+## 44.8 Settings
+
+The Settings screen is organized by category without overwhelming the user:
+
+```text
+Settings
+
+General
+├── Language
+├── Appearance (Light / Dark)
+└── Storage location
+
+Institution
+├── Institution Profile
+└── Security Keys
+
+Certificates
+├── Default export format
+├── Default filename pattern
+└── Default export organization
+
+Verification
+├── Verification settings
+└── QR code settings
+
+Fonts
+└── Font Library
+
+Advanced
+├── Database
+├── Encryption
+├── Diagnostics
+└── Developer Tools
+```
+
+Cryptographic details (key algorithms, key fingerprints, rotation history) are available only under Advanced > Security Keys, not in the main settings flow.
+
+---
+
+# 45. Interaction Design Principles
+
+## 45.1 Designer-Specific Interactions
+
+The Certificate Designer supports a professional set of interactions:
+
+**Selection**
+- Single click: select element
+- Shift+click: add to selection
+- Drag on empty canvas: marquee selection
+- Escape: deselect all
+
+**Movement**
+- Drag: move freely
+- Arrow keys: move 1px
+- Shift+Arrow: move 10px
+- Drag with Shift: constrain to horizontal or vertical axis
+
+**Resize**
+- Drag corner handles: free resize
+- Drag edge handles: constrain to one axis
+- Hold Shift during resize: maintain aspect ratio
+
+**Alignment**
+- Smart guides appear when approaching alignment with other elements
+- Alignment toolbar: align left, right, top, bottom, center horizontal, center vertical
+- Distribute evenly: horizontal and vertical
+
+**Context Menu (Right-click on element)**
+- Duplicate
+- Delete
+- Bring to front
+- Send to back
+- Lock / Unlock
+- Hide / Show
+
+## 45.2 Full Keyboard Shortcut Reference
+
+| Shortcut | Action |
+|---|---|
+| Ctrl + S | Save |
+| Ctrl + Z | Undo |
+| Ctrl + Shift + Z | Redo |
+| Ctrl + C | Copy |
+| Ctrl + V | Paste |
+| Ctrl + D | Duplicate |
+| Ctrl + A | Select all |
+| Delete | Delete selected |
+| Escape | Deselect / Close panel |
+| Ctrl + P | Preview |
+| Ctrl + G | Generate |
+| Ctrl + + | Zoom in |
+| Ctrl + - | Zoom out |
+| Ctrl + 0 | Fit to window |
+| Arrow keys | Move 1px |
+| Shift + Arrow | Move 10px |
+| Ctrl + [ | Send backward |
+| Ctrl + ] | Bring forward |
+| Ctrl + Shift + [ | Send to back |
+| Ctrl + Shift + ] | Bring to front |
+
+## 45.3 Drag and Drop Zones (Desktop)
+
+| Zone | Accepted content |
+|---|---|
+| Home screen | Project files (.cstudio), Excel files (.xlsx) |
+| Template library | Image files (PNG, JPG, WEBP) |
+| Data section | Excel files (.xlsx) |
+| Font library | Font files (.ttf, .otf) |
+| Designer canvas | Data columns (from the data panel) |
+| Verification screen | Certificate files (PDF, PNG) |
+
+## 45.4 System State Display
+
+Every screen must implement these states:
+
+**Loading**
+```text
+Loading project...
+```
+
+**Empty**
+```text
+No certificates yet
+
+Generate certificates to see them here.
+
+[ Generate Certificates ]
+```
+
+**Error**
+```text
+Something went wrong
+
+We couldn't load this project.
+
+[ Retry ]
+```
+
+**Partial Success**
+```text
+38 certificates generated
+4 certificates failed
+
+[ View Successful ]
+[ Review Failures ]
+```
+
+**Offline**
+```text
+All local features remain available.
+```
+
+---
+
+# 46. Accessibility and Localization
+
+## 46.1 Language Support
+
+Certificate Studio supports two languages:
+
+- Arabic (default) — RTL layout
+- English — LTR layout
+
+The UI automatically switches text direction based on the selected language. Arabic content in certificates (recipient names, course titles) renders correctly regardless of the application language.
+
+## 46.2 RTL Support
+
+All UI components are built with bidirectional text support.
+
+- Navigation elements mirror correctly in RTL mode
+- The Certificate Designer positions elements correctly for RTL certificate designs
+- Text direction in certificate fields can be set to: Auto, LTR, or RTL
+- The Auto setting detects the text content direction and applies it correctly
+
+## 46.3 Keyboard Navigation
+
+All primary actions are reachable by keyboard without a mouse:
+
+- Tab to navigate between form fields
+- Enter to confirm
+- Escape to cancel or close panels
+- Arrow keys to navigate lists
+- Full keyboard shortcut set in the Certificate Designer
+
+
 # Certificate Studio
 
 **Design once. Generate many. Verify with confidence.**

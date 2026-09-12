@@ -48,6 +48,10 @@ class _AppStartupGateState extends State<AppStartupGate> {
 
   Future<void> _reloadInstitution() async {
     final institution = await _repository.getCurrent();
-    if (mounted) setState(() => _institutionFuture = Future.value(institution));
+    if (mounted) {
+      setState(() {
+        _institutionFuture = Future.value(institution);
+      });
+    }
   }
 }

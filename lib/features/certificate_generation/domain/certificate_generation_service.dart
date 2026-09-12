@@ -409,12 +409,14 @@ class CertificateGenerationService {
     return pw.Positioned(
       left: x,
       top: y,
-      width: width,
-      height: height,
-      child: pw.Text(
-        '${values[className] ?? ''}',
-        textAlign: alignment,
-        style: pw.TextStyle(fontSize: _number(style['font_size'], 24)),
+      child: pw.SizedBox(
+        width: width,
+        height: height,
+        child: pw.Text(
+          '${values[className] ?? ''}',
+          textAlign: alignment,
+          style: pw.TextStyle(fontSize: _number(style['font_size'], 24)),
+        ),
       ),
     );
   }

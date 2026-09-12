@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/security/keys/institution_key_manager.dart';
 import '../../../data_import/presentation/screens/data_import_screen.dart';
 import '../../../certificate_designer/presentation/screens/certificate_designer_screen.dart';
+import '../../../certificate_generation/presentation/screens/certificate_generation_screen.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
 import '../../domain/entities/project.dart';
 
 class ProjectDetailsScreen extends StatelessWidget {
-  const ProjectDetailsScreen({super.key, required this.project, required this.database});
+  const ProjectDetailsScreen({super.key, required this.project, required this.database, this.keyStorage});
 
   final Project project;
   final AppDatabase database;
+  final KeyStorage? keyStorage;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +72,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                       icon: Icons.play_circle_outline,
                       title: 'Generate',
                       description: 'Create certificates after setup is complete.',
-                      onPressed: () => _showComingNext(context, 'Certificate generation'),
+                      onPressed: () => Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => CertificateGenerationScreen(database: database, keyStorage: keyStorage ?? InMemoryKeyStorage(), projectId: project.id, projectName: project.name, institutionId: project.institutionId))),
                     ),
                   ],
                 ),

@@ -70,7 +70,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
     final database = widget.database;
     if (database == null) return;
     await Navigator.of(context).push<void>(
-      MaterialPageRoute(builder: (_) => ProjectDetailsScreen(project: project, database: database)),
+      MaterialPageRoute(builder: (_) => ProjectDetailsScreen(project: project, database: database, keyStorage: widget.keyStorage)),
     );
   }
 

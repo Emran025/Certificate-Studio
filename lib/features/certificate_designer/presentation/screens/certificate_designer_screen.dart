@@ -27,6 +27,8 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
   bool _loading = true;
   bool _saving = false;
   String _saveLabel = 'Not saved';
+  final List<List<_DesignerField>> _undoStack = [];
+  final List<List<_DesignerField>> _redoStack = [];
 
   _DesignerField? get _selected => _fields.where((field) => field.id == _selectedId).firstOrNull;
 
@@ -51,6 +53,9 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     setState(() {
       _columns = columns.toList()..sort();
       _fields = rows.map(_DesignerField.fromRow).toList();
+      _undoStack
+        ..clear()
+        ..add(List<_DesignerField>.from(_fields));
       _loading = false;
     });
   }
@@ -63,11 +68,8 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     final field = _DesignerField(id: id, className: _className(source), source: source, x: 100, y: 100 + (_fields.length * 70), width: 420, height: 64, fontSize: 28, color: '#20332B');
     await widget.database.insert(DatabaseTables.certificateFields, field.toRow(widget.projectId, now));
     if (!mounted) return;
-    setState(() {
-      _fields = [..._fields, field];
-      _selectedId = id;
-      _saveLabel = 'Saved';
-    });
+    _updateFields([..._fields, field]);
+    setState(() => _selectedId = id);
   }
 
   Future<void> _deleteSelected() async {
@@ -75,11 +77,8 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     if (selected == null) return;
     await widget.database.delete(DatabaseTables.certificateFields, selected.id);
     if (!mounted) return;
-    setState(() {
-      _fields = _fields.where((field) => field.id != selected.id).toList();
-      _selectedId = null;
-      _saveLabel = 'Saved';
-    });
+    _updateFields(_fields.where((field) => field.id != selected.id).toList());
+    setState(() => _selectedId = null);
   }
 
   Future<void> _save() async {
@@ -116,8 +115,41 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     final selected = _selected;
     if (selected == null) return;
     final next = selected.copyWith(x: (selected.x + details.delta.dx).clamp(0, 920), y: (selected.y + details.delta.dy).clamp(0, 620));
-    setState(() => _fields = _fields.map((field) => field.id == next.id ? next : field).toList());
+    _updateFields(_fields.map((field) => field.id == next.id ? next : field).toList());
   }
+
+  void _updateFields(List<_DesignerField> next) {
+    if (_sameFields(_fields, next)) return;
+    _undoStack.add(List<_DesignerField>.from(_fields));
+    _redoStack.clear();
+    setState(() {
+      _fields = next;
+      _saveLabel = 'Unsaved changes';
+    });
+  }
+
+  void _undo() {
+    if (_undoStack.isEmpty) return;
+    _redoStack.add(List<_DesignerField>.from(_fields));
+    setState(() {
+      _fields = List<_DesignerField>.from(_undoStack.removeLast());
+      _selectedId = _fields.any((field) => field.id == _selectedId) ? _selectedId : null;
+      _saveLabel = 'Unsaved changes';
+    });
+  }
+
+  void _redo() {
+    if (_redoStack.isEmpty) return;
+    final next = _redoStack.removeLast();
+    _undoStack.add(List<_DesignerField>.from(_fields));
+    setState(() {
+      _fields = List<_DesignerField>.from(next);
+      _selectedId = _fields.any((field) => field.id == _selectedId) ? _selectedId : null;
+      _saveLabel = 'Unsaved changes';
+    });
+  }
+
+  bool _sameFields(List<_DesignerField> left, List<_DesignerField> right) => left.length == right.length && left.asMap().entries.every((entry) => entry.value == right[entry.key]);
 
   @override
   Widget build(BuildContext context) {
@@ -128,13 +160,15 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
         actions: [
           Text(_saveLabel, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(width: AppSpacing.sm),
+          IconButton(tooltip: 'Undo', onPressed: _undoStack.length > 1 ? _undo : null, icon: const Icon(Icons.undo)),
+          IconButton(tooltip: 'Redo', onPressed: _redoStack.isNotEmpty ? _redo : null, icon: const Icon(Icons.redo)),
           IconButton(tooltip: 'Save design', onPressed: _saving ? null : _save, icon: const Icon(Icons.save_outlined)),
         ],
       ),
       body: Row(children: [
         SizedBox(width: 230, child: _ElementsPanel(columns: _columns, fields: _fields, selectedId: _selectedId, onAdd: _addField, onSelect: (id) => setState(() => _selectedId = id))),
         Expanded(child: Container(color: AppColors.background, padding: const EdgeInsets.all(AppSpacing.xl), child: Center(child: _Canvas(fields: _fields, selectedId: _selectedId, canvasKey: _canvasKey, onSelect: (id) => setState(() => _selectedId = id), onMove: _moveSelected)))),
-        SizedBox(width: 280, child: _PropertiesPanel(field: _selected, onChanged: (field) => setState(() => _fields = _fields.map((item) => item.id == field.id ? field : item).toList()), onDelete: _deleteSelected)),
+        SizedBox(width: 280, child: _PropertiesPanel(field: _selected, onChanged: (field) => _updateFields(_fields.map((item) => item.id == field.id ? field : item).toList()), onDelete: _deleteSelected)),
       ]),
     );
   }

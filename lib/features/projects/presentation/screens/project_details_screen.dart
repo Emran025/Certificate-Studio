@@ -11,7 +11,12 @@ import '../../../../shared/widgets/design_system.dart';
 import '../../domain/entities/project.dart';
 
 class ProjectDetailsScreen extends StatelessWidget {
-  const ProjectDetailsScreen({super.key, required this.project, required this.database, this.keyStorage});
+  const ProjectDetailsScreen({
+    super.key,
+    required this.project,
+    required this.database,
+    this.keyStorage,
+  });
 
   final Project project;
   final AppDatabase database;
@@ -38,7 +43,10 @@ class ProjectDetailsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(project.name, style: Theme.of(context).textTheme.headlineLarge),
+                Text(
+                  project.name,
+                  style: Theme.of(context).textTheme.headlineLarge,
+                ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   project.description?.isNotEmpty == true
@@ -55,25 +63,58 @@ class ProjectDetailsScreen extends StatelessWidget {
                       icon: Icons.image_outlined,
                       title: 'Template',
                       description: 'Choose the certificate background.',
-                      onPressed: () => Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => TemplatePickerScreen(database: database, projectId: project.id))),
+                      onPressed: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (_) => TemplatePickerScreen(
+                            database: database,
+                            projectId: project.id,
+                          ),
+                        ),
+                      ),
                     ),
                     _ProjectAction(
                       icon: Icons.table_chart_outlined,
                       title: 'Student data',
                       description: 'Import or paste recipient data.',
-                      onPressed: () => Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => DataImportScreen(database: database, projectId: project.id))),
+                      onPressed: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (_) => DataImportScreen(
+                            database: database,
+                            projectId: project.id,
+                          ),
+                        ),
+                      ),
                     ),
                     _ProjectAction(
                       icon: Icons.design_services_outlined,
                       title: 'Design',
                       description: 'Place fields on the certificate canvas.',
-                      onPressed: () => Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => CertificateDesignerScreen(database: database, projectId: project.id, projectName: project.name))),
+                      onPressed: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (_) => CertificateDesignerScreen(
+                            database: database,
+                            projectId: project.id,
+                            projectName: project.name,
+                          ),
+                        ),
+                      ),
                     ),
                     _ProjectAction(
                       icon: Icons.play_circle_outline,
                       title: 'Generate',
-                      description: 'Create certificates after setup is complete.',
-                      onPressed: () => Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => CertificateGenerationScreen(database: database, keyStorage: keyStorage ?? InMemoryKeyStorage(), projectId: project.id, projectName: project.name, institutionId: project.institutionId))),
+                      description:
+                          'Create certificates after setup is complete.',
+                      onPressed: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (_) => CertificateGenerationScreen(
+                            database: database,
+                            keyStorage: keyStorage ?? InMemoryKeyStorage(),
+                            projectId: project.id,
+                            projectName: project.name,
+                            institutionId: project.institutionId,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -82,12 +123,28 @@ class ProjectDetailsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Project information', style: Theme.of(context).textTheme.titleLarge),
+                      Text(
+                        'Project information',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                       const SizedBox(height: AppSpacing.md),
-                      _InfoRow(label: 'Course', value: project.courseName ?? 'Not set'),
-                      _InfoRow(label: 'Organization', value: project.organizationName ?? 'Not set'),
-                      _InfoRow(label: 'Type', value: (project.settings['project_type'] ?? 'course').toString()),
-                      _InfoRow(label: 'Created', value: _formatDate(project.createdAt)),
+                      _InfoRow(
+                        label: 'Course',
+                        value: project.courseName ?? 'Not set',
+                      ),
+                      _InfoRow(
+                        label: 'Organization',
+                        value: project.organizationName ?? 'Not set',
+                      ),
+                      _InfoRow(
+                        label: 'Type',
+                        value: (project.settings['project_type'] ?? 'course')
+                            .toString(),
+                      ),
+                      _InfoRow(
+                        label: 'Created',
+                        value: _formatDate(project.createdAt),
+                      ),
                     ],
                   ),
                 ),
@@ -99,17 +156,28 @@ class ProjectDetailsScreen extends StatelessWidget {
     );
   }
 
+  // ignore: unused_element
   void _showComingNext(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature will be available from this project workspace.')),
+      SnackBar(
+        content: Text(
+          '$feature will be available from this project workspace.',
+        ),
+      ),
     );
   }
 
-  String _formatDate(DateTime value) => '${value.day}/${value.month}/${value.year}';
+  String _formatDate(DateTime value) =>
+      '${value.day}/${value.month}/${value.year}';
 }
 
 class _ProjectAction extends StatelessWidget {
-  const _ProjectAction({required this.icon, required this.title, required this.description, required this.onPressed});
+  const _ProjectAction({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onPressed,
+  });
   final IconData icon;
   final String title;
   final String description;
@@ -126,7 +194,16 @@ class _ProjectAction extends StatelessWidget {
           children: [
             Icon(icon, size: 28),
             const SizedBox(width: AppSpacing.md),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: Theme.of(context).textTheme.titleMedium), const SizedBox(height: AppSpacing.xxs), Text(description)])),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(description),
+                ],
+              ),
+            ),
             const Icon(Icons.chevron_right),
           ],
         ),
@@ -143,6 +220,14 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-    child: Row(children: [SizedBox(width: 120, child: Text(label, style: Theme.of(context).textTheme.labelLarge)), Expanded(child: Text(value))]),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(label, style: Theme.of(context).textTheme.labelLarge),
+        ),
+        Expanded(child: Text(value)),
+      ],
+    ),
   );
 }

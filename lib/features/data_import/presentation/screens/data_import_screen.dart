@@ -13,7 +13,11 @@ import '../../domain/entities/imported_table.dart';
 import '../../domain/usecases/paste_table.dart';
 
 class DataImportScreen extends StatefulWidget {
-  const DataImportScreen({super.key, required this.database, required this.projectId});
+  const DataImportScreen({
+    super.key,
+    required this.database,
+    required this.projectId,
+  });
 
   final AppDatabase database;
   final String projectId;
@@ -51,7 +55,9 @@ class _DataImportScreenState extends State<DataImportScreen> {
       DatabaseTables.settings,
       where: {'key': 'mapping:${widget.projectId}'},
     );
-    final rawMapping = savedMapping.isEmpty ? null : savedMapping.first['value_json'];
+    final rawMapping = savedMapping.isEmpty
+        ? null
+        : savedMapping.first['value_json'];
     if (!mounted) return;
     setState(() {
       _table = table;
@@ -79,18 +85,28 @@ class _DataImportScreenState extends State<DataImportScreen> {
       _error = null;
     });
     try {
-      final table = await _pasteTable(projectId: widget.projectId, rawText: rawText);
+      final table = await _pasteTable(
+        projectId: widget.projectId,
+        rawText: rawText,
+      );
       if (mounted) {
         setState(() {
           _table = table;
-          _mapping = {for (final column in table.columns) column: _suggestClass(column)};
+          _mapping = {
+            for (final column in table.columns) column: _suggestClass(column),
+          };
         });
         await _saveMapping();
       }
     } on FormatException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
-      if (mounted) setState(() => _error = 'We could not save the imported data. Please try again.');
+      if (mounted) {
+        setState(
+          () =>
+              _error = 'We could not save the imported data. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -119,34 +135,115 @@ class _DataImportScreenState extends State<DataImportScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Add student data', style: Theme.of(context).textTheme.headlineMedium),
+                      Text(
+                        'Add student data',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
                       const SizedBox(height: AppSpacing.xs),
-                      Text('Paste a spreadsheet copied from Excel or another table. The first row becomes the column names.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary)),
+                      Text(
+                        'Paste a spreadsheet copied from Excel or another table. The first row becomes the column names.',
+                        style: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(color: AppColors.textSecondary),
+                      ),
                       const SizedBox(height: AppSpacing.lg),
                       AppSurfaceCard(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            TextField(controller: _controller, minLines: 5, maxLines: 10, decoration: const InputDecoration(labelText: 'Paste table data', hintText: 'Student Name\tCourse\tGrade\nAhmed Ali\tFlutter\t95', alignLabelWithHint: true)),
+                            TextField(
+                              controller: _controller,
+                              minLines: 5,
+                              maxLines: 10,
+                              decoration: const InputDecoration(
+                                labelText: 'Paste table data',
+                                hintText: 'Student Name\tCourse\tGrade\nAhmed Ali\tFlutter\t95',
+                                alignLabelWithHint: true,
+                              ),
+                            ),
                             const SizedBox(height: AppSpacing.md),
-                            Row(children: [AppSecondaryButton(label: 'Paste from clipboard', icon: Icons.content_paste, onPressed: _saving ? null : _pasteFromClipboard), const SizedBox(width: AppSpacing.md), AppPrimaryButton(label: _saving ? 'Saving...' : 'Import data', icon: Icons.file_download_outlined, onPressed: _saving ? null : () => _import(_controller.text))]),
-                            if (_error != null) ...[const SizedBox(height: AppSpacing.md), Text(_error!, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.error))],
+                            Row(
+                              children: [
+                                AppSecondaryButton(
+                                  label: 'Paste from clipboard',
+                                  icon: Icons.content_paste,
+                                  onPressed: _saving
+                                      ? null
+                                      : _pasteFromClipboard,
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                                AppPrimaryButton(
+                                  label: _saving ? 'Saving...' : 'Import data',
+                                  icon: Icons.file_download_outlined,
+                                  onPressed: _saving
+                                      ? null
+                                      : () => _import(_controller.text),
+                                ),
+                              ],
+                            ),
+                            if (_error != null) ...[
+                              const SizedBox(height: AppSpacing.md),
+                              Text(
+                                _error!,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: AppColors.error),
+                              ),
+                            ],
                           ],
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xl),
                       if (_table.columns.isNotEmpty) ...[
-                        Text('Data preview', style: Theme.of(context).textTheme.titleLarge),
+                        Text(
+                          'Data preview',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
                         const SizedBox(height: AppSpacing.md),
                         _DataPreview(table: _table),
                         const SizedBox(height: AppSpacing.xl),
-                        Text('Column mapping', style: Theme.of(context).textTheme.titleLarge),
+                        Text(
+                          'Column mapping',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
                         const SizedBox(height: AppSpacing.xs),
-                        Text('Choose the certificate class each imported column supplies.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary)),
+                        Text(
+                          'Choose the certificate class each imported column supplies.',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
                         const SizedBox(height: AppSpacing.md),
-                        AppSurfaceCard(child: Column(children: [for (final column in _table.columns) _MappingRow(column: column, value: _mapping[column] ?? 'custom', onChanged: (value) { if (value == null) return; setState(() => _mapping[column] = value); _saveMapping(); })])),
+                        AppSurfaceCard(
+                          child: Column(
+                            children: [
+                              for (final column in _table.columns)
+                                _MappingRow(
+                                  column: column,
+                                  value: _mapping[column] ?? 'custom',
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    setState(() => _mapping[column] = value);
+                                    _saveMapping();
+                                  },
+                                ),
+                            ],
+                          ),
+                        ),
                       ] else
-                        AppSurfaceCard(child: Row(children: [const Icon(Icons.info_outline, color: AppColors.info), const SizedBox(width: AppSpacing.sm), Expanded(child: Text('No recipient data yet. Import a table to continue to column mapping.'))])),
+                        AppSurfaceCard(
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                color: AppColors.info,
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Text(
+                                  'No recipient data yet. Import a table to continue to column mapping.',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -157,8 +254,15 @@ class _DataImportScreenState extends State<DataImportScreen> {
 
   Future<void> _saveMapping() async {
     final key = 'mapping:${widget.projectId}';
-    final values = {'key': key, 'value_json': jsonEncode(_mapping), 'updated_at': DateTime.now().toUtc().toIso8601String()};
-    final existing = await widget.database.query(DatabaseTables.settings, where: {'key': key});
+    final values = {
+      'key': key,
+      'value_json': jsonEncode(_mapping),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    };
+    final existing = await widget.database.query(
+      DatabaseTables.settings,
+      where: {'key': key},
+    );
     if (existing.isEmpty) {
       await widget.database.insert(DatabaseTables.settings, values);
     } else {
@@ -167,19 +271,32 @@ class _DataImportScreenState extends State<DataImportScreen> {
   }
 
   String _suggestClass(String column) {
-    final normalized = column.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+    final normalized = column.toLowerCase().replaceAll(
+      RegExp(r'[^a-z0-9]+'),
+      '_',
+    );
     if (normalized.contains('name')) return 'student_name';
     if (normalized.contains('course')) return 'course_name';
-    if (normalized.contains('grade') || normalized.contains('score')) return 'grade';
+    if (normalized.contains('grade') || normalized.contains('score')) {
+      return 'grade';
+    }
     if (normalized.contains('date')) return 'issue_date';
-    if (normalized.contains('phone') || normalized.contains('mobile')) return 'phone';
-    if (normalized == 'class' || normalized.contains('id')) return 'student_class';
+    if (normalized.contains('phone') || normalized.contains('mobile')) {
+      return 'phone';
+    }
+    if (normalized == 'class' || normalized.contains('id')) {
+      return 'student_class';
+    }
     return 'custom';
   }
 }
 
 class _MappingRow extends StatelessWidget {
-  const _MappingRow({required this.column, required this.value, required this.onChanged});
+  const _MappingRow({
+    required this.column,
+    required this.value,
+    required this.onChanged,
+  });
   final String column;
   final String value;
   final ValueChanged<String?> onChanged;
@@ -187,7 +304,43 @@ class _MappingRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-    child: Row(children: [Expanded(child: Text(column, style: Theme.of(context).textTheme.titleSmall)), const Icon(Icons.arrow_forward, size: 18), const SizedBox(width: AppSpacing.md), Expanded(child: DropdownButtonFormField<String>(value: value, decoration: const InputDecoration(labelText: 'Certificate class'), items: const [DropdownMenuItem(value: 'student_name', child: Text('Student name')), DropdownMenuItem(value: 'student_class', child: Text('Student class')), DropdownMenuItem(value: 'course_name', child: Text('Course name')), DropdownMenuItem(value: 'grade', child: Text('Grade')), DropdownMenuItem(value: 'issue_date', child: Text('Issue date')), DropdownMenuItem(value: 'phone', child: Text('Phone')), DropdownMenuItem(value: 'custom', child: Text('Custom / unmapped'))], onChanged: onChanged))]),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(column, style: Theme.of(context).textTheme.titleSmall),
+        ),
+        const Icon(Icons.arrow_forward, size: 18),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: DropdownButtonFormField<String>(
+            value: value,
+            decoration: const InputDecoration(labelText: 'Certificate class'),
+            items: const [
+              DropdownMenuItem(
+                value: 'student_name',
+                child: Text('Student name'),
+              ),
+              DropdownMenuItem(
+                value: 'student_class',
+                child: Text('Student class'),
+              ),
+              DropdownMenuItem(
+                value: 'course_name',
+                child: Text('Course name'),
+              ),
+              DropdownMenuItem(value: 'grade', child: Text('Grade')),
+              DropdownMenuItem(value: 'issue_date', child: Text('Issue date')),
+              DropdownMenuItem(value: 'phone', child: Text('Phone')),
+              DropdownMenuItem(
+                value: 'custom',
+                child: Text('Custom / unmapped'),
+              ),
+            ],
+            onChanged: onChanged,
+          ),
+        ),
+      ],
+    ),
   );
 }
 
@@ -203,10 +356,17 @@ class _DataPreview extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(
-          columns: [for (final column in table.columns) DataColumn(label: Text(column))],
+          columns: [
+            for (final column in table.columns) DataColumn(label: Text(column)),
+          ],
           rows: [
             for (final row in table.rows.take(50))
-              DataRow(cells: [for (final column in table.columns) DataCell(Text(row[column] ?? ''))]),
+              DataRow(
+                cells: [
+                  for (final column in table.columns)
+                    DataCell(Text(row[column] ?? '')),
+                ],
+              ),
           ],
         ),
       ),

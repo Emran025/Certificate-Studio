@@ -8,7 +8,11 @@ import '../../../institution/presentation/screens/institution_setup_screen.dart'
 import '../widgets/app_shell.dart';
 
 class AppStartupGate extends StatefulWidget {
-  const AppStartupGate({super.key, required this.database, required this.keyStorage});
+  const AppStartupGate({
+    super.key,
+    required this.database,
+    required this.keyStorage,
+  });
 
   final AppDatabase database;
   final KeyStorage keyStorage;
@@ -36,13 +40,23 @@ class _AppStartupGateState extends State<AppStartupGate> {
       future: _institutionFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         final institution = snapshot.data;
         if (institution == null) {
-          return InstitutionSetupScreen(repository: _repository, keyManager: _keyManager, onCompleted: (_) => _reloadInstitution());
+          return InstitutionSetupScreen(
+            repository: _repository,
+            keyManager: _keyManager,
+            onCompleted: (_) => _reloadInstitution(),
+          );
         }
-        return WorkspaceShell(database: widget.database, institution: institution, keyStorage: widget.keyStorage);
+        return WorkspaceShell(
+          database: widget.database,
+          institution: institution,
+          keyStorage: widget.keyStorage,
+        );
       },
     );
   }

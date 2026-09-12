@@ -6,6 +6,9 @@ class ImportedTable {
 
   int get rowCount => rows.length;
 
-  ImportedTable copyWith({List<String>? columns, List<Map<String, String>>? rows}) =>
+  ImportedTable copyWith({
+    List<String>? columns,
+    List<Map<String, String>>? rows,
+  }) =>
       ImportedTable(columns: columns ?? this.columns, rows: rows ?? this.rows);
 }

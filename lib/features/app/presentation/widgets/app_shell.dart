@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../verification/presentation/screens/verification_screen.dart';
 import '../../../../config/env/app_environment.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/security/keys/institution_key_manager.dart';
@@ -15,7 +16,12 @@ import '../../../projects/presentation/screens/create_project_screen.dart';
 import '../../../projects/presentation/screens/project_details_screen.dart';
 
 class WorkspaceShell extends StatefulWidget {
-  const WorkspaceShell({super.key, this.database, this.institution, this.keyStorage});
+  const WorkspaceShell({
+    super.key,
+    this.database,
+    this.institution,
+    this.keyStorage,
+  });
 
   final AppDatabase? database;
   final Institution? institution;
@@ -70,7 +76,13 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
     final database = widget.database;
     if (database == null) return;
     await Navigator.of(context).push<void>(
-      MaterialPageRoute(builder: (_) => ProjectDetailsScreen(project: project, database: database, keyStorage: widget.keyStorage)),
+      MaterialPageRoute(
+        builder: (_) => ProjectDetailsScreen(
+          project: project,
+          database: database,
+          keyStorage: widget.keyStorage,
+        ),
+      ),
     );
   }
 
@@ -87,7 +99,14 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
                 institution: widget.institution,
                 projectsFuture: _projectsFuture,
                 onCreateProject: _openCreateProject,
-                onVerify: () => Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => VerificationScreen(database: widget.database!, keyStorage: widget.keyStorage ?? InMemoryKeyStorage()))),
+                onVerify: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    builder: (_) => VerificationScreen(
+                      database: widget.database!,
+                      keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
+                    ),
+                  ),
+                ),
                 onOpenProject: _openProject,
               ),
             ),
@@ -211,7 +230,7 @@ class _WorkspaceContent extends StatelessWidget {
     this.projectsFuture,
     required this.onCreateProject,
     required this.onVerify,
-    this.keyStorage,
+    // this.keyStorage,
     required this.onOpenProject,
   });
   final AppDatabase? database;
@@ -380,7 +399,10 @@ class _ProjectsSection extends StatelessWidget {
             for (final project in projects)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                child: _ProjectPreviewCard(project: project, onTap: () => onOpenProject(project)),
+                child: _ProjectPreviewCard(
+                  project: project,
+                  onTap: () => onOpenProject(project),
+                ),
               ),
           ],
         );
@@ -489,4 +511,3 @@ class _MetricCard extends StatelessWidget {
     ),
   );
 }
-import '../../../verification/presentation/screens/verification_screen.dart';

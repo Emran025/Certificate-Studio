@@ -1,0 +1,10 @@
+name: certificate_crypto
+description: Native Dart cryptographic protocol implementation for Certificate Studio.
+publish_to: none
+version: 1.0.0
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+dependencies:
+  cryptography: ^2.9.0
+dev_dependencies:
+  test: ^1.25.0

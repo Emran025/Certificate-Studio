@@ -1,0 +1,151 @@
+abstract final class DatabaseTables {
+  static const institutions = 'institutions';
+  static const projects = 'projects';
+  static const templates = 'templates';
+  static const fonts = 'fonts';
+  static const signatures = 'signatures';
+  static const students = 'students';
+  static const certificateFields = 'certificate_fields';
+  static const certificateLayouts = 'certificate_layouts';
+  static const certificates = 'certificates';
+  static const verificationRecords = 'verification_records';
+  static const settings = 'settings';
+}
+
+abstract final class DatabaseSchema {
+  static const version = 1;
+
+  static const createStatements = <String>[
+    '''CREATE TABLE institutions (
+      id TEXT PRIMARY KEY,
+      institution_id TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      name_ar TEXT,
+      name_en TEXT,
+      logo_path TEXT,
+      contact_json TEXT,
+      settings_json TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )''',
+    '''CREATE TABLE projects (
+      id TEXT PRIMARY KEY,
+      institution_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      course_name TEXT,
+      description TEXT,
+      start_date TEXT,
+      end_date TEXT,
+      trainer_name TEXT,
+      organization_name TEXT,
+      logo_path TEXT,
+      template_id TEXT,
+      settings_json TEXT,
+      project_key_reference TEXT NOT NULL,
+      version INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (institution_id) REFERENCES institutions (id)
+    )''',
+    '''CREATE TABLE templates (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      width INTEGER NOT NULL,
+      height INTEGER NOT NULL,
+      dpi REAL NOT NULL,
+      format TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )''',
+    '''CREATE TABLE fonts (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      family TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      format TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )''',
+    '''CREATE TABLE signatures (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      title TEXT,
+      file_path TEXT NOT NULL,
+      x REAL NOT NULL,
+      y REAL NOT NULL,
+      width REAL NOT NULL,
+      height REAL NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (project_id) REFERENCES projects (id)
+    )''',
+    '''CREATE TABLE students (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      class_name TEXT NOT NULL,
+      data_json TEXT NOT NULL,
+      row_number INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (project_id) REFERENCES projects (id)
+    )''',
+    '''CREATE TABLE certificate_fields (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      class_name TEXT NOT NULL,
+      source TEXT,
+      position_json TEXT NOT NULL,
+      style_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (project_id) REFERENCES projects (id)
+    )''',
+    '''CREATE TABLE certificate_layouts (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL UNIQUE,
+      canvas_width REAL NOT NULL,
+      canvas_height REAL NOT NULL,
+      grid_enabled INTEGER NOT NULL DEFAULT 1,
+      settings_json TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (project_id) REFERENCES projects (id)
+    )''',
+    '''CREATE TABLE certificates (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      student_id TEXT NOT NULL,
+      file_path TEXT,
+      image_path TEXT,
+      status TEXT NOT NULL,
+      document_hash TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (project_id) REFERENCES projects (id),
+      FOREIGN KEY (student_id) REFERENCES students (id)
+    )''',
+    '''CREATE TABLE verification_records (
+      id TEXT PRIMARY KEY,
+      certificate_id TEXT NOT NULL UNIQUE,
+      institution_id TEXT NOT NULL,
+      project_id TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      signature TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (certificate_id) REFERENCES certificates (id)
+    )''',
+    '''CREATE TABLE settings (
+      key TEXT PRIMARY KEY,
+      value_json TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )''',
+  ];
+
+  static const indexes = <String>[
+    'CREATE INDEX idx_projects_institution ON projects (institution_id)',
+    'CREATE INDEX idx_students_project ON students (project_id)',
+    'CREATE INDEX idx_certificates_project ON certificates (project_id)',
+    'CREATE INDEX idx_certificates_status ON certificates (status)',
+  ];
+}

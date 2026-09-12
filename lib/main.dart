@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 
 import 'config/env/app_environment.dart';
+import 'core/database/app_database.dart';
 import 'shared/themes/app_colors.dart';
 import 'shared/themes/app_spacing.dart';
 import 'shared/themes/app_theme.dart';
 import 'shared/widgets/design_system.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const CertificateStudioApp());
+  final database = InMemoryAppDatabase();
+  await database.open();
+  runApp(CertificateStudioApp(database: database));
 }
 
 class CertificateStudioApp extends StatelessWidget {
-  const CertificateStudioApp({super.key});
+  const CertificateStudioApp({super.key, this.database});
+
+  final AppDatabase? database;
 
   @override
   Widget build(BuildContext context) {
@@ -24,13 +29,15 @@ class CertificateStudioApp extends StatelessWidget {
       supportedLocales: AppEnvironment.supportedLocales
           .map((languageCode) => Locale(languageCode))
           .toList(),
-      home: const WorkspaceShell(),
+      home: WorkspaceShell(database: database),
     );
   }
 }
 
 class WorkspaceShell extends StatelessWidget {
-  const WorkspaceShell({super.key});
+  const WorkspaceShell({super.key, this.database});
+
+  final AppDatabase? database;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +46,7 @@ class WorkspaceShell extends StatelessWidget {
         child: Row(
           children: [
             const _WorkspaceNavigation(),
-            Expanded(child: _WorkspaceContent()),
+            Expanded(child: _WorkspaceContent(database: database)),
           ],
         ),
       ),
@@ -123,6 +130,10 @@ class _NavigationItem extends StatelessWidget {
 }
 
 class _WorkspaceContent extends StatelessWidget {
+  const _WorkspaceContent({this.database});
+
+  final AppDatabase? database;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -146,6 +157,10 @@ class _WorkspaceContent extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if (database?.isOpen ?? false) ...[
+                    const AppStatusBadge(label: 'Offline ready'),
+                    const SizedBox(width: AppSpacing.md),
+                  ],
                   IconButton(tooltip: 'Notifications', onPressed: () {}, icon: const Icon(Icons.notifications_none_outlined)),
                   const SizedBox(width: AppSpacing.xs),
                   IconButton(tooltip: 'Settings', onPressed: () {}, icon: const Icon(Icons.settings_outlined)),

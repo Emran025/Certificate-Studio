@@ -27,6 +27,8 @@ class PersistentAppDatabase implements AppDatabase {
       DatabaseTables.certificateFields,
       DatabaseTables.certificateLayouts,
       DatabaseTables.certificates,
+      DatabaseTables.generationJobs,
+      DatabaseTables.generationItems,
       DatabaseTables.verificationRecords,
       DatabaseTables.settings,
     ])
@@ -73,7 +75,7 @@ class PersistentAppDatabase implements AppDatabase {
         }
       }
     }
-    _version = _version < 1 ? 1 : _version;
+    _version = _version < DatabaseSchema.version ? DatabaseSchema.version : _version;
     _isOpen = true;
   }
 

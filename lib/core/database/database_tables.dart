@@ -8,12 +8,14 @@ abstract final class DatabaseTables {
   static const certificateFields = 'certificate_fields';
   static const certificateLayouts = 'certificate_layouts';
   static const certificates = 'certificates';
+  static const generationJobs = 'generation_jobs';
+  static const generationItems = 'generation_items';
   static const verificationRecords = 'verification_records';
   static const settings = 'settings';
 }
 
 abstract final class DatabaseSchema {
-  static const version = 1;
+  static const version = 2;
 
   static const createStatements = <String>[
     '''CREATE TABLE institutions (
@@ -118,11 +120,35 @@ abstract final class DatabaseSchema {
       student_id TEXT NOT NULL,
       file_path TEXT,
       image_path TEXT,
+      document_json TEXT,
       status TEXT NOT NULL,
       document_hash TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       FOREIGN KEY (project_id) REFERENCES projects (id),
+      FOREIGN KEY (student_id) REFERENCES students (id)
+    )''',
+    '''CREATE TABLE generation_jobs (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      status TEXT NOT NULL,
+      total_count INTEGER NOT NULL,
+      completed_count INTEGER NOT NULL DEFAULT 0,
+      failed_count INTEGER NOT NULL DEFAULT 0,
+      started_at TEXT NOT NULL,
+      completed_at TEXT,
+      error_message TEXT,
+      FOREIGN KEY (project_id) REFERENCES projects (id)
+    )''',
+    '''CREATE TABLE generation_items (
+      id TEXT PRIMARY KEY,
+      job_id TEXT NOT NULL,
+      student_id TEXT NOT NULL,
+      certificate_id TEXT,
+      status TEXT NOT NULL,
+      error_message TEXT,
+      completed_at TEXT,
+      FOREIGN KEY (job_id) REFERENCES generation_jobs (id),
       FOREIGN KEY (student_id) REFERENCES students (id)
     )''',
     '''CREATE TABLE verification_records (
@@ -147,5 +173,7 @@ abstract final class DatabaseSchema {
     'CREATE INDEX idx_students_project ON students (project_id)',
     'CREATE INDEX idx_certificates_project ON certificates (project_id)',
     'CREATE INDEX idx_certificates_status ON certificates (status)',
+    'CREATE INDEX idx_generation_jobs_project ON generation_jobs (project_id)',
+    'CREATE INDEX idx_generation_items_job ON generation_items (job_id)',
   ];
 }

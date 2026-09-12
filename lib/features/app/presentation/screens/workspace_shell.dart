@@ -87,6 +87,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
                 institution: widget.institution,
                 projectsFuture: _projectsFuture,
                 onCreateProject: _openCreateProject,
+                onVerify: () => Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => VerificationScreen(database: widget.database!, keyStorage: widget.keyStorage ?? InMemoryKeyStorage()))),
                 onOpenProject: _openProject,
               ),
             ),
@@ -209,11 +210,14 @@ class _WorkspaceContent extends StatelessWidget {
     this.institution,
     this.projectsFuture,
     required this.onCreateProject,
+    required this.onVerify,
+    this.keyStorage,
     required this.onOpenProject,
   });
   final AppDatabase? database;
   final Institution? institution;
   final Future<List<Project>>? projectsFuture;
+  final VoidCallback onVerify;
   final VoidCallback onCreateProject;
   final ValueChanged<Project> onOpenProject;
 
@@ -260,6 +264,12 @@ class _WorkspaceContent extends StatelessWidget {
                   tooltip: 'Settings',
                   onPressed: () {},
                   icon: const Icon(Icons.settings_outlined),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                OutlinedButton.icon(
+                  onPressed: onVerify,
+                  icon: const Icon(Icons.verified_user_outlined),
+                  label: const Text('Verify'),
                 ),
               ],
             ),
@@ -479,3 +489,4 @@ class _MetricCard extends StatelessWidget {
     ),
   );
 }
+import '../../../verification/presentation/screens/verification_screen.dart';

@@ -44,7 +44,7 @@ class CertificateGenerationService {
         final document = utf8.encode(jsonEncode({'project_id': projectId, 'student_id': student['id'], 'fields': values}));
         final record = await createVerificationRecord({'institution_id': institutionId, 'project_id': projectId, 'certificate_id': certificateId, ...values}, document, keyPair.privateKey);
         final now = DateTime.now().toUtc().toIso8601String();
-        await database.insert(DatabaseTables.certificates, {'id': certificateId, 'project_id': projectId, 'student_id': student['id'], 'file_path': null, 'image_path': null, 'status': 'signed', 'document_hash': record['document_hash'], 'created_at': now, 'updated_at': now});
+        await database.insert(DatabaseTables.certificates, {'id': certificateId, 'project_id': projectId, 'student_id': student['id'], 'file_path': null, 'image_path': null, 'document_json': utf8.decode(document), 'status': 'signed', 'document_hash': record['document_hash'], 'created_at': now, 'updated_at': now});
         await database.insert(DatabaseTables.verificationRecords, {'id': 'verification-$certificateId', 'certificate_id': certificateId, 'institution_id': institutionId, 'project_id': projectId, 'payload_json': jsonEncode(record), 'signature': record['signature'], 'created_at': now});
         generated++;
       } catch (error) {

@@ -34,6 +34,8 @@ dependencies:
     path: packages/certificate_crypto
   flutter_secure_storage: ^9.2.4
   shared_preferences: ^2.5.3
+  image: ^4.5.4
+  pdf: ^3.11.3
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

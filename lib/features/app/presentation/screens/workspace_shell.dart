@@ -67,8 +67,10 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   }
 
   Future<void> _openProject(Project project) async {
+    final database = widget.database;
+    if (database == null) return;
     await Navigator.of(context).push<void>(
-      MaterialPageRoute(builder: (_) => ProjectDetailsScreen(project: project)),
+      MaterialPageRoute(builder: (_) => ProjectDetailsScreen(project: project, database: database)),
     );
   }
 

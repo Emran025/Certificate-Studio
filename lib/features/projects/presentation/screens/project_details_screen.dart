@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/database/app_database.dart';
+import '../../../data_import/presentation/screens/data_import_screen.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
 import '../../domain/entities/project.dart';
 
 class ProjectDetailsScreen extends StatelessWidget {
-  const ProjectDetailsScreen({super.key, required this.project});
+  const ProjectDetailsScreen({super.key, required this.project, required this.database});
 
   final Project project;
+  final AppDatabase database;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +56,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                       icon: Icons.table_chart_outlined,
                       title: 'Student data',
                       description: 'Import or paste recipient data.',
-                      onPressed: () => _showComingNext(context, 'Student data import'),
+                      onPressed: () => Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => DataImportScreen(database: database, projectId: project.id))),
                     ),
                     _ProjectAction(
                       icon: Icons.design_services_outlined,

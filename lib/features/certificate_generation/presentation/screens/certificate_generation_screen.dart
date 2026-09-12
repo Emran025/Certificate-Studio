@@ -5,6 +5,7 @@ import '../../../../core/database/database_tables.dart';
 import '../../../../core/security/keys/institution_key_manager.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
+import '../../../certificates/presentation/screens/certificate_library_screen.dart';
 import '../../domain/certificate_generation_service.dart';
 
 class CertificateGenerationScreen extends StatefulWidget {
@@ -156,6 +157,23 @@ class _CertificateGenerationScreenState
                         'Job ${result.jobId} · ${result.status}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
+                      const SizedBox(height: AppSpacing.md),
+                      FilledButton.icon(
+                        onPressed: result.generated == 0
+                            ? null
+                            : () => Navigator.of(context).push<void>(
+                                MaterialPageRoute(
+                                  builder: (_) => CertificateLibraryScreen(
+                                    database: widget.database,
+                                    keyStorage: widget.keyStorage,
+                                    projectId: widget.projectId,
+                                    title: 'Generated certificates',
+                                  ),
+                                ),
+                              ),
+                        icon: const Icon(Icons.open_in_new),
+                        label: const Text('Open certificate library'),
+                      ),
                       if (result.errors.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.md),
                         for (final error in result.errors)
@@ -171,41 +189,36 @@ class _CertificateGenerationScreenState
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
-              Text(
-                'Certificate library',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              if (_certificates.isEmpty)
-                const AppSurfaceCard(
-                  child: Text(
-                    'No certificates generated yet. Import recipient data, design the layout, then generate.',
-                  ),
-                )
-              else
-                AppSurfaceCard(
-                  padding: EdgeInsets.zero,
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _certificates.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final certificate = _certificates[index];
-                      return ListTile(
-                        leading: const Icon(Icons.workspace_premium_outlined),
-                        title: Text(certificate['id']! as String),
-                        subtitle: Text(
-                          'Status: ${certificate['status']} · Hash: ${(certificate['document_hash'] as String?) ?? 'available'}',
-                        ),
-                        trailing: const Icon(
-                          Icons.verified,
-                          color: Colors.green,
-                        ),
-                      );
-                    },
-                  ),
+              AppSurfaceCard(
+                child: Row(
+                  children: [
+                    const Icon(Icons.collections_bookmark_outlined),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Text(
+                        _certificates.isEmpty
+                            ? 'No certificates generated yet. Import recipient data, design the layout, then generate.'
+                            : '${_certificates.length} generated certificate${_certificates.length == 1 ? '' : 's'} available in the library.',
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: _certificates.isEmpty
+                          ? null
+                          : () => Navigator.of(context).push<void>(
+                                MaterialPageRoute(
+                                  builder: (_) => CertificateLibraryScreen(
+                                    database: widget.database,
+                                    keyStorage: widget.keyStorage,
+                                    projectId: widget.projectId,
+                                    title: 'Generated certificates',
+                                  ),
+                                ),
+                              ),
+                      child: const Text('Browse'),
+                    ),
+                  ],
                 ),
+              ),
             ],
           ),
         ),

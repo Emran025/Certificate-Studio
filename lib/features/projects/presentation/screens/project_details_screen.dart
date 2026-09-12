@@ -5,6 +5,7 @@ import '../../../../core/security/keys/institution_key_manager.dart';
 import '../../../data_import/presentation/screens/data_import_screen.dart';
 import '../../../certificate_designer/presentation/screens/certificate_designer_screen.dart';
 import '../../../certificate_generation/presentation/screens/certificate_generation_screen.dart';
+import '../../../templates/presentation/screens/template_picker_screen.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
 import '../../domain/entities/project.dart';
@@ -54,7 +55,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                       icon: Icons.image_outlined,
                       title: 'Template',
                       description: 'Choose the certificate background.',
-                      onPressed: () => _showComingNext(context, 'Template selection'),
+                      onPressed: () => Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => TemplatePickerScreen(database: database, projectId: project.id))),
                     ),
                     _ProjectAction(
                       icon: Icons.table_chart_outlined,

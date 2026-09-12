@@ -9,8 +9,8 @@ import 'shared/themes/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final database = await PersistentAppDatabase.create();
   final keyStorage = await PersistentKeyStorage.create();
+  final database = await PersistentAppDatabase.create(keyStorage: keyStorage);
   runApp(CertificateStudioApp(database: database, keyStorage: keyStorage));
 }
 

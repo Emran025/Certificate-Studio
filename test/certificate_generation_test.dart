@@ -47,4 +47,38 @@ void main() {
     expect(result.errors, isNotEmpty);
     expect((await database.query(DatabaseTables.generationJobs)).single['status'], 'empty');
   });
+
+  test('applies persisted column mappings to generated certificate fields', () async {
+    final database = InMemoryAppDatabase();
+    await database.open();
+    await database.insert(DatabaseTables.students, {
+      'id': 'student-mapped',
+      'project_id': 'project-mapped',
+      'class_name': 'fallback',
+      'data_json': jsonEncode({'اسم الطالب': 'سارة', 'الدورة': 'Flutter'}),
+      'row_number': 1,
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+    await database.insert(DatabaseTables.settings, {
+      'key': 'mapping:project-mapped',
+      'value_json': jsonEncode({
+        'اسم الطالب': 'student_name',
+        'الدورة': 'course_name',
+      }),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+
+    final result = await CertificateGenerationService(
+      database,
+      InMemoryKeyStorage(),
+    ).generate(projectId: 'project-mapped', institutionId: 'institution-1');
+
+    expect(result.status, 'completed');
+    final certificate = (await database.query(DatabaseTables.certificates)).single;
+    final document = jsonDecode(certificate['document_json']! as String) as Map;
+    final fields = document['fields'] as Map;
+    expect(fields['student_name'], 'سارة');
+    expect(fields['course_name'], 'Flutter');
+  });
 }

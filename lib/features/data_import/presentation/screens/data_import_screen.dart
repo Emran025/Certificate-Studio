@@ -156,8 +156,8 @@ class _DataImportScreenState extends State<DataImportScreen> {
   }
 
   Future<void> _saveMapping() async {
-    final values = {'key': 'mapping:${widget.projectId}', 'value_json': jsonEncode(_mapping), 'updated_at': DateTime.now().toUtc().toIso8601String()};
-    final key = values['key']! as String;
+    final key = 'mapping:${widget.projectId}';
+    final values = {'key': key, 'value_json': jsonEncode(_mapping), 'updated_at': DateTime.now().toUtc().toIso8601String()};
     final existing = await widget.database.query(DatabaseTables.settings, where: {'key': key});
     if (existing.isEmpty) {
       await widget.database.insert(DatabaseTables.settings, values);

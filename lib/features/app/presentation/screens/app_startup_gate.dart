@@ -5,7 +5,7 @@ import '../../../../core/security/keys/institution_key_manager.dart';
 import '../../../institution/data/repositories/institution_repository_impl.dart';
 import '../../../institution/domain/entities/institution.dart';
 import '../../../institution/presentation/screens/institution_setup_screen.dart';
-import 'workspace_shell.dart';
+import '../widgets/app_shell.dart';
 
 class AppStartupGate extends StatefulWidget {
   const AppStartupGate({super.key, required this.database, required this.keyStorage});

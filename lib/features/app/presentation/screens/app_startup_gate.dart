@@ -8,9 +8,10 @@ import '../../../institution/presentation/screens/institution_setup_screen.dart'
 import 'workspace_shell.dart';
 
 class AppStartupGate extends StatefulWidget {
-  const AppStartupGate({super.key, required this.database});
+  const AppStartupGate({super.key, required this.database, required this.keyStorage});
 
   final AppDatabase database;
+  final KeyStorage keyStorage;
 
   @override
   State<AppStartupGate> createState() => _AppStartupGateState();
@@ -25,7 +26,7 @@ class _AppStartupGateState extends State<AppStartupGate> {
   void initState() {
     super.initState();
     _repository = InstitutionRepositoryImpl(widget.database);
-    _keyManager = InstitutionKeyManager(InMemoryKeyStorage());
+    _keyManager = InstitutionKeyManager(widget.keyStorage);
     _institutionFuture = _repository.getCurrent();
   }
 
@@ -41,7 +42,7 @@ class _AppStartupGateState extends State<AppStartupGate> {
         if (institution == null) {
           return InstitutionSetupScreen(repository: _repository, keyManager: _keyManager, onCompleted: (_) => _reloadInstitution());
         }
-        return WorkspaceShell(database: widget.database, institution: institution);
+        return WorkspaceShell(database: widget.database, institution: institution, keyStorage: widget.keyStorage);
       },
     );
   }

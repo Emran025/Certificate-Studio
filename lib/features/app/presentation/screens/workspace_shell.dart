@@ -12,12 +12,14 @@ import '../../../projects/data/repositories/project_repository_impl.dart';
 import '../../../projects/domain/entities/project.dart';
 import '../../../projects/domain/usecases/create_project.dart';
 import '../../../projects/presentation/screens/create_project_screen.dart';
+import '../../../projects/presentation/screens/project_details_screen.dart';
 
 class WorkspaceShell extends StatefulWidget {
-  const WorkspaceShell({super.key, this.database, this.institution});
+  const WorkspaceShell({super.key, this.database, this.institution, this.keyStorage});
 
   final AppDatabase? database;
   final Institution? institution;
+  final KeyStorage? keyStorage;
 
   @override
   State<WorkspaceShell> createState() => _WorkspaceShellState();
@@ -36,7 +38,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
       _projectRepository = ProjectRepositoryImpl(database);
       _createProject = CreateProject(
         _projectRepository,
-        ProjectKeyManager(InMemoryKeyStorage()),
+        ProjectKeyManager(widget.keyStorage ?? InMemoryKeyStorage()),
       );
       _projectsFuture = _loadProjects();
     }
@@ -64,6 +66,12 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
     }
   }
 
+  Future<void> _openProject(Project project) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => ProjectDetailsScreen(project: project)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,6 +85,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
                 institution: widget.institution,
                 projectsFuture: _projectsFuture,
                 onCreateProject: _openCreateProject,
+                onOpenProject: _openProject,
               ),
             ),
           ],
@@ -198,11 +207,13 @@ class _WorkspaceContent extends StatelessWidget {
     this.institution,
     this.projectsFuture,
     required this.onCreateProject,
+    required this.onOpenProject,
   });
   final AppDatabase? database;
   final Institution? institution;
   final Future<List<Project>>? projectsFuture;
   final VoidCallback onCreateProject;
+  final ValueChanged<Project> onOpenProject;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -276,6 +287,7 @@ class _WorkspaceContent extends StatelessWidget {
             _ProjectsSection(
               projectsFuture: projectsFuture,
               onCreateProject: onCreateProject,
+              onOpenProject: onOpenProject,
             ),
             const SizedBox(height: AppSpacing.xxl),
             const AppSectionHeader(title: 'Your workspace'),
@@ -318,9 +330,11 @@ class _ProjectsSection extends StatelessWidget {
   const _ProjectsSection({
     required this.projectsFuture,
     required this.onCreateProject,
+    required this.onOpenProject,
   });
   final Future<List<Project>>? projectsFuture;
   final VoidCallback onCreateProject;
+  final ValueChanged<Project> onOpenProject;
 
   @override
   Widget build(BuildContext context) {
@@ -354,7 +368,7 @@ class _ProjectsSection extends StatelessWidget {
             for (final project in projects)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                child: _ProjectPreviewCard(project: project),
+                child: _ProjectPreviewCard(project: project, onTap: () => onOpenProject(project)),
               ),
           ],
         );
@@ -402,8 +416,9 @@ class _EmptyProjects extends StatelessWidget {
 }
 
 class _ProjectPreviewCard extends StatelessWidget {
-  const _ProjectPreviewCard({required this.project});
+  const _ProjectPreviewCard({required this.project, required this.onTap});
   final Project project;
+  final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => AppSurfaceCard(
     padding: const EdgeInsets.all(AppSpacing.md),
@@ -423,7 +438,7 @@ class _ProjectPreviewCard extends StatelessWidget {
         '${project.courseName ?? 'Certificate project'}  •  Updated ${_relativeTime(project.updatedAt)}',
       ),
       trailing: const AppStatusBadge(label: 'Draft'),
-      onTap: () {},
+      onTap: onTap,
     ),
   );
 

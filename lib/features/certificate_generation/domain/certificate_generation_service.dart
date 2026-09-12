@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:image/image.dart' as img;
@@ -9,6 +10,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/database/database_tables.dart';
 import '../../../core/files/certificate_artifact_store.dart';
 import '../../../core/security/keys/institution_key_manager.dart';
+import 'template_bytes.dart';
 
 class CertificateGenerationResult {
   const CertificateGenerationResult({
@@ -50,6 +52,26 @@ class CertificateGenerationService {
     final fields = await database.query(
       DatabaseTables.certificateFields,
       where: {'project_id': projectId},
+    );
+    final projects = await database.query(
+      DatabaseTables.projects,
+      where: {'id': projectId},
+    );
+    final project = projects.isEmpty
+        ? const <String, Object?>{}
+        : projects.first;
+    final templateId = project['template_id'] as String?;
+    final templates = templateId == null
+        ? const <Map<String, Object?>>[]
+        : await database.query(
+            DatabaseTables.templates,
+            where: {'id': templateId},
+          );
+    final template = templates.isEmpty
+        ? const <String, Object?>{}
+        : templates.first;
+    final templateBytes = await readTemplateBytes(
+      template['file_path'] as String? ?? '',
     );
     final mappingRows = await database.query(
       DatabaseTables.settings,
@@ -145,12 +167,24 @@ class CertificateGenerationService {
         final pdfPath = await artifactStore.save(
           certificateId: certificateId,
           extension: 'pdf',
-          bytes: await _renderPdf(values, record['document_hash'] as String),
+          bytes: await _renderPdf(
+            values,
+            fields,
+            record['document_hash'] as String,
+            templateBytes,
+            template,
+          ),
         );
         final imagePath = await artifactStore.save(
           certificateId: certificateId,
           extension: 'png',
-          bytes: _renderPng(values, record['document_hash'] as String),
+          bytes: _renderPng(
+            values,
+            fields,
+            record['document_hash'] as String,
+            templateBytes,
+            template,
+          ),
         );
         final now = DateTime.now().toUtc().toIso8601String();
         final certificateValues = {
@@ -246,95 +280,171 @@ class CertificateGenerationService {
     );
   }
 
-  Future<List<int>> _renderPdf(Map<String, dynamic> values, String hash) async {
+  Future<List<int>> _renderPdf(
+    Map<String, dynamic> values,
+    List<Map<String, Object?>> fields,
+    String hash,
+    List<int>? templateBytes,
+    Map<String, Object?> template,
+  ) async {
     final document = pw.Document(title: 'Certificate');
-    final entries = values.entries
-        .map((entry) => '${entry.key}: ${entry.value}')
-        .join('\n');
+    final canvasWidth = _number(template['width'], 1000);
+    final canvasHeight = _number(template['height'], 700);
+    final dpi = _number(template['dpi'], 96);
+    final background = templateBytes == null
+        ? null
+        : pw.MemoryImage(Uint8List.fromList(templateBytes));
+    final pageWidth = canvasWidth / dpi * 72;
+    final pageHeight = canvasHeight / dpi * 72;
     document.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (_) => pw.Center(
-          child: pw.Container(
-            padding: const pw.EdgeInsets.all(36),
-            decoration: pw.BoxDecoration(border: pw.Border.all(width: 2)),
-            child: pw.Column(
-              mainAxisSize: pw.MainAxisSize.min,
-              children: [
-                pw.Text(
-                  'Certificate',
-                  style: pw.TextStyle(
-                    fontSize: 30,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
+        pageFormat: PdfPageFormat(pageWidth, pageHeight),
+        margin: pw.EdgeInsets.zero,
+        build: (_) => pw.Stack(
+          children: [
+            if (background != null)
+              pw.Positioned.fill(
+                child: pw.Image(background, fit: pw.BoxFit.fill),
+              ),
+            for (final field in fields)
+              if (_fieldIsVisible(field))
+                _pdfField(
+                  values,
+                  field,
+                  canvasWidth,
+                  canvasHeight,
+                  pageWidth,
+                  pageHeight,
                 ),
-                pw.SizedBox(height: 24),
-                pw.Text(entries, textAlign: pw.TextAlign.center),
-                pw.SizedBox(height: 24),
-                pw.Text(
-                  'Verification hash: $hash',
-                  style: const pw.TextStyle(fontSize: 8),
-                ),
-              ],
+            pw.Positioned(
+              left: 8,
+              bottom: 6,
+              child: pw.Text(hash, style: const pw.TextStyle(fontSize: 5)),
             ),
-          ),
+          ],
         ),
       ),
     );
     return document.save();
   }
 
-  List<int> _renderPng(Map<String, dynamic> values, String hash) {
-    final canvas = img.Image(width: 1600, height: 1100);
-    img.fill(canvas, color: img.ColorRgb8(250, 247, 240));
-    img.drawRect(
-      canvas,
-      x1: 35,
-      y1: 35,
-      x2: 1565,
-      y2: 1065,
-      color: img.ColorRgb8(45, 93, 73),
-      thickness: 8,
-    );
-    img.drawRect(
-      canvas,
-      x1: 70,
-      y1: 70,
-      x2: 1530,
-      y2: 1030,
-      color: img.ColorRgb8(190, 151, 71),
-      thickness: 3,
-    );
-    img.drawString(
-      canvas,
-      'CERTIFICATE',
-      font: img.arial48,
-      x: 585,
-      y: 180,
-      color: img.ColorRgb8(45, 93, 73),
-    );
-    var y = 380;
-    for (final entry in values.entries) {
+  List<int> _renderPng(
+    Map<String, dynamic> values,
+    List<Map<String, Object?>> fields,
+    String hash,
+    List<int>? templateBytes,
+    Map<String, Object?> template,
+  ) {
+    final fallbackWidth = _number(template['width'], 1600).round();
+    final fallbackHeight = _number(template['height'], 1100).round();
+    final canvas = templateBytes == null
+        ? img.Image(width: fallbackWidth, height: fallbackHeight)
+        : img.decodeImage(Uint8List.fromList(templateBytes)) ??
+              img.Image(width: fallbackWidth, height: fallbackHeight);
+    if (templateBytes == null) {
+      img.fill(canvas, color: img.ColorRgb8(250, 247, 240));
+      img.drawRect(
+        canvas,
+        x1: 35,
+        y1: 35,
+        x2: canvas.width - 35,
+        y2: canvas.height - 35,
+        color: img.ColorRgb8(45, 93, 73),
+        thickness: 8,
+      );
+    }
+    final designWidth = _number(template['width'], 1000);
+    final designHeight = _number(template['height'], 700);
+    for (final field in fields) {
+      if (!_fieldIsVisible(field)) continue;
+      final position = _jsonMap(field['position_json']);
+      final style = _jsonMap(field['style_json']);
+      final className = field['class_name'] as String? ?? '';
+      final text = '${values[className] ?? ''}';
+      if (text.isEmpty) continue;
+      final x = (_number(position['x'], 0) / designWidth * canvas.width)
+          .round();
+      final y = (_number(position['y'], 0) / designHeight * canvas.height)
+          .round();
       img.drawString(
         canvas,
-        '${entry.key}: ${entry.value}',
-        font: img.arial24,
-        x: 180,
+        text,
+        font: _bitmapFont(_number(style['font_size'], 24)),
+        x: x,
         y: y,
-        color: img.ColorRgb8(35, 35, 35),
+        color: _imageColor(style['color'] as String?),
       );
-      y += 48;
-      if (y > 900) break;
     }
     img.drawString(
       canvas,
       'Verification hash: $hash',
       font: img.arial14,
       x: 180,
-      y: 960,
+      y: canvas.height - 40,
       color: img.ColorRgb8(90, 90, 90),
     );
     return img.encodePng(canvas);
+  }
+
+  pw.Widget _pdfField(
+    Map<String, dynamic> values,
+    Map<String, Object?> field,
+    double canvasWidth,
+    double canvasHeight,
+    double pageWidth,
+    double pageHeight,
+  ) {
+    final position = _jsonMap(field['position_json']);
+    final style = _jsonMap(field['style_json']);
+    final x = _number(position['x'], 0) / canvasWidth * pageWidth;
+    final y = _number(position['y'], 0) / canvasHeight * pageHeight;
+    final width = _number(position['width'], 420) / canvasWidth * pageWidth;
+    final height = _number(position['height'], 64) / canvasHeight * pageHeight;
+    final className = field['class_name'] as String? ?? '';
+    final alignment = switch (style['alignment']) {
+      'center' => pw.TextAlign.center,
+      'right' => pw.TextAlign.right,
+      _ => pw.TextAlign.left,
+    };
+    return pw.Positioned(
+      left: x,
+      top: y,
+      width: width,
+      height: height,
+      child: pw.Text(
+        '${values[className] ?? ''}',
+        textAlign: alignment,
+        style: pw.TextStyle(fontSize: _number(style['font_size'], 24)),
+      ),
+    );
+  }
+
+  bool _fieldIsVisible(Map<String, Object?> field) =>
+      _jsonMap(field['style_json'])['visible'] != false;
+
+  Map<String, dynamic> _jsonMap(Object? raw) {
+    if (raw is! String || raw.isEmpty) return {};
+    final value = jsonDecode(raw);
+    return value is Map ? Map<String, dynamic>.from(value) : {};
+  }
+
+  double _number(Object? value, double fallback) =>
+      value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
+
+  img.BitmapFont _bitmapFont(double size) {
+    if (size >= 40) return img.arial48;
+    if (size >= 28) return img.arial24;
+    return img.arial14;
+  }
+
+  img.Color _imageColor(String? value) {
+    final hex = (value ?? '#20332B').replaceFirst('#', '');
+    final normalized = hex.length == 6 ? hex : '20332B';
+    return img.ColorRgb8(
+      int.parse(normalized.substring(0, 2), radix: 16),
+      int.parse(normalized.substring(2, 4), radix: 16),
+      int.parse(normalized.substring(4, 6), radix: 16),
+    );
   }
 
   Future<CertificateKeyPair> _keyPair(String projectId) async {

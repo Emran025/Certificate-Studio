@@ -10,7 +10,7 @@ Future<void> main(List<String> args) async {
     final pair = await CertificateKeyPair.fromSeed(List<int>.generate(32, (i) => i));
     final message = utf8.encode('cross-language certificate payload');
     final record = await createVerificationRecord({'institution_id': 'interop-inst', 'project_id': 'interop-project', 'certificate_id': 'CERT-001', 'course': 'Flutter'}, message, pair.privateKey);
-    final output = {'public_key': pair.publicRecord()['public_key'], 'message': base64UrlEncodeNoPadding(message), 'signature': signatureBase64Url(await signBytes(message, pair.privateKey)), 'record': record};
+    final output = {'public_key': pair.publicRecord()['public_key'], 'message': base64UrlEncodeNoPadding(message), 'signature': signatureBase64Url(await signBytes(message, pair.privateKey)), 'record': record, 'qr_payload': encodeVerificationQrPayload(record)};
     await file.writeAsString(jsonEncode(output));
   } else if (mode == 'verify') {
     final input = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
@@ -18,6 +18,7 @@ Future<void> main(List<String> args) async {
     final message = base64UrlDecode(input['message'] as String);
     if (!await verifyBytes(message, base64UrlDecode(input['signature'] as String), publicKey)) exitCode = 1;
     if (!await verifyVerificationRecord(input['record'] as Map<String, dynamic>, utf8.encode('cross-language certificate payload'), publicKey)) exitCode = 1;
+    if (!(await verifyQrPayload(input['qr_payload'] as String, utf8.encode('cross-language certificate payload'), publicKey)).isValid) exitCode = 1;
   } else {
     throw ArgumentError('unknown mode');
   }

@@ -45,7 +45,7 @@ class TestInstitutionSetup extends StatelessWidget {
   final InstitutionKeyManager keyManager;
 
   @override
-  Widget build(context) => MaterialApp(
+  Widget build(BuildContext context) => MaterialApp(
         home: InstitutionSetupScreen(repository: repository, keyManager: keyManager, onCompleted: (_) {}),
       );
 }

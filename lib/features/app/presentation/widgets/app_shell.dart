@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../verification/presentation/screens/verification_screen.dart';
+import '../../../certificates/presentation/screens/certificate_library_screen.dart';
 import '../../../../config/env/app_environment.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/security/keys/institution_key_manager.dart';
@@ -86,13 +87,26 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
     );
   }
 
+  Future<void> _openCertificateLibrary() async {
+    final database = widget.database;
+    if (database == null) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => CertificateLibraryScreen(
+          database: database,
+          keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: Row(
           children: [
-            const _WorkspaceNavigation(),
+            _WorkspaceNavigation(onCertificates: _openCertificateLibrary),
             Expanded(
               child: _WorkspaceContent(
                 database: widget.database,
@@ -118,7 +132,9 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
 }
 
 class _WorkspaceNavigation extends StatelessWidget {
-  const _WorkspaceNavigation();
+  const _WorkspaceNavigation({required this.onCertificates});
+
+  final VoidCallback onCertificates;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -165,9 +181,10 @@ class _WorkspaceNavigation extends StatelessWidget {
         const _NavigationItem(icon: Icons.folder_outlined, label: 'Projects'),
         const _NavigationItem(icon: Icons.image_outlined, label: 'Templates'),
         const _NavigationItem(icon: Icons.text_fields_outlined, label: 'Fonts'),
-        const _NavigationItem(
+        _NavigationItem(
           icon: Icons.workspace_premium_outlined,
           label: 'Certificates',
+          onTap: onCertificates,
         ),
         const Spacer(),
         const _NavigationItem(
@@ -185,10 +202,12 @@ class _NavigationItem extends StatelessWidget {
     required this.icon,
     required this.label,
     this.selected = false,
+    this.onTap,
   });
   final IconData icon;
   final String label;
   final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -216,7 +235,7 @@ class _NavigationItem extends StatelessWidget {
               color: selected ? AppColors.primary : AppColors.textSecondary,
             ),
           ),
-          onTap: () {},
+          onTap: onTap,
         ),
       ),
     ),

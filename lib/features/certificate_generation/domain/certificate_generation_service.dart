@@ -46,6 +46,13 @@ class CertificateGenerationService {
       DatabaseTables.certificateFields,
       where: {'project_id': projectId},
     );
+    final mappingRows = await database.query(
+      DatabaseTables.settings,
+      where: {'key': 'mapping:$projectId'},
+    );
+    final mapping = _decodeMapping(
+      mappingRows.isEmpty ? null : mappingRows.first['value_json'],
+    );
     final jobId = 'generation-${projectId}-${DateTime.now().microsecondsSinceEpoch}';
     final startedAt = DateTime.now().toUtc().toIso8601String();
     await database.insert(DatabaseTables.generationJobs, {
@@ -87,10 +94,18 @@ class CertificateGenerationService {
       try {
         final data = _decodeData(student['data_json']);
         final values = <String, dynamic>{
-          'student_class': student['class_name'] ?? '${index + 1}',
+          'student_class': _mappedValue(data, mapping, 'student_class') ??
+              student['class_name'] ??
+              '${index + 1}',
           'issue_date': DateTime.now().toUtc().toIso8601String().split('T').first,
           ...data,
         };
+        for (final entry in mapping.entries) {
+          final value = data[entry.key];
+          if (value != null && entry.value != 'custom') {
+            values[entry.value] = value;
+          }
+        }
         for (final field in fields) {
           final source = field['source'] as String?;
           final className = field['class_name'] as String?;
@@ -195,5 +210,25 @@ class CertificateGenerationService {
     if (raw is! String) return {};
     final value = jsonDecode(raw);
     return value is Map ? Map<String, dynamic>.from(value) : {};
+  }
+
+  Map<String, String> _decodeMapping(Object? raw) {
+    if (raw is! String) return {};
+    final value = jsonDecode(raw);
+    if (value is! Map) return {};
+    return value.map((key, value) => MapEntry(key.toString(), value.toString()));
+  }
+
+  String? _mappedValue(
+    Map<String, dynamic> data,
+    Map<String, String> mapping,
+    String target,
+  ) {
+    for (final entry in mapping.entries) {
+      if (entry.value == target && data[entry.key] != null) {
+        return data[entry.key].toString();
+      }
+    }
+    return null;
   }
 }

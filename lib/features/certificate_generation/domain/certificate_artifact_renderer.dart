@@ -19,7 +19,9 @@ class CertificateArtifactRenderer {
     required List<int> fontBytes,
   }) async {
     final document = pw.Document(title: 'Certificate');
-    final font = pw.Font.ttf(ByteData.sublistView(Uint8List.fromList(fontBytes)));
+    final font = pw.Font.ttf(
+      ByteData.sublistView(Uint8List.fromList(fontBytes)),
+    );
     final canvasWidth = _number(template['width'], 1000);
     final canvasHeight = _number(template['height'], 700);
     final dpi = _number(template['dpi'], 96);
@@ -77,11 +79,15 @@ class CertificateArtifactRenderer {
     var canvas = templateBytes == null
         ? img.Image(width: fallbackWidth, height: fallbackHeight)
         : img.decodeImage(Uint8List.fromList(templateBytes)) ??
-            img.Image(width: fallbackWidth, height: fallbackHeight);
+              img.Image(width: fallbackWidth, height: fallbackHeight);
     final designWidth = _number(template['width'], canvas.width.toDouble());
     final designHeight = _number(template['height'], canvas.height.toDouble());
-    final targetWidth = math.max(canvas.width.toDouble(), designWidth * 2).round();
-    final targetHeight = math.max(canvas.height.toDouble(), designHeight * 2).round();
+    // Upscale the actual source dimensions by one factor. Using the template
+    // metadata here can stretch an image when its stored dimensions differ
+    // from the decoded source image.
+    const scale = 2;
+    final targetWidth = canvas.width * scale;
+    final targetHeight = canvas.height * scale;
     if (canvas.width != targetWidth || canvas.height != targetHeight) {
       canvas = img.copyResize(
         canvas,
@@ -106,11 +112,12 @@ class CertificateArtifactRenderer {
       if (!_fieldIsVisible(field)) continue;
       final position = _jsonMap(field['position_json']);
       final style = _jsonMap(field['style_json']);
-      final className = field['class_name'] as String? ?? '';
-      final text = '${values[className] ?? ''}';
+      final text = _fieldText(values, field);
       if (text.isEmpty) continue;
-      final x = (_number(position['x'], 0) / designWidth * canvas.width).round();
-      final y = (_number(position['y'], 0) / designHeight * canvas.height).round();
+      final x = (_number(position['x'], 0) / designWidth * canvas.width)
+          .round();
+      final y = (_number(position['y'], 0) / designHeight * canvas.height)
+          .round();
       img.drawString(
         canvas,
         text,
@@ -131,15 +138,18 @@ class CertificateArtifactRenderer {
     _drawQr(
       canvas,
       encodeVerificationQrPayload(record),
-      x: canvas.width - 240,
-      y: canvas.height - 240,
-      size: 160,
+      x: canvas.width - _qrSize(canvas) - 32,
+      y: canvas.height - _qrSize(canvas) - 32,
+      size: _qrSize(canvas),
     );
     return [...img.encodePng(canvas), ...utf8.encode(_embeddedMarker(record))];
   }
 
+  static int _qrSize(img.Image canvas) =>
+      (math.min(canvas.width, canvas.height) * .24).round().clamp(220, 520);
+
   static pw.Widget _qrWidget(String payload, double size) {
-    final matrix = Encoder.encode(payload, ErrorCorrectionLevel.m).matrix!;
+    final matrix = Encoder.encode(payload, ErrorCorrectionLevel.l).matrix!;
     final count = matrix.width;
     const quietModules = 4;
     final module = size / (count + quietModules * 2);
@@ -178,13 +188,15 @@ class CertificateArtifactRenderer {
     required int y,
     required int size,
   }) {
-    final matrix = Encoder.encode(payload, ErrorCorrectionLevel.m).matrix!;
+    final matrix = Encoder.encode(payload, ErrorCorrectionLevel.l).matrix!;
     const quietModules = 4;
-    final module =
-        (size / (matrix.width + quietModules * 2)).floor().clamp(1, 20) as int;
+    final module = (size / (matrix.width + quietModules * 2)).floor().clamp(
+      1,
+      20,
+    );
     final totalSize = (matrix.width + quietModules * 2) * module;
-    final originX = x.clamp(0, canvas.width - totalSize) as int;
-    final originY = y.clamp(0, canvas.height - totalSize) as int;
+    final originX = x.clamp(0, canvas.width - totalSize);
+    final originY = y.clamp(0, canvas.height - totalSize);
     img.fillRect(
       canvas,
       x1: originX,
@@ -226,7 +238,6 @@ class CertificateArtifactRenderer {
     final y = _number(position['y'], 0) / canvasHeight * pageHeight;
     final width = _number(position['width'], 420) / canvasWidth * pageWidth;
     final height = _number(position['height'], 64) / canvasHeight * pageHeight;
-    final className = field['class_name'] as String? ?? '';
     final alignment = switch (style['alignment']) {
       'center' => pw.TextAlign.center,
       'right' => pw.TextAlign.right,
@@ -239,7 +250,7 @@ class CertificateArtifactRenderer {
         width: width,
         height: height,
         child: pw.Text(
-          '${values[className] ?? ''}',
+          _fieldText(values, field),
           textAlign: alignment,
           style: pw.TextStyle(
             font: font,
@@ -253,6 +264,34 @@ class CertificateArtifactRenderer {
 
   static bool _fieldIsVisible(Map<String, Object?> field) =>
       _jsonMap(field['style_json'])['visible'] != false;
+
+  static String _fieldText(
+    Map<String, dynamic> values,
+    Map<String, Object?> field,
+  ) {
+    final className = field['class_name'] as String?;
+    final source = field['source'] as String?;
+    final sourceValue = _valueForKey(values, source);
+    if (sourceValue != null && '$sourceValue'.isNotEmpty) {
+      return '$sourceValue';
+    }
+    final classValue = _valueForKey(values, className);
+    return classValue == null ? '' : '$classValue';
+  }
+
+  static dynamic _valueForKey(Map<String, dynamic> values, String? key) {
+    if (key == null) return null;
+    final exact = values[key];
+    if (exact != null) return exact;
+    final normalizedKey = _normalizeKey(key);
+    for (final entry in values.entries) {
+      if (_normalizeKey(entry.key) == normalizedKey) return entry.value;
+    }
+    return null;
+  }
+
+  static String _normalizeKey(String value) =>
+      value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '_');
 
   static Map<String, dynamic> _jsonMap(Object? raw) {
     if (raw is! String || raw.isEmpty) return {};

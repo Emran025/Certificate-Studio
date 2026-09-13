@@ -102,7 +102,7 @@ class CertificateGenerationService {
           ? 'No recipient data was imported.'
           : null,
     });
-    if (students.isEmpty)
+    if (students.isEmpty) {
       return CertificateGenerationResult(
         jobId: jobId,
         status: 'empty',
@@ -113,6 +113,7 @@ class CertificateGenerationService {
           'Import at least one recipient before generating certificates.',
         ],
       );
+    }
 
     final errors = <String>[];
     var generated = 0;
@@ -143,24 +144,26 @@ class CertificateGenerationService {
           ...data,
         };
         for (final entry in mapping.entries) {
-          final value = data[entry.key];
-          if (value != null && entry.value != 'custom')
+          final value = _valueForKey(data, entry.key);
+          if (value != null && entry.value != 'custom') {
             values[entry.value] = value;
+          }
         }
         for (final field in fields) {
           final source = field['source'] as String?;
           final className = field['class_name'] as String?;
-          if (source != null && className != null)
-            values[className] = data[source] ?? '';
+          if (source != null && className != null) {
+            final value = _valueForKey(data, source) ?? '';
+            values[className] = value;
+            values[source] = value;
+          }
         }
         final certificateId = 'certificate-$projectId-$studentId';
-        final document = utf8.encode(
-          jsonEncode({
-            'project_id': projectId,
-            'student_id': studentId,
-            'fields': values,
-          }),
-        );
+        final document = canonicalJsonBytes({
+          'project_id': projectId,
+          'student_id': studentId,
+          'fields': values,
+        });
         // Sign the unsigned verification record exactly once. Signing an
         // already signed record makes verification fail after regeneration.
         final signedRecord = await createVerificationRecord(
@@ -177,30 +180,28 @@ class CertificateGenerationService {
         // The QR payload is rendered into the artifact itself. Including an
         // artifact hash inside that payload would create a circular hash, so
         // the signed document record is intentionally the QR source of truth.
-        final pdfPath = await artifactStore.save(
-          certificateId: certificateId,
-          extension: 'pdf',
-            bytes: await _renderPdfInIsolate(
-              values,
-              fields,
-              signedRecord['document_hash'] as String,
-              signedRecord,
-              templateBytes,
-              template,
-          ),
+        final renderedArtifacts = await _renderArtifactsInIsolate(
+          values,
+          fields,
+          signedRecord['document_hash'] as String,
+          signedRecord,
+          templateBytes,
+          template,
         );
-        final imagePath = await artifactStore.save(
-          certificateId: certificateId,
-          extension: 'png',
-          bytes: await _renderPngInIsolate(
-            values,
-            fields,
-            signedRecord['document_hash'] as String,
-            signedRecord,
-            templateBytes,
-            template,
+        final savedArtifacts = await Future.wait([
+          artifactStore.save(
+            certificateId: certificateId,
+            extension: 'pdf',
+            bytes: renderedArtifacts[0],
           ),
-        );
+          artifactStore.save(
+            certificateId: certificateId,
+            extension: 'png',
+            bytes: renderedArtifacts[1],
+          ),
+        ]);
+        final pdfPath = savedArtifacts[0];
+        final imagePath = savedArtifacts[1];
         final now = DateTime.now().toUtc().toIso8601String();
         final certificateValues = {
           'id': certificateId,
@@ -296,7 +297,7 @@ class CertificateGenerationService {
     );
   }
 
-  Future<List<int>> _renderPdfInIsolate(
+  Future<List<List<int>>> _renderArtifactsInIsolate(
     Map<String, dynamic> values,
     List<Map<String, Object?>> fields,
     String hash,
@@ -306,35 +307,27 @@ class CertificateGenerationService {
   ) async {
     final fontBytes = await _loadArabicFontBytes();
     return Isolate.run(
-      () => CertificateArtifactRenderer.renderPdf(
-        values: values,
-        fields: fields,
-        hash: hash,
-        record: record,
-        templateBytes: templateBytes,
-        template: template,
-        fontBytes: fontBytes,
-      ),
+      () async => [
+        await CertificateArtifactRenderer.renderPdf(
+          values: values,
+          fields: fields,
+          hash: hash,
+          record: record,
+          templateBytes: templateBytes,
+          template: template,
+          fontBytes: fontBytes,
+        ),
+        CertificateArtifactRenderer.renderPng(
+          values: values,
+          fields: fields,
+          hash: hash,
+          record: record,
+          templateBytes: templateBytes,
+          template: template,
+        ),
+      ],
     );
   }
-
-  Future<List<int>> _renderPngInIsolate(
-    Map<String, dynamic> values,
-    List<Map<String, Object?>> fields,
-    String hash,
-    Map<String, dynamic> record,
-    List<int>? templateBytes,
-    Map<String, Object?> template,
-  ) => Isolate.run(
-    () => CertificateArtifactRenderer.renderPng(
-      values: values,
-      fields: fields,
-      hash: hash,
-      record: record,
-      templateBytes: templateBytes,
-      template: template,
-    ),
-  );
 
   Future<List<int>> _loadArabicFontBytes() async {
     return _arabicFontBytes ??= () async {
@@ -351,8 +344,7 @@ class CertificateGenerationService {
     List<int>? templateBytes,
     Map<String, Object?> template, {
     bool embedMarker = true,
-  }
-  ) async {
+  }) async {
     final document = pw.Document(title: 'Certificate');
     final arabicFont = await _loadArabicFont();
     final canvasWidth = _number(template['width'], 1000);
@@ -396,7 +388,9 @@ class CertificateGenerationService {
       ),
     );
     final bytes = await document.save();
-    return embedMarker ? [...bytes, ...utf8.encode(_embeddedMarker(record))] : bytes;
+    return embedMarker
+        ? [...bytes, ...utf8.encode(_embeddedMarker(record))]
+        : bytes;
   }
 
   Future<pw.Font> _loadArabicFont() async {
@@ -412,9 +406,9 @@ class CertificateGenerationService {
     String hash,
     Map<String, dynamic> record,
     List<int>? templateBytes,
-    Map<String, Object?> template,
-    {bool embedMarker = true}
-  ) {
+    Map<String, Object?> template, {
+    bool embedMarker = true,
+  }) {
     final fallbackWidth = _number(template['width'], 1600).round();
     final fallbackHeight = _number(template['height'], 1100).round();
     final canvas = templateBytes == null
@@ -471,7 +465,9 @@ class CertificateGenerationService {
       size: 520,
     );
     final bytes = img.encodePng(canvas);
-    return embedMarker ? [...bytes, ...utf8.encode(_embeddedMarker(record))] : bytes;
+    return embedMarker
+        ? [...bytes, ...utf8.encode(_embeddedMarker(record))]
+        : bytes;
   }
 
   String _embeddedMarker(Map<String, dynamic> record) =>
@@ -495,7 +491,12 @@ class CertificateGenerationService {
           for (var x = 0; x < count; x++) {
             for (var y = 0; y < count; y++) {
               if (matrix.get(x, y) == 1) {
-                canvas.drawRect(x * module, size.y - (y + 1) * module, module, module);
+                canvas.drawRect(
+                  x * module,
+                  size.y - (y + 1) * module,
+                  module,
+                  module,
+                );
                 canvas.fillPath();
               }
             }
@@ -505,10 +506,17 @@ class CertificateGenerationService {
     );
   }
 
-  void _drawQr(img.Image canvas, String payload, {required int x, required int y, required int size}) {
+  void _drawQr(
+    img.Image canvas,
+    String payload, {
+    required int x,
+    required int y,
+    required int size,
+  }) {
     final matrix = Encoder.encode(payload, ErrorCorrectionLevel.m).matrix!;
     const quietModules = 4;
-    final module = (size / (matrix.width + quietModules * 2)).floor().clamp(2, 20) as int;
+    final module =
+        (size / (matrix.width + quietModules * 2)).floor().clamp(2, 20) as int;
     final totalSize = (matrix.width + quietModules * 2) * module;
     final originX = x.clamp(0, canvas.width - totalSize) as int;
     final originY = y.clamp(0, canvas.height - totalSize) as int;
@@ -527,7 +535,14 @@ class CertificateGenerationService {
           final top = originY + (quietModules + row) * module;
           final right = left + module - 1;
           final bottom = top + module - 1;
-          img.fillRect(canvas, x1: left, y1: top, x2: right, y2: bottom, color: img.ColorRgb8(0, 0, 0));
+          img.fillRect(
+            canvas,
+            x1: left,
+            y1: top,
+            x2: right,
+            y2: bottom,
+            color: img.ColorRgb8(0, 0, 0),
+          );
         }
       }
     }
@@ -606,11 +621,12 @@ class CertificateGenerationService {
   Future<CertificateKeyPair> _keyPair(String projectId) async {
     final stored = await keyStorage.read('project.$projectId.key');
     final seed = stored == null ? generateMasterKey() : _hexDecode(stored);
-    if (stored == null)
+    if (stored == null) {
       await keyStorage.write(
         'project.$projectId.key',
         seed.map((value) => value.toRadixString(16).padLeft(2, '0')).join(),
       );
+    }
     return CertificateKeyPair.fromSeed(seed);
   }
 
@@ -639,9 +655,24 @@ class CertificateGenerationService {
     String target,
   ) {
     for (final entry in mapping.entries) {
-      if (entry.value == target && data[entry.key] != null)
-        return data[entry.key].toString();
+      if (entry.value == target) {
+        final value = _valueForKey(data, entry.key);
+        if (value != null) return value.toString();
+      }
     }
     return null;
   }
+
+  dynamic _valueForKey(Map<String, dynamic> data, String key) {
+    final exact = data[key];
+    if (exact != null) return exact;
+    final normalizedKey = _normalizeKey(key);
+    for (final entry in data.entries) {
+      if (_normalizeKey(entry.key) == normalizedKey) return entry.value;
+    }
+    return null;
+  }
+
+  String _normalizeKey(String value) =>
+      value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '_');
 }

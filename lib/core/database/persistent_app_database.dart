@@ -73,7 +73,9 @@ class PersistentAppDatabase implements AppDatabase {
       wasPlaintext = !_isEncrypted(raw);
       await _restore(raw);
     }
-    _version = _version < DatabaseSchema.version ? DatabaseSchema.version : _version;
+    _version = _version < DatabaseSchema.version
+        ? DatabaseSchema.version
+        : _version;
     _isOpen = true;
     if (wasPlaintext) await _persistNow();
   }
@@ -87,7 +89,10 @@ class PersistentAppDatabase implements AppDatabase {
   }
 
   @override
-  Future<List<Map<String, Object?>>> query(String table, {Map<String, Object?> where = const {}}) async {
+  Future<List<Map<String, Object?>>> query(
+    String table, {
+    Map<String, Object?> where = const {},
+  }) async {
     _ensureReady(table);
     return [
       for (final row in _tables[table]!)
@@ -97,7 +102,10 @@ class PersistentAppDatabase implements AppDatabase {
   }
 
   @override
-  Future<Map<String, Object?>> insert(String table, Map<String, Object?> values) async {
+  Future<Map<String, Object?>> insert(
+    String table,
+    Map<String, Object?> values,
+  ) async {
     _ensureReady(table);
     final row = Map<String, Object?>.from(values);
     _tables[table]!.add(row);
@@ -106,11 +114,16 @@ class PersistentAppDatabase implements AppDatabase {
   }
 
   @override
-  Future<void> update(String table, String id, Map<String, Object?> values) async {
+  Future<void> update(
+    String table,
+    String id,
+    Map<String, Object?> values,
+  ) async {
     _ensureReady(table);
     final rows = _tables[table]!;
     final index = rows.indexWhere((row) => row['id'] == id || row['key'] == id);
-    if (index < 0) throw StateError('No record with id "$id" exists in $table.');
+    if (index < 0)
+      throw StateError('No record with id "$id" exists in $table.');
     rows[index] = {...rows[index], ...values};
     _queuePersist();
   }
@@ -119,6 +132,15 @@ class PersistentAppDatabase implements AppDatabase {
   Future<void> delete(String table, String id) async {
     _ensureReady(table);
     _tables[table]!.removeWhere((row) => row['id'] == id || row['key'] == id);
+    _queuePersist();
+  }
+
+  @override
+  Future<void> deleteWhere(String table, Map<String, Object?> where) async {
+    _ensureReady(table);
+    _tables[table]!.removeWhere(
+      (row) => where.entries.every((entry) => row[entry.key] == entry.value),
+    );
     _queuePersist();
   }
 
@@ -141,11 +163,15 @@ class PersistentAppDatabase implements AppDatabase {
     try {
       final envelope = jsonDecode(raw);
       final decoded = _isEncrypted(raw)
-          ? jsonDecode(utf8.decode(await decryptBytes(
-              envelope as Map<String, dynamic>,
-              _databaseKey,
-              aad: utf8.encode(_storageKey),
-            )))
+          ? jsonDecode(
+              utf8.decode(
+                await decryptBytes(
+                  envelope as Map<String, dynamic>,
+                  _databaseKey,
+                  aad: utf8.encode(_storageKey),
+                ),
+              ),
+            )
           : envelope;
       if (decoded is! Map<String, dynamic>) return;
       _version = (decoded['version'] as num?)?.toInt() ?? 0;
@@ -155,7 +181,9 @@ class PersistentAppDatabase implements AppDatabase {
           final rows = storedTables[table];
           if (rows is List) {
             _tables[table]!.addAll(
-              rows.whereType<Map>().map((row) => Map<String, Object?>.from(row)),
+              rows.whereType<Map>().map(
+                (row) => Map<String, Object?>.from(row),
+              ),
             );
           }
         }
@@ -210,15 +238,17 @@ class PersistentAppDatabase implements AppDatabase {
 
   void _ensureReady(String table) {
     if (!_isOpen) throw StateError('Database is not open.');
-    if (!_tables.containsKey(table)) throw ArgumentError.value(table, 'table', 'Unknown table.');
+    if (!_tables.containsKey(table))
+      throw ArgumentError.value(table, 'table', 'Unknown table.');
   }
 
-  String _hexEncode(List<int> bytes) => bytes.map((value) => value.toRadixString(16).padLeft(2, '0')).join();
+  String _hexEncode(List<int> bytes) =>
+      bytes.map((value) => value.toRadixString(16).padLeft(2, '0')).join();
 
   List<int> _hexDecode(String value) => [
-        for (var index = 0; index < value.length; index += 2)
-          int.parse(value.substring(index, index + 2), radix: 16),
-      ];
+    for (var index = 0; index < value.length; index += 2)
+      int.parse(value.substring(index, index + 2), radix: 16),
+  ];
 }
 
 /// Local durable key storage. Production adapters can implement the same
@@ -232,7 +262,8 @@ class PersistentKeyStorage implements KeyStorage {
       const PersistentKeyStorage(FlutterSecureStorage());
 
   @override
-  Future<void> write(String key, String value) => _storage.write(key: key, value: value);
+  Future<void> write(String key, String value) =>
+      _storage.write(key: key, value: value);
 
   @override
   Future<String?> read(String key) => _storage.read(key: key);

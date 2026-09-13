@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
@@ -27,7 +28,7 @@ class CertificateArtifactRenderer {
         : pw.MemoryImage(Uint8List.fromList(templateBytes));
     final pageWidth = canvasWidth / dpi * 72;
     final pageHeight = canvasHeight / dpi * 72;
-    final qr = _qrWidget(encodeVerificationQrPayload(record), 220);
+    final qr = _qrWidget(encodeVerificationQrPayload(record), 150);
     document.addPage(
       pw.Page(
         pageFormat: PdfPageFormat(pageWidth, pageHeight),
@@ -73,10 +74,26 @@ class CertificateArtifactRenderer {
   }) {
     final fallbackWidth = _number(template['width'], 1600).round();
     final fallbackHeight = _number(template['height'], 1100).round();
-    final canvas = templateBytes == null
+    var canvas = templateBytes == null
         ? img.Image(width: fallbackWidth, height: fallbackHeight)
         : img.decodeImage(Uint8List.fromList(templateBytes)) ??
             img.Image(width: fallbackWidth, height: fallbackHeight);
+    final targetWidth = math.max(
+      canvas.width,
+      _number(template['width'], canvas.width).round(),
+    );
+    final targetHeight = math.max(
+      canvas.height,
+      _number(template['height'], canvas.height).round(),
+    );
+    if (canvas.width != targetWidth || canvas.height != targetHeight) {
+      canvas = img.copyResize(
+        canvas,
+        width: targetWidth,
+        height: targetHeight,
+        interpolation: img.Interpolation.cubic,
+      );
+    }
     if (templateBytes == null) {
       img.fill(canvas, color: img.ColorRgb8(250, 247, 240));
       img.drawRect(
@@ -120,9 +137,9 @@ class CertificateArtifactRenderer {
     _drawQr(
       canvas,
       encodeVerificationQrPayload(record),
-      x: canvas.width - 540,
-      y: canvas.height - 540,
-      size: 520,
+      x: canvas.width - 240,
+      y: canvas.height - 240,
+      size: 220,
     );
     return [...img.encodePng(canvas), ...utf8.encode(_embeddedMarker(record))];
   }
@@ -170,7 +187,7 @@ class CertificateArtifactRenderer {
     final matrix = Encoder.encode(payload, ErrorCorrectionLevel.m).matrix!;
     const quietModules = 4;
     final module =
-        (size / (matrix.width + quietModules * 2)).floor().clamp(2, 20) as int;
+        (size / (matrix.width + quietModules * 2)).floor().clamp(1, 20) as int;
     final totalSize = (matrix.width + quietModules * 2) * module;
     final originX = x.clamp(0, canvas.width - totalSize) as int;
     final originY = y.clamp(0, canvas.height - totalSize) as int;

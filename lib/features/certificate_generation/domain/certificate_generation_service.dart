@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:isolate';
-import 'dart:typed_data';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:flutter/services.dart';
@@ -83,7 +82,7 @@ class CertificateGenerationService {
       mappingRows.isEmpty ? null : mappingRows.first['value_json'],
     );
     final jobId =
-        'generation-${projectId}-${DateTime.now().microsecondsSinceEpoch}';
+        'generation-$projectId-${DateTime.now().microsecondsSinceEpoch}';
     final startedAt = DateTime.now().toUtc().toIso8601String();
     await database.insert(DatabaseTables.generationJobs, {
       'id': jobId,
@@ -341,6 +340,8 @@ class CertificateGenerationService {
       return bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes);
     }();
   }
+
+  Future<void> _yieldToUi() => Future<void>.delayed(Duration.zero);
 
   Future<CertificateKeyPair> _keyPair(String projectId) async {
     final stored = await keyStorage.read('project.$projectId.key');

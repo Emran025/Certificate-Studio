@@ -344,7 +344,7 @@ class _TemplateDialogState extends State<_TemplateDialog> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _format,
+                      initialValue: _format,
                       decoration: const InputDecoration(labelText: 'Format'),
                       items: const [
                         DropdownMenuItem(value: 'png', child: Text('PNG')),

@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// SharedPreferences is used as the portable fallback so generation also works on
 /// web; a native filesystem implementation can replace this adapter later.
 class CertificateArtifactStore {
-  CertificateArtifactStore({SharedPreferences? preferences}) : _preferences = preferences;
+  CertificateArtifactStore({this._preferences});
 
   SharedPreferences? _preferences;
 

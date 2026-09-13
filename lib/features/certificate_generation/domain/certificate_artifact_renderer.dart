@@ -57,7 +57,14 @@ class CertificateArtifactRenderer {
             pw.Positioned(
               left: 8,
               bottom: 6,
-              child: pw.Text(hash, style: const pw.TextStyle(fontSize: 5)),
+              child: pw.Text(
+                hash,
+                style: pw.TextStyle(
+                  font: font,
+                  fontFallback: [font],
+                  fontSize: 5,
+                ),
+              ),
             ),
             _pdfQrField(
               encodeVerificationQrPayload(record),

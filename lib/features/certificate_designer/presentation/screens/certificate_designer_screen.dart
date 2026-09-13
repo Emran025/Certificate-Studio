@@ -38,7 +38,8 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
   final List<List<_DesignerField>> _undoStack = [];
   final List<List<_DesignerField>> _redoStack = [];
 
-  _DesignerField? get _selected => _fields.where((field) => field.id == _selectedId).firstOrNull;
+  _DesignerField? get _selected =>
+      _fields.where((field) => field.id == _selectedId).firstOrNull;
   double get _canvasWidth => _number(_template?['width'], 1000);
   double get _canvasHeight => _number(_template?['height'], 700);
   String get _templatePath => _template?['file_path'] as String? ?? '';
@@ -178,13 +179,22 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
   void _moveField(String id, Offset delta) {
     final field = _fields.firstWhere((item) => item.id == id);
     final next = field.copyWith(
-      x: (field.x + delta.dx / _zoom).clamp(0, _canvasWidth - field.width).toDouble(),
-      y: (field.y + delta.dy / _zoom).clamp(0, _canvasHeight - field.height).toDouble(),
+      x: (field.x + delta.dx / _zoom)
+          .clamp(0, _canvasWidth - field.width)
+          .toDouble(),
+      y: (field.y + delta.dy / _zoom)
+          .clamp(0, _canvasHeight - field.height)
+          .toDouble(),
     );
     _replaceField(next);
   }
 
-  void _resizeField(String id, Offset delta, {required bool fromLeft, required bool fromTop}) {
+  void _resizeField(
+    String id,
+    Offset delta, {
+    required bool fromLeft,
+    required bool fromTop,
+  }) {
     final field = _fields.firstWhere((item) => item.id == id);
     final dx = delta.dx / _zoom;
     final dy = delta.dy / _zoom;
@@ -210,7 +220,9 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
   }
 
   void _replaceField(_DesignerField field) {
-    _updateFields(_fields.map((item) => item.id == field.id ? field : item).toList());
+    _updateFields(
+      _fields.map((item) => item.id == field.id ? field : item).toList(),
+    );
   }
 
   void _updateFields(List<_DesignerField> next) {
@@ -228,7 +240,9 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     _redoStack.add(List<_DesignerField>.from(_fields));
     setState(() {
       _fields = List<_DesignerField>.from(_undoStack.removeLast());
-      _selectedId = _fields.any((field) => field.id == _selectedId) ? _selectedId : null;
+      _selectedId = _fields.any((field) => field.id == _selectedId)
+          ? _selectedId
+          : null;
       _saveLabel = 'Unsaved changes';
     });
   }
@@ -244,34 +258,75 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
   }
 
   bool _sameFields(List<_DesignerField> left, List<_DesignerField> right) =>
-      left.length == right.length && left.asMap().entries.every((entry) => entry.value == right[entry.key]);
+      left.length == right.length &&
+      left.asMap().entries.every((entry) => entry.value == right[entry.key]);
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text('Design · ${widget.projectName}'),
         actions: [
           Text(_saveLabel, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(width: AppSpacing.sm),
-          IconButton(tooltip: 'Zoom out', onPressed: () => setState(() => _zoom = (_zoom - .1).clamp(.4, 2.2)), icon: const Icon(Icons.remove)),
-          Text('${(_zoom * 100).round()}%', style: Theme.of(context).textTheme.labelMedium),
-          IconButton(tooltip: 'Zoom in', onPressed: () => setState(() => _zoom = (_zoom + .1).clamp(.4, 2.2)), icon: const Icon(Icons.add)),
-          IconButton(tooltip: 'Undo', onPressed: _undoStack.length > 1 ? _undo : null, icon: const Icon(Icons.undo)),
-          IconButton(tooltip: 'Redo', onPressed: _redoStack.isNotEmpty ? _redo : null, icon: const Icon(Icons.redo)),
-          IconButton(tooltip: 'Save design', onPressed: _saving ? null : _save, icon: const Icon(Icons.save_outlined)),
+          IconButton(
+            tooltip: 'Zoom out',
+            onPressed: () =>
+                setState(() => _zoom = (_zoom - .1).clamp(.4, 2.2)),
+            icon: const Icon(Icons.remove),
+          ),
+          Text(
+            '${(_zoom * 100).round()}%',
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+          IconButton(
+            tooltip: 'Zoom in',
+            onPressed: () =>
+                setState(() => _zoom = (_zoom + .1).clamp(.4, 2.2)),
+            icon: const Icon(Icons.add),
+          ),
+          IconButton(
+            tooltip: 'Undo',
+            onPressed: _undoStack.length > 1 ? _undo : null,
+            icon: const Icon(Icons.undo),
+          ),
+          IconButton(
+            tooltip: 'Redo',
+            onPressed: _redoStack.isNotEmpty ? _redo : null,
+            icon: const Icon(Icons.redo),
+          ),
+          IconButton(
+            tooltip: 'Save design',
+            onPressed: _saving ? null : _save,
+            icon: const Icon(Icons.save_outlined),
+          ),
         ],
       ),
       body: Row(
         children: [
-          SizedBox(width: 230, child: _ElementsPanel(columns: _columns, fields: _fields, selectedId: _selectedId, onAdd: _addField, onSelect: (id) => setState(() => _selectedId = id))),
+          SizedBox(
+            width: 230,
+            child: _ElementsPanel(
+              columns: _columns,
+              fields: _fields,
+              selectedId: _selectedId,
+              onAdd: _addField,
+              onSelect: (id) => setState(() => _selectedId = id),
+            ),
+          ),
           Expanded(
             child: Container(
               color: AppColors.background,
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: _template == null
-                  ? const Center(child: Text('Select a template before designing this certificate.'))
+                  ? const Center(
+                      child: Text(
+                        'Select a template before designing this certificate.',
+                      ),
+                    )
                   : _Canvas(
                       fields: _fields,
                       selectedId: _selectedId,
@@ -286,18 +341,36 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
                     ),
             ),
           ),
-          SizedBox(width: 300, child: _PropertiesPanel(field: _selected, columns: _columns, onChanged: _replaceField, onDelete: _deleteSelected)),
+          SizedBox(
+            width: 300,
+            child: _PropertiesPanel(
+              field: _selected,
+              columns: _columns,
+              onChanged: _replaceField,
+              onDelete: _deleteSelected,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  String _className(String source) => source.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_').replaceAll(RegExp(r'^_|_$'), '');
-  double _number(Object? value, double fallback) => value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
+  String _className(String source) => source
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_|_$'), '');
+  double _number(Object? value, double fallback) =>
+      value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
 }
 
 class _ElementsPanel extends StatelessWidget {
-  const _ElementsPanel({required this.columns, required this.fields, required this.selectedId, required this.onAdd, required this.onSelect});
+  const _ElementsPanel({
+    required this.columns,
+    required this.fields,
+    required this.selectedId,
+    required this.onAdd,
+    required this.onSelect,
+  });
   final List<String> columns;
   final List<_DesignerField> fields;
   final String? selectedId;
@@ -305,23 +378,64 @@ class _ElementsPanel extends StatelessWidget {
   final ValueChanged<String> onSelect;
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: const BoxDecoration(color: AppColors.surface, border: Border(right: BorderSide(color: AppColors.border))),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Elements', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.sm),
-          SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: columns.isEmpty ? null : onAdd, icon: const Icon(Icons.add), label: const Text('Data field'))),
-          const SizedBox(height: AppSpacing.lg),
-          Text('Layers', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: AppSpacing.xs),
-          if (fields.isEmpty) const Text('Add a field from imported data to start designing.'),
-          Expanded(child: ListView(children: [for (final field in fields) ListTile(selected: field.id == selectedId, dense: true, leading: const Icon(Icons.text_fields, size: 18), title: Text(field.source), subtitle: Text('${field.width.round()} × ${field.height.round()}'), onTap: () => onSelect(field.id))])),
-        ]),
-      );
+    padding: const EdgeInsets.all(AppSpacing.md),
+    decoration: const BoxDecoration(
+      color: AppColors.surface,
+      border: Border(right: BorderSide(color: AppColors.border)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Elements', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.sm),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: columns.isEmpty ? null : onAdd,
+            icon: const Icon(Icons.add),
+            label: const Text('Data field'),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Text('Layers', style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: AppSpacing.xs),
+        if (fields.isEmpty)
+          const Text('Add a field from imported data to start designing.'),
+        Expanded(
+          child: ListView(
+            children: [
+              for (final field in fields)
+                ListTile(
+                  selected: field.id == selectedId,
+                  dense: true,
+                  leading: const Icon(Icons.text_fields, size: 18),
+                  title: Text(field.source),
+                  subtitle: Text(
+                    '${field.width.round()} × ${field.height.round()}',
+                  ),
+                  onTap: () => onSelect(field.id),
+                ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Canvas extends StatelessWidget {
-  const _Canvas({required this.fields, required this.selectedId, required this.previewData, required this.templatePath, required this.canvasWidth, required this.canvasHeight, required this.zoom, required this.onSelect, required this.onMove, required this.onResize});
+  const _Canvas({
+    required this.fields,
+    required this.selectedId,
+    required this.previewData,
+    required this.templatePath,
+    required this.canvasWidth,
+    required this.canvasHeight,
+    required this.zoom,
+    required this.onSelect,
+    required this.onMove,
+    required this.onResize,
+  });
   final List<_DesignerField> fields;
   final String? selectedId;
   final Map<String, dynamic> previewData;
@@ -331,39 +445,68 @@ class _Canvas extends StatelessWidget {
   final double zoom;
   final ValueChanged<String> onSelect;
   final void Function(String, Offset) onMove;
-  final void Function(String, Offset, {required bool fromLeft, required bool fromTop}) onResize;
+  final void Function(
+    String,
+    Offset, {
+    required bool fromLeft,
+    required bool fromTop,
+  })
+  onResize;
 
   @override
   Widget build(BuildContext context) => InteractiveViewer(
-        constrained: false,
-        minScale: .4,
-        maxScale: 2.2,
-        boundaryMargin: const EdgeInsets.all(160),
-        child: Transform.scale(
-          scale: zoom,
-          alignment: Alignment.topLeft,
-          child: SizedBox(
-            width: canvasWidth,
-            height: canvasHeight,
-            child: Stack(children: [
-              Positioned.fill(child: templateFileExists(templatePath) ? templateCanvasPreview(templatePath) : Container(color: Colors.white, child: const Center(child: Text('Template image unavailable')))),
-              for (final field in fields)
-                _CanvasField(
-                  field: field,
-                  selected: field.id == selectedId,
-                  previewText: '${previewData[field.source] ?? field.source}',
-                  onSelect: () => onSelect(field.id),
-                  onMove: (delta) => onMove(field.id, delta),
-                  onResize: (delta, fromLeft, fromTop) => onResize(field.id, delta, fromLeft: fromLeft, fromTop: fromTop),
+    constrained: false,
+    minScale: .4,
+    maxScale: 2.2,
+    boundaryMargin: const EdgeInsets.all(160),
+    child: Transform.scale(
+      scale: zoom,
+      alignment: Alignment.topLeft,
+      child: SizedBox(
+        width: canvasWidth,
+        height: canvasHeight,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: templateFileExists(templatePath)
+                  ? templateCanvasPreview(templatePath)
+                  : Container(
+                      color: Colors.white,
+                      child: const Center(
+                        child: Text('Template image unavailable'),
+                      ),
+                    ),
+            ),
+            for (final field in fields)
+              _CanvasField(
+                field: field,
+                selected: field.id == selectedId,
+                previewText: '${previewData[field.source] ?? field.source}',
+                onSelect: () => onSelect(field.id),
+                onMove: (delta) => onMove(field.id, delta),
+                onResize: (delta, fromLeft, fromTop) => onResize(
+                  field.id,
+                  delta,
+                  fromLeft: fromLeft,
+                  fromTop: fromTop,
                 ),
-            ]),
-          ),
+              ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _CanvasField extends StatelessWidget {
-  const _CanvasField({required this.field, required this.selected, required this.previewText, required this.onSelect, required this.onMove, required this.onResize});
+  const _CanvasField({
+    required this.field,
+    required this.selected,
+    required this.previewText,
+    required this.onSelect,
+    required this.onMove,
+    required this.onResize,
+  });
   final _DesignerField field;
   final bool selected;
   final String previewText;
@@ -372,31 +515,69 @@ class _CanvasField extends StatelessWidget {
   final void Function(Offset, bool, bool) onResize;
   @override
   Widget build(BuildContext context) => Positioned(
-        left: field.x,
-        top: field.y,
-        width: field.width,
-        height: field.height,
-        child: GestureDetector(
-          onTap: onSelect,
-          onPanStart: (_) => onSelect(),
-          onPanUpdate: (details) => onMove(details.delta),
-          child: Stack(clipBehavior: Clip.none, children: [
-            Container(
-              alignment: field.textAlignment,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(color: selected ? AppColors.primaryLight.withOpacity(.45) : Colors.transparent, border: Border.all(color: selected ? AppColors.primary : Colors.transparent, width: 2)),
-              child: Text(previewText, maxLines: 3, overflow: TextOverflow.ellipsis, textDirection: field.textDirection, style: TextStyle(fontFamily: field.fontFamily, fontSize: field.fontSize, color: _hex(field.color), fontWeight: field.bold ? FontWeight.bold : FontWeight.normal, fontStyle: field.italic ? FontStyle.italic : FontStyle.normal)),
+    left: field.x,
+    top: field.y,
+    width: field.width,
+    height: field.height,
+    child: GestureDetector(
+      onTap: onSelect,
+      onPanStart: (_) => onSelect(),
+      onPanUpdate: (details) => onMove(details.delta),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            alignment: field.textAlignment,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.primaryLight.withOpacity(.45)
+                  : Colors.transparent,
+              border: Border.all(
+                color: selected ? AppColors.primary : Colors.transparent,
+                width: 2,
+              ),
             ),
-            if (selected) ...[
-              _ResizeHandle(alignment: Alignment.topLeft, onDrag: (delta) => onResize(delta, true, true)),
-              _ResizeHandle(alignment: Alignment.topRight, onDrag: (delta) => onResize(delta, false, true)),
-              _ResizeHandle(alignment: Alignment.bottomLeft, onDrag: (delta) => onResize(delta, true, false)),
-              _ResizeHandle(alignment: Alignment.bottomRight, onDrag: (delta) => onResize(delta, false, false)),
-            ],
-          ]),
-        ),
-      );
-  Color _hex(String value) { final hex = value.replaceFirst('#', ''); return Color(int.tryParse('FF$hex', radix: 16) ?? 0xFF20332B); }
+            child: Text(
+              previewText,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              textDirection: field.textDirection,
+              style: TextStyle(
+                fontFamily: field.fontFamily,
+                fontSize: field.fontSize,
+                color: _hex(field.color),
+                fontWeight: field.bold ? FontWeight.bold : FontWeight.normal,
+                fontStyle: field.italic ? FontStyle.italic : FontStyle.normal,
+              ),
+            ),
+          ),
+          if (selected) ...[
+            _ResizeHandle(
+              alignment: Alignment.topLeft,
+              onDrag: (delta) => onResize(delta, true, true),
+            ),
+            _ResizeHandle(
+              alignment: Alignment.topRight,
+              onDrag: (delta) => onResize(delta, false, true),
+            ),
+            _ResizeHandle(
+              alignment: Alignment.bottomLeft,
+              onDrag: (delta) => onResize(delta, true, false),
+            ),
+            _ResizeHandle(
+              alignment: Alignment.bottomRight,
+              onDrag: (delta) => onResize(delta, false, false),
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
+  Color _hex(String value) {
+    final hex = value.replaceFirst('#', '');
+    return Color(int.tryParse('FF$hex', radix: 16) ?? 0xFF20332B);
+  }
 }
 
 class _ResizeHandle extends StatelessWidget {
@@ -404,11 +585,30 @@ class _ResizeHandle extends StatelessWidget {
   final Alignment alignment;
   final ValueChanged<Offset> onDrag;
   @override
-  Widget build(BuildContext context) => Align(alignment: alignment, child: GestureDetector(onPanUpdate: (details) => onDrag(details.delta), child: Container(width: 12, height: 12, decoration: BoxDecoration(color: AppColors.primary, border: Border.all(color: Colors.white, width: 2), shape: BoxShape.circle))));
+  Widget build(BuildContext context) => Align(
+    alignment: alignment,
+    child: GestureDetector(
+      onPanUpdate: (details) => onDrag(details.delta),
+      child: Container(
+        width: 12,
+        height: 12,
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          border: Border.all(color: Colors.white, width: 2),
+          shape: BoxShape.circle,
+        ),
+      ),
+    ),
+  );
 }
 
 class _PropertiesPanel extends StatelessWidget {
-  const _PropertiesPanel({required this.field, required this.columns, required this.onChanged, required this.onDelete});
+  const _PropertiesPanel({
+    required this.field,
+    required this.columns,
+    required this.onChanged,
+    required this.onDelete,
+  });
   final _DesignerField? field;
   final List<String> columns;
   final ValueChanged<_DesignerField> onChanged;
@@ -416,60 +616,255 @@ class _PropertiesPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = field;
-    if (selected == null) return const Center(child: Text('Select a field to edit its properties.'));
+    if (selected == null) {
+      return const Center(
+        child: Text('Select a field to edit its properties.'),
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: const BoxDecoration(color: AppColors.surface, border: Border(left: BorderSide(color: AppColors.border))),
-      child: ListView(children: [
-        Text('Field properties', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.md),
-        DropdownButtonFormField<String>(value: columns.contains(selected.source) ? selected.source : null, decoration: const InputDecoration(labelText: 'Data source field'), items: [for (final column in columns) DropdownMenuItem(value: column, child: Text(column))], onChanged: (value) { if (value != null) onChanged(selected.copyWith(source: value, className: value)); }),
-        const SizedBox(height: AppSpacing.sm),
-        Text('Position and size', style: Theme.of(context).textTheme.labelLarge),
-        Row(children: [Expanded(child: _NumberInput(label: 'X', value: selected.x, onChanged: (value) => onChanged(selected.copyWith(x: value)))), const SizedBox(width: AppSpacing.sm), Expanded(child: _NumberInput(label: 'Y', value: selected.y, onChanged: (value) => onChanged(selected.copyWith(y: value))))]),
-        Row(children: [Expanded(child: _NumberInput(label: 'Width', value: selected.width, onChanged: (value) => onChanged(selected.copyWith(width: value)))), const SizedBox(width: AppSpacing.sm), Expanded(child: _NumberInput(label: 'Height', value: selected.height, onChanged: (value) => onChanged(selected.copyWith(height: value))))]),
-        const SizedBox(height: AppSpacing.sm),
-        DropdownButtonFormField<String>(value: selected.fontFamily, decoration: const InputDecoration(labelText: 'Font family'), items: const [DropdownMenuItem(value: 'Cairo', child: Text('Cairo')), DropdownMenuItem(value: 'Arial', child: Text('Arial')), DropdownMenuItem(value: 'sans-serif', child: Text('Sans serif'))], onChanged: (value) { if (value != null) onChanged(selected.copyWith(fontFamily: value)); }),
-        _NumberInput(label: 'Font size', value: selected.fontSize, onChanged: (value) => onChanged(selected.copyWith(fontSize: value.clamp(8, 180)))),
-        DropdownButtonFormField<String>(value: selected.alignment, decoration: const InputDecoration(labelText: 'Text alignment'), items: const [DropdownMenuItem(value: 'left', child: Text('Left')), DropdownMenuItem(value: 'center', child: Text('Center')), DropdownMenuItem(value: 'right', child: Text('Right'))], onChanged: (value) { if (value != null) onChanged(selected.copyWith(alignment: value)); }),
-        DropdownButtonFormField<String>(value: selected.direction, decoration: const InputDecoration(labelText: 'Text direction'), items: const [DropdownMenuItem(value: 'ltr', child: Text('LTR')), DropdownMenuItem(value: 'rtl', child: Text('RTL'))], onChanged: (value) { if (value != null) onChanged(selected.copyWith(direction: value)); }),
-        SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Bold'), value: selected.bold, onChanged: (value) => onChanged(selected.copyWith(bold: value))),
-        SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Italic'), value: selected.italic, onChanged: (value) => onChanged(selected.copyWith(italic: value))),
-        TextFormField(initialValue: selected.color, decoration: const InputDecoration(labelText: 'Text color (#RRGGBB)'), onChanged: (value) { if (RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value)) onChanged(selected.copyWith(color: value)); }),
-        const SizedBox(height: AppSpacing.md),
-        OutlinedButton.icon(onPressed: onDelete, icon: const Icon(Icons.delete_outline), label: const Text('Delete field')),
-      ]),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(left: BorderSide(color: AppColors.border)),
+      ),
+      child: ListView(
+        children: [
+          Text(
+            'Field properties',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          DropdownButtonFormField<String>(
+            value: columns.contains(selected.source) ? selected.source : null,
+            decoration: const InputDecoration(labelText: 'Data source field'),
+            items: [
+              for (final column in columns)
+                DropdownMenuItem(value: column, child: Text(column)),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                onChanged(selected.copyWith(source: value, className: value));
+              }
+            },
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Position and size',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _NumberInput(
+                  label: 'X',
+                  value: selected.x,
+                  onChanged: (value) => onChanged(selected.copyWith(x: value)),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _NumberInput(
+                  label: 'Y',
+                  value: selected.y,
+                  onChanged: (value) => onChanged(selected.copyWith(y: value)),
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _NumberInput(
+                  label: 'Width',
+                  value: selected.width,
+                  onChanged: (value) =>
+                      onChanged(selected.copyWith(width: value)),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _NumberInput(
+                  label: 'Height',
+                  value: selected.height,
+                  onChanged: (value) =>
+                      onChanged(selected.copyWith(height: value)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          DropdownButtonFormField<String>(
+            value: selected.fontFamily,
+            decoration: const InputDecoration(labelText: 'Font family'),
+            items: const [
+              DropdownMenuItem(value: 'Cairo', child: Text('Cairo')),
+              DropdownMenuItem(value: 'Arial', child: Text('Arial')),
+              DropdownMenuItem(value: 'sans-serif', child: Text('Sans serif')),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                onChanged(selected.copyWith(fontFamily: value));
+              }
+            },
+          ),
+          _NumberInput(
+            label: 'Font size',
+            value: selected.fontSize,
+            onChanged: (value) =>
+                onChanged(selected.copyWith(fontSize: value.clamp(8, 180))),
+          ),
+          DropdownButtonFormField<String>(
+            value: selected.alignment,
+            decoration: const InputDecoration(labelText: 'Text alignment'),
+            items: const [
+              DropdownMenuItem(value: 'left', child: Text('Left')),
+              DropdownMenuItem(value: 'center', child: Text('Center')),
+              DropdownMenuItem(value: 'right', child: Text('Right')),
+            ],
+            onChanged: (value) {
+              if (value != null) onChanged(selected.copyWith(alignment: value));
+            },
+          ),
+          DropdownButtonFormField<String>(
+            value: selected.direction,
+            decoration: const InputDecoration(labelText: 'Text direction'),
+            items: const [
+              DropdownMenuItem(value: 'ltr', child: Text('LTR')),
+              DropdownMenuItem(value: 'rtl', child: Text('RTL')),
+            ],
+            onChanged: (value) {
+              if (value != null) onChanged(selected.copyWith(direction: value));
+            },
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Bold'),
+            value: selected.bold,
+            onChanged: (value) => onChanged(selected.copyWith(bold: value)),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Italic'),
+            value: selected.italic,
+            onChanged: (value) => onChanged(selected.copyWith(italic: value)),
+          ),
+          TextFormField(
+            initialValue: selected.color,
+            decoration: const InputDecoration(
+              labelText: 'Text color (#RRGGBB)',
+            ),
+            onChanged: (value) {
+              if (RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value)) {
+                onChanged(selected.copyWith(color: value));
+              }
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          OutlinedButton.icon(
+            onPressed: onDelete,
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Delete field'),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _NumberInput extends StatefulWidget {
-  const _NumberInput({required this.label, required this.value, required this.onChanged});
+  const _NumberInput({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
   final String label;
   final double value;
   final ValueChanged<double> onChanged;
   @override
   State<_NumberInput> createState() => _NumberInputState();
 }
+
 class _NumberInputState extends State<_NumberInput> {
-  late final TextEditingController _controller = TextEditingController(text: widget.value.round().toString());
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.value.round().toString(),
+  );
   @override
-  void didUpdateWidget(covariant _NumberInput oldWidget) { super.didUpdateWidget(oldWidget); if (oldWidget.value != widget.value && !_controller.text.contains(RegExp(r'[^0-9.]'))) _controller.text = widget.value.round().toString(); }
+  void didUpdateWidget(covariant _NumberInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value &&
+        !_controller.text.contains(RegExp(r'[^0-9.]'))) {
+      _controller.text = widget.value.round().toString();
+    }
+  }
+
   @override
-  void dispose() { _controller.dispose(); super.dispose(); }
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
-  Widget build(BuildContext context) => TextField(controller: _controller, decoration: InputDecoration(labelText: widget.label), keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (text) { final value = double.tryParse(text); if (value != null) widget.onChanged(value); });
+  Widget build(BuildContext context) => TextField(
+    controller: _controller,
+    decoration: InputDecoration(labelText: widget.label),
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    onChanged: (text) {
+      final value = double.tryParse(text);
+      if (value != null) widget.onChanged(value);
+    },
+  );
 }
 
 class _ColumnPicker extends StatelessWidget {
   const _ColumnPicker({required this.columns});
   final List<String> columns;
   @override
-  Widget build(BuildContext context) => AlertDialog(title: const Text('Add data field'), content: SizedBox(width: 360, child: columns.isEmpty ? const Text('Import recipient data first so fields can be mapped to columns.') : ListView(shrinkWrap: true, children: [for (final column in columns) ListTile(leading: const Icon(Icons.view_column_outlined), title: Text(column), onTap: () => Navigator.pop(context, column))])), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel'))]);
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Add data field'),
+    content: SizedBox(
+      width: 360,
+      child: columns.isEmpty
+          ? const Text(
+              'Import recipient data first so fields can be mapped to columns.',
+            )
+          : ListView(
+              shrinkWrap: true,
+              children: [
+                for (final column in columns)
+                  ListTile(
+                    leading: const Icon(Icons.view_column_outlined),
+                    title: Text(column),
+                    onTap: () => Navigator.pop(context, column),
+                  ),
+              ],
+            ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+    ],
+  );
 }
 
 class _DesignerField {
-  const _DesignerField({required this.id, required this.className, required this.source, required this.x, required this.y, required this.width, required this.height, required this.fontSize, required this.color, this.alignment = 'left', this.direction = 'ltr', this.fontFamily = 'Cairo', this.bold = false, this.italic = false});
+  const _DesignerField({
+    required this.id,
+    required this.className,
+    required this.source,
+    required this.x,
+    required this.y,
+    required this.width,
+    required this.height,
+    required this.fontSize,
+    required this.color,
+    this.alignment = 'left',
+    this.direction = 'ltr',
+    this.fontFamily = 'Cairo',
+    this.bold = false,
+    this.italic = false,
+  });
   final String id;
   final String className;
   final String source;
@@ -484,18 +879,98 @@ class _DesignerField {
   final String fontFamily;
   final bool bold;
   final bool italic;
-  Alignment get textAlignment => switch (alignment) { 'center' => Alignment.center, 'right' => Alignment.centerRight, _ => Alignment.centerLeft };
-  TextDirection get textDirection => direction == 'rtl' ? TextDirection.rtl : TextDirection.ltr;
+  Alignment get textAlignment => switch (alignment) {
+    'center' => Alignment.center,
+    'right' => Alignment.centerRight,
+    _ => Alignment.centerLeft,
+  };
+  TextDirection get textDirection =>
+      direction == 'rtl' ? TextDirection.rtl : TextDirection.ltr;
 
   factory _DesignerField.fromRow(Map<String, Object?> row) {
     final position = _decode(row['position_json']);
     final style = _decode(row['style_json']);
-    return _DesignerField(id: row['id']! as String, className: row['class_name']! as String, source: (row['source'] as String?) ?? '', x: _number(position['x'], 100), y: _number(position['y'], 100), width: _number(position['width'], 420), height: _number(position['height'], 64), fontSize: _number(style['font_size'], 28), color: (style['color'] as String?) ?? '#20332B', alignment: (style['alignment'] as String?) ?? 'left', direction: (style['direction'] as String?) ?? 'ltr', fontFamily: (style['font_family'] as String?) ?? 'Cairo', bold: style['bold'] == true || style['font_weight'] == 'bold', italic: style['italic'] == true);
+    return _DesignerField(
+      id: row['id']! as String,
+      className: row['class_name']! as String,
+      source: (row['source'] as String?) ?? '',
+      x: _number(position['x'], 100),
+      y: _number(position['y'], 100),
+      width: _number(position['width'], 420),
+      height: _number(position['height'], 64),
+      fontSize: _number(style['font_size'], 28),
+      color: (style['color'] as String?) ?? '#20332B',
+      alignment: (style['alignment'] as String?) ?? 'left',
+      direction: (style['direction'] as String?) ?? 'ltr',
+      fontFamily: (style['font_family'] as String?) ?? 'Cairo',
+      bold: style['bold'] == true || style['font_weight'] == 'bold',
+      italic: style['italic'] == true,
+    );
   }
-  Map<String, Object?> toRow(String projectId, String now) => {'id': id, 'project_id': projectId, 'class_name': className, 'source': source, 'position_json': jsonEncode({'x': x, 'y': y, 'width': width, 'height': height}), 'style_json': jsonEncode({'font_size': fontSize, 'color': color, 'alignment': alignment, 'direction': direction, 'font_family': fontFamily, 'font_weight': bold ? 'bold' : 'normal', 'bold': bold, 'italic': italic}), 'created_at': now, 'updated_at': now};
-  _DesignerField copyWith({String? className, String? source, double? x, double? y, double? width, double? height, double? fontSize, String? color, String? alignment, String? direction, String? fontFamily, bool? bold, bool? italic}) => _DesignerField(id: id, className: className ?? this.className, source: source ?? this.source, x: x ?? this.x, y: y ?? this.y, width: width ?? this.width, height: height ?? this.height, fontSize: fontSize ?? this.fontSize, color: color ?? this.color, alignment: alignment ?? this.alignment, direction: direction ?? this.direction, fontFamily: fontFamily ?? this.fontFamily, bold: bold ?? this.bold, italic: italic ?? this.italic);
-  static Map<String, Object?> _decode(Object? raw) { if (raw is! String) return {}; final value = jsonDecode(raw); return value is Map ? Map<String, Object?>.from(value) : {}; }
-  static double _number(Object? value, double fallback) => value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
+  Map<String, Object?> toRow(String projectId, String now) => {
+    'id': id,
+    'project_id': projectId,
+    'class_name': className,
+    'source': source,
+    'position_json': jsonEncode({
+      'x': x,
+      'y': y,
+      'width': width,
+      'height': height,
+    }),
+    'style_json': jsonEncode({
+      'font_size': fontSize,
+      'color': color,
+      'alignment': alignment,
+      'direction': direction,
+      'font_family': fontFamily,
+      'font_weight': bold ? 'bold' : 'normal',
+      'bold': bold,
+      'italic': italic,
+    }),
+    'created_at': now,
+    'updated_at': now,
+  };
+  _DesignerField copyWith({
+    String? className,
+    String? source,
+    double? x,
+    double? y,
+    double? width,
+    double? height,
+    double? fontSize,
+    String? color,
+    String? alignment,
+    String? direction,
+    String? fontFamily,
+    bool? bold,
+    bool? italic,
+  }) => _DesignerField(
+    id: id,
+    className: className ?? this.className,
+    source: source ?? this.source,
+    x: x ?? this.x,
+    y: y ?? this.y,
+    width: width ?? this.width,
+    height: height ?? this.height,
+    fontSize: fontSize ?? this.fontSize,
+    color: color ?? this.color,
+    alignment: alignment ?? this.alignment,
+    direction: direction ?? this.direction,
+    fontFamily: fontFamily ?? this.fontFamily,
+    bold: bold ?? this.bold,
+    italic: italic ?? this.italic,
+  );
+  static Map<String, Object?> _decode(Object? raw) {
+    if (raw is! String) return {};
+    final value = jsonDecode(raw);
+    return value is Map ? Map<String, Object?>.from(value) : {};
+  }
+
+  static double _number(Object? value, double fallback) =>
+      value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
 }
 
-extension<T> on Iterable<T> { T? get firstOrNull => isEmpty ? null : first; }
+extension<T> on Iterable<T> {
+  T? get firstOrNull => isEmpty ? null : first;
+}

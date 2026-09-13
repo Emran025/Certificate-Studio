@@ -313,6 +313,7 @@ class CertificateGenerationService {
     Map<String, Object?> template,
   ) async {
     final fontBytes = await _loadArabicFontBytes();
+    final fontBytesByFamily = await _loadProjectFontBytes(fontBytes);
     return Isolate.run(
       () => CertificateArtifactRenderer.renderPdf(
         values: values,
@@ -321,9 +322,26 @@ class CertificateGenerationService {
         record: record,
         templateBytes: templateBytes,
         template: template,
-        fontBytes: fontBytes,
+        fontBytesByFamily: fontBytesByFamily,
       ),
     );
+  }
+
+  Future<Map<String, List<int>>> _loadProjectFontBytes(
+    List<int> defaultFontBytes,
+  ) async {
+    final result = <String, List<int>>{'Cairo': defaultFontBytes};
+    final rows = await database.query(DatabaseTables.fonts);
+    for (final row in rows) {
+      final family = row['family']?.toString().trim();
+      final path = row['file_path']?.toString().trim();
+      if (family == null || family.isEmpty || path == null || path.isEmpty) {
+        continue;
+      }
+      final bytes = await readTemplateBytes(path);
+      if (bytes != null && bytes.isNotEmpty) result[family] = bytes;
+    }
+    return result;
   }
 
   Future<List<int>> _rasterizePdf(List<int> pdfBytes) async {

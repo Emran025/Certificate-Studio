@@ -16,12 +16,16 @@ class CertificateArtifactRenderer {
     required Map<String, dynamic> record,
     required List<int>? templateBytes,
     required Map<String, Object?> template,
-    required List<int> fontBytes,
+    required Map<String, List<int>> fontBytesByFamily,
   }) async {
     final document = pw.Document(title: 'Certificate');
-    final font = pw.Font.ttf(
-      ByteData.sublistView(Uint8List.fromList(fontBytes)),
-    );
+    final fonts = <String, pw.Font>{
+      for (final entry in fontBytesByFamily.entries)
+        entry.key: pw.Font.ttf(
+          ByteData.sublistView(Uint8List.fromList(entry.value)),
+        ),
+    };
+    final defaultFont = fonts['Cairo'] ?? fonts.values.first;
     final canvasWidth = _number(template['width'], 1000);
     final canvasHeight = _number(template['height'], 700);
     final dpi = _number(template['dpi'], 96);
@@ -52,7 +56,8 @@ class CertificateArtifactRenderer {
                   canvasHeight,
                   pageWidth,
                   pageHeight,
-                  font,
+                  fonts,
+                  defaultFont,
                 ),
             pw.Positioned(
               left: 8,
@@ -60,8 +65,8 @@ class CertificateArtifactRenderer {
               child: pw.Text(
                 hash,
                 style: pw.TextStyle(
-                  font: font,
-                  fontFallback: [font],
+                  font: defaultFont,
+                  fontFallback: fonts.values.toList(),
                   fontSize: 5,
                 ),
               ),
@@ -299,10 +304,12 @@ class CertificateArtifactRenderer {
     double canvasHeight,
     double pageWidth,
     double pageHeight,
-    pw.Font font,
+    Map<String, pw.Font> fonts,
+    pw.Font defaultFont,
   ) {
     final position = _jsonMap(field['position_json']);
     final style = _jsonMap(field['style_json']);
+    final font = fonts[style['font_family']?.toString()] ?? defaultFont;
     final x = _number(position['x'], 0) / canvasWidth * pageWidth;
     final y = _number(position['y'], 0) / canvasHeight * pageHeight;
     final width = _number(position['width'], 420) / canvasWidth * pageWidth;
@@ -323,7 +330,7 @@ class CertificateArtifactRenderer {
           textAlign: alignment,
           style: pw.TextStyle(
             font: font,
-            fontFallback: [font],
+            fontFallback: fonts.values.where((item) => item != font).toList(),
             fontSize: _number(style['font_size'], 24),
           ),
         ),

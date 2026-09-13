@@ -65,6 +65,8 @@ class DataImportRepositoryImpl implements DataImportRepository {
 
   @override
   Future<ImportedTable> saveForProject(String projectId, ImportedTable table) async {
+    _database.beginBatch();
+    try {
     final existing = await _database.query(
       DatabaseTables.students,
       where: {'project_id': projectId},
@@ -89,6 +91,9 @@ class DataImportRepositoryImpl implements DataImportRepository {
         'created_at': DateTime.now().toUtc().toIso8601String(),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
+    }
+    } finally {
+      await _database.endBatch();
     }
     return table;
   }

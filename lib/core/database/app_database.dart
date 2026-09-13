@@ -18,6 +18,8 @@ abstract interface class AppDatabase {
   Future<void> update(String table, String id, Map<String, Object?> values);
   Future<void> delete(String table, String id);
   Future<void> deleteWhere(String table, Map<String, Object?> where);
+  void beginBatch();
+  Future<void> endBatch();
 }
 
 /// Deterministic local adapter used until a platform SQLCipher driver is wired.
@@ -121,6 +123,12 @@ class InMemoryAppDatabase implements AppDatabase {
       (row) => where.entries.every((entry) => row[entry.key] == entry.value),
     );
   }
+
+  @override
+  void beginBatch() {}
+
+  @override
+  Future<void> endBatch() async {}
 
   void _ensureReady(String table) {
     if (!_isOpen) throw StateError('Database is not open.');

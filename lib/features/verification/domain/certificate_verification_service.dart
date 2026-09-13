@@ -232,6 +232,16 @@ class CertificateVerificationService {
     if (embedded is String) {
       return base64Url.decode(base64Url.normalize(embedded));
     }
+    final fields = record['fields'];
+    if (fields is Map) {
+      return utf8.encode(
+        jsonEncode({
+          'project_id': record['project_id'],
+          'student_id': record['student_id'],
+          'fields': Map<String, dynamic>.from(fields),
+        }),
+      );
+    }
     return utf8.encode(
       jsonEncode({
         'project_id': record['project_id'],

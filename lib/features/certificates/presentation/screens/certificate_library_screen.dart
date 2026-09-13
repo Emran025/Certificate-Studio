@@ -113,14 +113,22 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     _LibraryCertificate certificate,
     String extension,
   ) async {
-    final path = await _exporter.exportSingle(
-      certificate: certificate.row,
-      extension: extension,
-      fileName: _fileName(certificate),
-    );
+    String? path;
+    Object? error;
+    try {
+      path = await _exporter.exportSingle(
+        certificate: certificate.row,
+        extension: extension,
+        fileName: _fileName(certificate),
+      );
+    } catch (exception) {
+      error = exception;
+    }
     if (!mounted) return;
     _showExportResult(
-      path == null
+      error != null
+          ? 'Export failed: $error'
+          : path == null
           ? 'The requested file is unavailable.'
           : 'Certificate exported successfully.',
     );
@@ -134,15 +142,23 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
         .where((item) => _selected.contains(item.id))
         .toList();
     if (chosen.isEmpty) return;
-    final path = await _exporter.exportZip(
-      certificates: [for (final item in chosen) item.row],
-      extension: extension,
-      fileName: 'certificates-${DateTime.now().millisecondsSinceEpoch}',
-      fileNameFor: (row) => _fileName(_LibraryCertificate(row, null)),
-    );
+    String? path;
+    Object? error;
+    try {
+      path = await _exporter.exportZip(
+        certificates: [for (final item in chosen) item.row],
+        extension: extension,
+        fileName: 'certificates-${DateTime.now().millisecondsSinceEpoch}',
+        fileNameFor: (row) => _fileName(_LibraryCertificate(row, null)),
+      );
+    } catch (exception) {
+      error = exception;
+    }
     if (!mounted) return;
     _showExportResult(
-      path == null
+      error != null
+          ? 'Export failed: $error'
+          : path == null
           ? 'No generated files were available to export.'
           : '${chosen.length} certificates exported as a ZIP archive.',
     );
@@ -152,15 +168,23 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     List<_LibraryCertificate> certificates,
     String extension,
   ) async {
-    final path = await _exporter.exportZip(
-      certificates: [for (final item in certificates) item.row],
-      extension: extension,
-      fileName: 'certificates-${DateTime.now().millisecondsSinceEpoch}',
-      fileNameFor: (row) => _fileName(_LibraryCertificate(row, null)),
-    );
+    String? path;
+    Object? error;
+    try {
+      path = await _exporter.exportZip(
+        certificates: [for (final item in certificates) item.row],
+        extension: extension,
+        fileName: 'certificates-${DateTime.now().millisecondsSinceEpoch}',
+        fileNameFor: (row) => _fileName(_LibraryCertificate(row, null)),
+      );
+    } catch (exception) {
+      error = exception;
+    }
     if (!mounted) return;
     _showExportResult(
-      path == null
+      error != null
+          ? 'Export failed: $error'
+          : path == null
           ? 'No generated files were available to export.'
           : '${certificates.length} certificates exported as a ZIP archive.',
     );

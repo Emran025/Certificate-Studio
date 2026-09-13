@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
-import 'package:file_picker/file_picker.dart';
 
 import '../../../core/files/certificate_artifact_store.dart';
+import '../../../core/files/export_file_writer.dart';
 
 class CertificateExportService {
   CertificateExportService({CertificateArtifactStore? artifactStore})
@@ -22,12 +22,11 @@ class CertificateExportService {
     if (reference == null || reference.isEmpty) return null;
     final bytes = await artifactStore.read(reference);
     if (bytes == null || bytes.isEmpty) return null;
-    return FilePicker.platform.saveFile(
+    return saveExportBytes(
       dialogTitle: 'Export certificate',
       fileName: '$fileName.$extension',
-      type: FileType.custom,
-      allowedExtensions: [extension],
       bytes: bytes,
+      extension: extension,
     );
   }
 
@@ -52,12 +51,11 @@ class CertificateExportService {
     if (archive.files.isEmpty) return null;
     final encoded = ZipEncoder().encode(archive);
     if (encoded == null || encoded.isEmpty) return null;
-    return FilePicker.platform.saveFile(
+    return saveExportBytes(
       dialogTitle: 'Export certificates',
       fileName: '$fileName.zip',
-      type: FileType.custom,
-      allowedExtensions: const ['zip'],
       bytes: Uint8List.fromList(encoded),
+      extension: 'zip',
     );
   }
 }

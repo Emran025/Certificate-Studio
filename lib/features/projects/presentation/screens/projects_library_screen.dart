@@ -204,12 +204,14 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
     body: FutureBuilder<List<Project>>(
       future: _projects,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done)
+        if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
-        if (snapshot.hasError)
+        }
+        if (snapshot.hasError) {
           return Center(
             child: Text('Unable to load projects: ${snapshot.error}'),
           );
+        }
         final projects = snapshot.data ?? const <Project>[];
         return Padding(
           padding: const EdgeInsets.all(AppSpacing.xl),

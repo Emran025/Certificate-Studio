@@ -34,6 +34,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
   bool _loading = true;
   bool _saving = false;
   String _saveLabel = 'Not saved';
+  String _projectFontFamily = 'Cairo';
   double _zoom = 0.85;
   final List<List<_DesignerField>> _undoStack = [];
   final List<List<_DesignerField>> _redoStack = [];
@@ -64,6 +65,9 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
       where: {'id': widget.projectId},
     );
     final projectTemplateId = projects.firstOrNull?['template_id'] as String?;
+    final projectSettings = _decodeMap(projects.firstOrNull?['settings_json']);
+    final projectFontId = projectSettings['font_id']?.toString();
+    final projectFonts = projectFontId == null ? const <Map<String, Object?>>[] : await widget.database.query(DatabaseTables.fonts, where: {'id': projectFontId});
     final templates = projectTemplateId == null
         ? <Map<String, Object?>>[]
         : await widget.database.query(
@@ -88,6 +92,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
       _columns = columns.toList()..sort();
       _previewData = preview;
       _template = templates.firstOrNull;
+      _projectFontFamily = projectFonts.firstOrNull?['family']?.toString() ?? 'Cairo';
       _fields = rows.map(_DesignerField.fromRow).toList();
       _undoStack
         ..clear()
@@ -113,6 +118,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
       height: 64.clamp(40, _canvasHeight).toDouble(),
       fontSize: 28,
       color: '#20332B',
+      fontFamily: _projectFontFamily,
     );
     await widget.database.insert(
       DatabaseTables.certificateFields,
@@ -359,6 +365,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
       .toLowerCase()
       .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
       .replaceAll(RegExp(r'^_|_$'), '');
+  Map<String, dynamic> _decodeMap(Object? raw) => raw is String && raw.isNotEmpty ? Map<String, dynamic>.from(jsonDecode(raw) as Map) : <String, dynamic>{};
   double _number(Object? value, double fallback) =>
       value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
 }

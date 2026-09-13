@@ -11,10 +11,10 @@ class TemplatePickerScreen extends StatefulWidget {
   const TemplatePickerScreen({
     super.key,
     required this.database,
-    required this.projectId,
+    this.projectId,
   });
   final AppDatabase database;
-  final String projectId;
+  final String? projectId;
 
   @override
   State<TemplatePickerScreen> createState() => _TemplatePickerScreenState();
@@ -33,10 +33,7 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
 
   Future<void> _load() async {
     final templates = await widget.database.query(DatabaseTables.templates);
-    final projects = await widget.database.query(
-      DatabaseTables.projects,
-      where: {'id': widget.projectId},
-    );
+    final projects = widget.projectId == null ? const <Map<String, Object?>>[] : await widget.database.query(DatabaseTables.projects, where: {'id': widget.projectId});
     if (!mounted) return;
     setState(() {
       _templates = templates;
@@ -50,7 +47,7 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
   Future<void> _addTemplate() async {
     final draft = await showDialog<_TemplateDraft>(
       context: context,
-      builder: (_) => const _TemplateDialog(),
+          builder: (_) => const _TemplateDialog(),
     );
     if (draft == null) return;
     final now = DateTime.now().toUtc().toIso8601String();
@@ -69,10 +66,12 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
   }
 
   Future<void> _select(String id) async {
-    await widget.database.update(DatabaseTables.projects, widget.projectId, {
-      'template_id': id,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    });
+    if (widget.projectId != null) {
+      await widget.database.update(DatabaseTables.projects, widget.projectId!, {
+        'template_id': id,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    }
     if (mounted) setState(() => _selectedId = id);
   }
 
@@ -100,8 +99,9 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+    final projectMode = widget.projectId != null;
     return Scaffold(
-      appBar: AppBar(title: const Text('Certificate template')),
+      appBar: AppBar(title: Text(projectMode ? 'Certificate template' : 'Templates')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Center(
@@ -111,12 +111,12 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Choose a certificate template',
+                  projectMode ? 'Choose a certificate template' : 'Template library',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.',
+                  projectMode ? 'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.' : 'Browse persisted certificate backgrounds or import a new template.',
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: AppSpacing.lg),

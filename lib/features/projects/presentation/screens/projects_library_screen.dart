@@ -141,6 +141,8 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
           if ((certificate[key] as String?)?.isNotEmpty == true)
             artifacts.delete(certificate[key]! as String),
     ]);
+    widget.database.beginBatch();
+    try {
     await widget.database.deleteWhere(DatabaseTables.verificationRecords, {
       'project_id': project.id,
     });
@@ -172,6 +174,9 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
       'mapping:${project.id}',
     );
     await widget.database.delete(DatabaseTables.projects, project.id);
+    } finally {
+      await widget.database.endBatch();
+    }
     await widget.keyStorage.delete('project.${project.id}.key');
     if (mounted) {
       setState(() => _projects = _load());

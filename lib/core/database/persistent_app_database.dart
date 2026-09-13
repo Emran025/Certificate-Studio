@@ -46,6 +46,8 @@ class PersistentAppDatabase implements AppDatabase {
   bool _isOpen = false;
   Completer<void>? _persistCompleter;
   bool _persistScheduled = false;
+  int _batchDepth = 0;
+  bool _batchDirty = false;
 
   static Future<PersistentAppDatabase> create({KeyStorage? keyStorage}) async {
     final storage = keyStorage ?? await PersistentKeyStorage.create();
@@ -144,6 +146,20 @@ class PersistentAppDatabase implements AppDatabase {
     _queuePersist();
   }
 
+  @override
+  void beginBatch() => _batchDepth++;
+
+  @override
+  Future<void> endBatch() async {
+    if (_batchDepth == 0) return;
+    _batchDepth--;
+    if (_batchDepth == 0 && _batchDirty) {
+      _batchDirty = false;
+      _queuePersist();
+      await _flushPersist();
+    }
+  }
+
   Future<List<int>> _loadOrCreateDatabaseKey() async {
     final stored = await _keyStorage.read(_databaseKeyName);
     if (stored != null && stored.isNotEmpty) {
@@ -204,6 +220,10 @@ class PersistentAppDatabase implements AppDatabase {
   }
 
   void _queuePersist() {
+    if (_batchDepth > 0) {
+      _batchDirty = true;
+      return;
+    }
     _persistCompleter ??= Completer<void>();
     if (_persistScheduled) return;
     _persistScheduled = true;

@@ -119,6 +119,8 @@ class CertificateGenerationService {
     final errors = <String>[];
     var generated = 0;
     final keyPair = await _keyPair(projectId);
+    _database.beginBatch();
+    try {
     for (var index = 0; index < students.length; index++) {
       await _yieldToUi();
       final student = students[index];
@@ -282,6 +284,9 @@ class CertificateGenerationService {
       });
       onProgress?.call(completed, students.length);
       await _yieldToUi();
+    }
+    } finally {
+      await _database.endBatch();
     }
     final status = generated == students.length
         ? 'completed'

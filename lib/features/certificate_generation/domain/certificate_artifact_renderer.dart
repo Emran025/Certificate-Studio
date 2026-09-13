@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
-import 'package:image/image.dart' as img;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:zxing2/qrcode.dart';
@@ -82,115 +81,6 @@ class CertificateArtifactRenderer {
     return [...bytes, ...utf8.encode(_embeddedMarker(record))];
   }
 
-  static List<int> renderPng({
-    required Map<String, dynamic> values,
-    required List<Map<String, Object?>> fields,
-    required String hash,
-    required Map<String, dynamic> record,
-    required List<int>? templateBytes,
-    required Map<String, Object?> template,
-  }) {
-    final designWidth = _number(template['width'], 1600);
-    final designHeight = _number(template['height'], 1100);
-    final logicalWidth = designWidth.round();
-    final logicalHeight = designHeight.round();
-    var canvas = img.Image(width: logicalWidth, height: logicalHeight);
-    img.fill(canvas, color: img.ColorRgb8(250, 247, 240));
-    final source = templateBytes == null
-        ? null
-        : img.decodeImage(Uint8List.fromList(templateBytes));
-    if (source != null) {
-      // Match the designer's BoxFit.contain behavior. The background is
-      // centered inside the logical design canvas instead of being stretched
-      // to the source image's raw pixel dimensions.
-      final fitScale = math.min(
-        logicalWidth / source.width,
-        logicalHeight / source.height,
-      );
-      final fittedWidth = (source.width * fitScale).round();
-      final fittedHeight = (source.height * fitScale).round();
-      final fitted = img.copyResize(
-        source,
-        width: fittedWidth,
-        height: fittedHeight,
-        interpolation: img.Interpolation.cubic,
-      );
-      img.compositeImage(
-        canvas,
-        fitted,
-        dstX: ((logicalWidth - fittedWidth) / 2).round(),
-        dstY: ((logicalHeight - fittedHeight) / 2).round(),
-      );
-    }
-    if (templateBytes == null) {
-      img.drawRect(
-        canvas,
-        x1: 35,
-        y1: 35,
-        x2: canvas.width - 35,
-        y2: canvas.height - 35,
-        color: img.ColorRgb8(45, 93, 73),
-        thickness: 8,
-      );
-    }
-    // Render every element in the same logical coordinate space used by the
-    // designer, then upscale the complete result without changing geometry.
-    const scale = 2;
-    final targetWidth = canvas.width * scale;
-    final targetHeight = canvas.height * scale;
-    if (canvas.width != targetWidth || canvas.height != targetHeight) {
-      canvas = img.copyResize(
-        canvas,
-        width: targetWidth,
-        height: targetHeight,
-        interpolation: img.Interpolation.cubic,
-      );
-    }
-    final logicalScale = canvas.width / logicalWidth;
-    for (final field in fields) {
-      if (!_fieldIsVisible(field) || _isQrField(field)) continue;
-      final position = _jsonMap(field['position_json']);
-      final style = _jsonMap(field['style_json']);
-      final text = _fieldText(values, field);
-      if (text.isEmpty) continue;
-      final x = (_number(position['x'], 0) * logicalScale).round();
-      final y = (_number(position['y'], 0) * logicalScale).round();
-      img.drawString(
-        canvas,
-        text,
-        font: _bitmapFont(_number(style['font_size'], 24) * logicalScale),
-        x: x,
-        y: y,
-        color: _imageColor(style['color'] as String?),
-      );
-    }
-    img.drawString(
-      canvas,
-      'Verification hash: $hash',
-      font: img.arial14,
-      x: 180,
-      y: canvas.height - 40,
-      color: img.ColorRgb8(90, 90, 90),
-    );
-    final qrFields = fields.where(_isQrField);
-    final qrField = qrFields.isEmpty ? null : qrFields.first;
-    final qrPosition = qrField == null
-        ? <String, dynamic>{}
-        : _jsonMap(qrField['position_json']);
-    final qrLogicalSize = _number(qrPosition['width'], 220);
-    final qrSize = (qrLogicalSize * logicalScale)
-        .clamp(120, math.min(canvas.width, canvas.height))
-        .round();
-    final qrX = qrField == null
-        ? canvas.width - qrSize - 32
-        : (_number(qrPosition['x'], 0) * logicalScale).round();
-    final qrY = qrField == null
-        ? canvas.height - qrSize - 32
-        : (_number(qrPosition['y'], 0) * logicalScale).round();
-    _drawQr(canvas, encodeVerificationQrPayload(record), x: qrX, y: qrY, size: qrSize);
-    return [...img.encodePng(canvas), ...utf8.encode(_embeddedMarker(record))];
-  }
-
   static bool _isQrField(Map<String, Object?> field) =>
       _jsonMap(field['style_json'])['kind'] == 'qr';
 
@@ -248,48 +138,6 @@ class CertificateArtifactRenderer {
         },
       ),
     );
-  }
-
-  static void _drawQr(
-    img.Image canvas,
-    String payload, {
-    required int x,
-    required int y,
-    required int size,
-  }) {
-    final matrix = Encoder.encode(payload, ErrorCorrectionLevel.l).matrix!;
-    const quietModules = 4;
-    final module = (size / (matrix.width + quietModules * 2)).floor().clamp(
-      1,
-      20,
-    );
-    final totalSize = (matrix.width + quietModules * 2) * module;
-    final originX = x.clamp(0, canvas.width - totalSize);
-    final originY = y.clamp(0, canvas.height - totalSize);
-    img.fillRect(
-      canvas,
-      x1: originX,
-      y1: originY,
-      x2: originX + totalSize - 1,
-      y2: originY + totalSize - 1,
-      color: img.ColorRgb8(255, 255, 255),
-    );
-    for (var row = 0; row < matrix.height; row++) {
-      for (var col = 0; col < matrix.width; col++) {
-        if (matrix.get(col, row) == 1) {
-          final left = originX + (quietModules + col) * module;
-          final top = originY + (quietModules + row) * module;
-          img.fillRect(
-            canvas,
-            x1: left,
-            y1: top,
-            x2: left + module - 1,
-            y2: top + module - 1,
-            color: img.ColorRgb8(0, 0, 0),
-          );
-        }
-      }
-    }
   }
 
   static pw.Widget _pdfField(
@@ -373,22 +221,6 @@ class CertificateArtifactRenderer {
 
   static double _number(Object? value, double fallback) =>
       value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
-
-  static img.BitmapFont _bitmapFont(double size) {
-    if (size >= 40) return img.arial48;
-    if (size >= 28) return img.arial24;
-    return img.arial14;
-  }
-
-  static img.Color _imageColor(String? value) {
-    final hex = (value ?? '#20332B').replaceFirst('#', '');
-    final normalized = hex.length == 6 ? hex : '20332B';
-    return img.ColorRgb8(
-      int.parse(normalized.substring(0, 2), radix: 16),
-      int.parse(normalized.substring(2, 4), radix: 16),
-      int.parse(normalized.substring(4, 6), radix: 16),
-    );
-  }
 
   static String _embeddedMarker(Map<String, dynamic> record) =>
       'CSTUDIO_RECORD_V1:${base64UrlEncodeNoPadding(utf8.encode(canonicalJson(record)))}';

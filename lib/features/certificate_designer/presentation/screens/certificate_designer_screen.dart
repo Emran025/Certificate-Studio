@@ -680,6 +680,7 @@ class _PropertiesPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: _NumberInput(
+                  key: ValueKey('${selected.id}-x'),
                   label: 'X',
                   value: selected.x,
                   onChanged: (value) => onChanged(selected.copyWith(x: value)),
@@ -688,6 +689,7 @@ class _PropertiesPanel extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: _NumberInput(
+                  key: ValueKey('${selected.id}-y'),
                   label: 'Y',
                   value: selected.y,
                   onChanged: (value) => onChanged(selected.copyWith(y: value)),
@@ -699,6 +701,7 @@ class _PropertiesPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: _NumberInput(
+                  key: ValueKey('${selected.id}-width'),
                   label: 'Width',
                   value: selected.width,
                   onChanged: (value) =>
@@ -708,6 +711,7 @@ class _PropertiesPanel extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: _NumberInput(
+                  key: ValueKey('${selected.id}-height'),
                   label: 'Height',
                   value: selected.height,
                   onChanged: (value) =>
@@ -733,6 +737,7 @@ class _PropertiesPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           _NumberInput(
+            key: ValueKey('${selected.id}-font-size'),
             label: 'Font size',
             value: selected.fontSize,
             onChanged: (value) =>
@@ -818,30 +823,57 @@ class _NumberInputState extends State<_NumberInput> {
   late final TextEditingController _controller = TextEditingController(
     text: widget.value.round().toString(),
   );
+  late final FocusNode _focusNode = FocusNode();
+
   @override
-  void didUpdateWidget(covariant _NumberInput oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.value != widget.value &&
-        !_controller.text.contains(RegExp(r'[^0-9.]'))) {
-      _controller.text = widget.value.round().toString();
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_handleFocusChange);
+  }
+
+  void _handleFocusChange() {
+    if (!_focusNode.hasFocus) {
+      final value = double.tryParse(_controller.text.trim());
+      _controller.text = (value ?? widget.value).round().toString();
     }
   }
 
   @override
+  void didUpdateWidget(covariant _NumberInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The parent rebuilds after every valid keystroke. Never replace the
+    // controller text while the user is editing, otherwise deleting a value
+    // or inserting a digit moves the caret and restores the previous value.
+    if (oldWidget.value != widget.value && !_focusNode.hasFocus) {
+      _controller.text = widget.value.round().toString();
+    }
+  }
+
+  void _commit() {
+    final value = double.tryParse(_controller.text.trim());
+    if (value != null) widget.onChanged(value);
+  }
+
+  @override
   void dispose() {
+    _focusNode.removeListener(_handleFocusChange);
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => TextField(
     controller: _controller,
+    focusNode: _focusNode,
     decoration: InputDecoration(labelText: widget.label),
     keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    textInputAction: TextInputAction.done,
     onChanged: (text) {
       final value = double.tryParse(text);
       if (value != null) widget.onChanged(value);
     },
+    onSubmitted: (_) => _commit(),
   );
 }
 

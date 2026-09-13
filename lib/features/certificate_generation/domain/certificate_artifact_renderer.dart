@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:arabic_reshaper/arabic_reshaper.dart';
 import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:image/image.dart' as img;
 import 'package:pdf/pdf.dart';
@@ -364,6 +365,7 @@ class CertificateArtifactRenderer {
     final position = _jsonMap(field['position_json']);
     final style = _jsonMap(field['style_json']);
     final font = fonts[style['font_family']?.toString()] ?? defaultFont;
+    final text = _fieldText(values, field);
     final x = _number(position['x'], 0) / canvasWidth * pageWidth;
     final y = _number(position['y'], 0) / canvasHeight * pageHeight;
     final width = _number(position['width'], 420) / canvasWidth * pageWidth;
@@ -380,7 +382,7 @@ class CertificateArtifactRenderer {
     };
     final direction = style['direction'] == 'rtl'
         ? pw.TextDirection.rtl
-        : _containsArabic(_fieldText(values, field))
+        : _containsArabic(text)
         ? pw.TextDirection.rtl
         : pw.TextDirection.ltr;
     final textStyle = pw.TextStyle(
@@ -402,7 +404,7 @@ class CertificateArtifactRenderer {
             child: pw.Directionality(
               textDirection: direction,
               child: pw.Text(
-                _fieldText(values, field),
+                _pdfText(text),
                 textAlign: alignment,
                 style: textStyle,
               ),
@@ -458,6 +460,9 @@ class CertificateArtifactRenderer {
 
   static bool _containsArabic(String value) =>
       RegExp(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]').hasMatch(value);
+
+  static String _pdfText(String value) =>
+      _containsArabic(value) ? ArabicReshaper.instance.reshape(value) : value;
 
   static PdfColor _pdfColor(String? value) {
     final raw = value?.replaceFirst('#', '');

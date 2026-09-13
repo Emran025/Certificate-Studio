@@ -806,18 +806,24 @@ class _PropertiesPanel extends StatelessWidget {
             },
           ),
           const SizedBox(height: AppSpacing.xs),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Bold'),
-            value: selected.bold,
-            onChanged: (value) => onChanged(selected.copyWith(bold: value)),
+          Material(
+            color: Colors.transparent,
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Bold'),
+              value: selected.bold,
+              onChanged: (value) => onChanged(selected.copyWith(bold: value)),
+            ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Italic'),
-            value: selected.italic,
-            onChanged: (value) => onChanged(selected.copyWith(italic: value)),
+          Material(
+            color: Colors.transparent,
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Italic'),
+              value: selected.italic,
+              onChanged: (value) => onChanged(selected.copyWith(italic: value)),
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           TextFormField(

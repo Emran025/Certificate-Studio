@@ -809,6 +809,7 @@ class _PropertiesPanel extends StatelessWidget {
 
 class _NumberInput extends StatefulWidget {
   const _NumberInput({
+    super.key,
     required this.label,
     required this.value,
     required this.onChanged,

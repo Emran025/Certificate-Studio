@@ -244,12 +244,13 @@ class _WorkspaceNavigation extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.asset(
+                    'assets/images/certificate_studio_logo.png',
+                    width: 36,
+                    height: 36,
+                    fit: BoxFit.cover,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),

@@ -16,6 +16,7 @@ class CertificateArtifactRenderer {
     required List<int>? templateBytes,
     required Map<String, Object?> template,
     required List<int> fontBytes,
+    Map<String, List<int>> fontBytesByFamily = const {},
   }) async {
     final document = pw.Document(title: 'Certificate');
     final font = pw.Font.ttf(
@@ -52,6 +53,7 @@ class CertificateArtifactRenderer {
                   pageWidth,
                   pageHeight,
                   font,
+                  fontBytesByFamily,
                 ),
             pw.Positioned(
               left: 8,
@@ -148,6 +150,7 @@ class CertificateArtifactRenderer {
     double pageWidth,
     double pageHeight,
     pw.Font font,
+    Map<String, List<int>> fontBytesByFamily,
   ) {
     final position = _jsonMap(field['position_json']);
     final style = _jsonMap(field['style_json']);
@@ -155,6 +158,7 @@ class CertificateArtifactRenderer {
     final y = _number(position['y'], 0) / canvasHeight * pageHeight;
     final width = _number(position['width'], 420) / canvasWidth * pageWidth;
     final height = _number(position['height'], 64) / canvasHeight * pageHeight;
+    final fieldFont = _fieldFont(field, font, fontBytesByFamily);
     final alignment = switch (style['alignment']) {
       'center' => pw.TextAlign.center,
       'right' => pw.TextAlign.right,
@@ -170,7 +174,7 @@ class CertificateArtifactRenderer {
           _fieldText(values, field),
           textAlign: alignment,
           style: pw.TextStyle(
-            font: font,
+            font: fieldFont,
             fontFallback: [font],
             fontSize: _number(style['font_size'], 24),
           ),
@@ -181,6 +185,18 @@ class CertificateArtifactRenderer {
 
   static bool _fieldIsVisible(Map<String, Object?> field) =>
       _jsonMap(field['style_json'])['visible'] != false;
+
+  static pw.Font _fieldFont(
+    Map<String, Object?> field,
+    pw.Font fallback,
+    Map<String, List<int>> fontBytesByFamily,
+  ) {
+    final style = _jsonMap(field['style_json']);
+    final family = style['font_family']?.toString().trim();
+    final bytes = family == null ? null : fontBytesByFamily[family];
+    if (bytes == null || bytes.isEmpty) return fallback;
+    return pw.Font.ttf(ByteData.sublistView(Uint8List.fromList(bytes)));
+  }
 
   static String _fieldText(
     Map<String, dynamic> values,

@@ -29,19 +29,14 @@ class CertificateArtifactRenderer {
     final canvasWidth = _number(template['width'], 1000);
     final canvasHeight = _number(template['height'], 700);
     final dpi = _number(template['dpi'], 96);
-    final sourceImage = templateBytes == null
-        ? null
-        : img.decodeImage(Uint8List.fromList(templateBytes));
     final background = templateBytes == null
         ? null
         : pw.MemoryImage(Uint8List.fromList(templateBytes));
-    // The designer stores the logical canvas size separately from the actual
-    // image dimensions. Use the image aspect ratio for the PDF page so the
-    // background and the positioned fields share the same visible surface.
-    final outputWidth = sourceImage?.width.toDouble() ?? canvasWidth;
-    final outputHeight = sourceImage?.height.toDouble() ?? canvasHeight;
-    final pageWidth = outputWidth / dpi * 72;
-    final pageHeight = outputHeight / dpi * 72;
+    // Field positions are stored in the designer's logical canvas coordinate
+    // system. Keep the PDF page in that same system; the background uses the
+    // same contain behavior as the designer preview.
+    final pageWidth = canvasWidth / dpi * 72;
+    final pageHeight = canvasHeight / dpi * 72;
     final qrField = fields.where(_isQrField).isEmpty
         ? null
         : fields.where(_isQrField).first;
@@ -53,7 +48,7 @@ class CertificateArtifactRenderer {
           children: [
             if (background != null)
               pw.Positioned.fill(
-                child: pw.Image(background, fit: pw.BoxFit.fill),
+                child: pw.Image(background, fit: pw.BoxFit.contain),
               ),
             for (final field in fields)
               if (_fieldIsVisible(field) && !_isQrField(field))
@@ -342,6 +337,8 @@ class CertificateArtifactRenderer {
     };
     final direction = style['direction'] == 'rtl'
         ? pw.TextDirection.rtl
+        : _containsArabic(_fieldText(values, field))
+        ? pw.TextDirection.rtl
         : pw.TextDirection.ltr;
     final textStyle = pw.TextStyle(
       color: _pdfColor(style['color'] as String?),
@@ -415,6 +412,9 @@ class CertificateArtifactRenderer {
 
   static double _number(Object? value, double fallback) =>
       value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
+
+  static bool _containsArabic(String value) =>
+      RegExp(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]').hasMatch(value);
 
   static PdfColor _pdfColor(String? value) {
     final raw = value?.replaceFirst('#', '');

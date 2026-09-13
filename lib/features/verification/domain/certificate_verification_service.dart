@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:cryptography/cryptography.dart';
@@ -339,7 +340,7 @@ class CertificateVerificationService {
 
   Map<String, dynamic>? _extractQrRecord(List<int> bytes) {
     try {
-      final decoded = img.decodeImage(bytes);
+      final decoded = img.decodeImage(Uint8List.fromList(bytes));
       if (decoded == null) return null;
       final rgba = decoded.convert(numChannels: 4).getBytes(order: img.ChannelOrder.abgr);
       final source = RGBLuminanceSource(decoded.width, decoded.height, rgba.buffer.asInt32List());

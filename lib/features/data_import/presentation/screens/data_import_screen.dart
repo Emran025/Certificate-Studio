@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/database/app_database.dart';
-import '../../../../core/database/database_tables.dart';
 import '../../../../shared/themes/app_colors.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
@@ -33,7 +30,6 @@ class _DataImportScreenState extends State<DataImportScreen> {
   late final ImportExcel _importExcel;
   final _controller = TextEditingController();
   ImportedTable _table = const ImportedTable(columns: [], rows: []);
-  Map<String, String> _mapping = {};
   bool _loading = true;
   bool _saving = false;
   String? _error;
@@ -55,19 +51,9 @@ class _DataImportScreenState extends State<DataImportScreen> {
 
   Future<void> _load(DataImportRepositoryImpl repository) async {
     final table = await repository.getForProject(widget.projectId);
-    final savedMapping = await widget.database.query(
-      DatabaseTables.settings,
-      where: {'key': 'mapping:${widget.projectId}'},
-    );
-    final rawMapping = savedMapping.isEmpty
-        ? null
-        : savedMapping.first['value_json'];
     if (!mounted) return;
     setState(() {
       _table = table;
-      _mapping = rawMapping is String
-          ? Map<String, String>.from(jsonDecode(rawMapping) as Map)
-          : {for (final column in table.columns) column: _suggestClass(column)};
       _loading = false;
     });
   }
@@ -96,11 +82,7 @@ class _DataImportScreenState extends State<DataImportScreen> {
       if (mounted) {
         setState(() {
           _table = table;
-          _mapping = {
-            for (final column in table.columns) column: _suggestClass(column),
-          };
         });
-        await _saveMapping();
       }
     } on FormatException catch (error) {
       if (mounted) setState(() => _error = error.message);
@@ -141,12 +123,8 @@ class _DataImportScreenState extends State<DataImportScreen> {
       if (!mounted) return;
       setState(() {
         _table = table;
-        _mapping = {
-          for (final column in table.columns) column: _suggestClass(column),
-        };
         _controller.clear();
       });
-      await _saveMapping();
     } on FormatException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
@@ -250,33 +228,6 @@ class _DataImportScreenState extends State<DataImportScreen> {
                         const SizedBox(height: AppSpacing.md),
                         _DataPreview(table: _table),
                         const SizedBox(height: AppSpacing.xl),
-                        Text(
-                          'Column mapping',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          'Choose the certificate class each imported column supplies.',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: AppColors.textSecondary),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        AppSurfaceCard(
-                          child: Column(
-                            children: [
-                              for (final column in _table.columns)
-                                _MappingRow(
-                                  column: column,
-                                  value: _mapping[column] ?? 'custom',
-                                  onChanged: (value) {
-                                    if (value == null) return;
-                                    setState(() => _mapping[column] = value);
-                                    _saveMapping();
-                                  },
-                                ),
-                            ],
-                          ),
-                        ),
                       ] else
                         AppSurfaceCard(
                           child: Row(
@@ -288,7 +239,7 @@ class _DataImportScreenState extends State<DataImportScreen> {
                               const SizedBox(width: AppSpacing.sm),
                               Expanded(
                                 child: Text(
-                                  'No recipient data yet. Import a table to continue to column mapping.',
+                                  'No recipient data yet. Import a table to continue to certificate design.',
                                 ),
                               ),
                             ],
@@ -302,96 +253,6 @@ class _DataImportScreenState extends State<DataImportScreen> {
     );
   }
 
-  Future<void> _saveMapping() async {
-    final key = 'mapping:${widget.projectId}';
-    final values = {
-      'key': key,
-      'value_json': jsonEncode(_mapping),
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    };
-    final existing = await widget.database.query(
-      DatabaseTables.settings,
-      where: {'key': key},
-    );
-    if (existing.isEmpty) {
-      await widget.database.insert(DatabaseTables.settings, values);
-    } else {
-      await widget.database.update(DatabaseTables.settings, key, values);
-    }
-  }
-
-  String _suggestClass(String column) {
-    final normalized = column.toLowerCase().replaceAll(
-      RegExp(r'[^a-z0-9]+'),
-      '_',
-    );
-    if (normalized.contains('name')) return 'student_name';
-    if (normalized.contains('course')) return 'course_name';
-    if (normalized.contains('grade') || normalized.contains('score')) {
-      return 'grade';
-    }
-    if (normalized.contains('date')) return 'issue_date';
-    if (normalized.contains('phone') || normalized.contains('mobile')) {
-      return 'phone';
-    }
-    if (normalized == 'class' || normalized.contains('id')) {
-      return 'student_class';
-    }
-    return 'custom';
-  }
-}
-
-class _MappingRow extends StatelessWidget {
-  const _MappingRow({
-    required this.column,
-    required this.value,
-    required this.onChanged,
-  });
-  final String column;
-  final String value;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(column, style: Theme.of(context).textTheme.titleSmall),
-        ),
-        const Icon(Icons.arrow_forward, size: 18),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: DropdownButtonFormField<String>(
-            value: value,
-            decoration: const InputDecoration(labelText: 'Certificate class'),
-            items: const [
-              DropdownMenuItem(
-                value: 'student_name',
-                child: Text('Student name'),
-              ),
-              DropdownMenuItem(
-                value: 'student_class',
-                child: Text('Student class'),
-              ),
-              DropdownMenuItem(
-                value: 'course_name',
-                child: Text('Course name'),
-              ),
-              DropdownMenuItem(value: 'grade', child: Text('Grade')),
-              DropdownMenuItem(value: 'issue_date', child: Text('Issue date')),
-              DropdownMenuItem(value: 'phone', child: Text('Phone')),
-              DropdownMenuItem(
-                value: 'custom',
-                child: Text('Custom / unmapped'),
-              ),
-            ],
-            onChanged: onChanged,
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 class _DataPreview extends StatelessWidget {

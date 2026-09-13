@@ -21,19 +21,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
   final _qrController = TextEditingController();
   CertificateVerificationResult? _result;
   bool _checking = false;
-  List<String> _recentIds = [];
 
   CertificateVerificationService get _service => CertificateVerificationService(widget.database, widget.keyStorage);
 
   @override
   void initState() {
     super.initState();
-    _loadRecent();
-  }
-
-  Future<void> _loadRecent() async {
-    final rows = await widget.database.query(DatabaseTables.certificates);
-    if (mounted) setState(() => _recentIds = rows.reversed.map((row) => row['id']! as String).take(10).toList());
   }
 
   Future<void> _pickCertificate() async {
@@ -118,7 +111,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
         ])),
         if (_checking) const Padding(padding: EdgeInsets.all(AppSpacing.lg), child: Center(child: CircularProgressIndicator())),
         if (_result case final result?) ...[const SizedBox(height: AppSpacing.lg), _ResultCard(result: result)],
-        if (_recentIds.isNotEmpty) ...[const SizedBox(height: AppSpacing.xl), Text('Recent certificates', style: Theme.of(context).textTheme.titleLarge), const SizedBox(height: AppSpacing.sm), AppSurfaceCard(padding: EdgeInsets.zero, child: ListView.separated(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: _recentIds.length, separatorBuilder: (_, _) => const Divider(height: 1), itemBuilder: (_, index) => ListTile(leading: const Icon(Icons.workspace_premium_outlined), title: Text(_recentIds[index]), trailing: const Icon(Icons.chevron_right), onTap: () => _verifyId(_recentIds[index]))))],
       ]))),
     ),
   );

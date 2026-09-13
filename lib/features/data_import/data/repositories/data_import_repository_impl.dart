@@ -4,6 +4,7 @@ import 'package:excel/excel.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
+import '../../../../shared/utils/field_identifier.dart';
 import '../../domain/entities/imported_table.dart';
 import '../../domain/repositories/data_import_repository.dart';
 
@@ -74,7 +75,11 @@ class DataImportRepositoryImpl implements DataImportRepository {
     }
     for (var index = 0; index < table.rows.length; index++) {
       final values = table.rows[index];
-      final className = values['class'] ?? values['Class'] ?? '${index + 1}';
+      final classSource = values.entries
+          .where((entry) => _isClassColumn(entry.key))
+          .map((entry) => entry.value.trim())
+          .firstWhere((value) => value.isNotEmpty, orElse: () => '${index + 1}');
+      final className = classSource;
       await _database.insert(DatabaseTables.students, {
         'id': 'student-${DateTime.now().microsecondsSinceEpoch}-$index',
         'project_id': projectId,
@@ -126,6 +131,16 @@ class DataImportRepositoryImpl implements DataImportRepository {
       result.add(candidate);
     }
     return result;
+  }
+
+  bool _isClassColumn(String header) {
+    final id = canonicalFieldClassId(header);
+    return id == 'class' ||
+        id == 'class_name' ||
+        id == 'student_class' ||
+        id == 'الصف' ||
+        id == 'الفصل' ||
+        id == 'الشعبة';
   }
 
   String _cellText(Data? cell) {

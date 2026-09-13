@@ -30,7 +30,9 @@ class CertificateArtifactRenderer {
         : pw.MemoryImage(Uint8List.fromList(templateBytes));
     final pageWidth = canvasWidth / dpi * 72;
     final pageHeight = canvasHeight / dpi * 72;
-    final qr = _qrWidget(encodeVerificationQrPayload(record), 120);
+    final qrField = fields.where(_isQrField).isEmpty
+        ? null
+        : fields.where(_isQrField).first;
     document.addPage(
       pw.Page(
         pageFormat: PdfPageFormat(pageWidth, pageHeight),
@@ -42,7 +44,7 @@ class CertificateArtifactRenderer {
                 child: pw.Image(background, fit: pw.BoxFit.fill),
               ),
             for (final field in fields)
-              if (_fieldIsVisible(field))
+              if (_fieldIsVisible(field) && !_isQrField(field))
                 _pdfField(
                   values,
                   field,
@@ -57,7 +59,14 @@ class CertificateArtifactRenderer {
               bottom: 6,
               child: pw.Text(hash, style: const pw.TextStyle(fontSize: 5)),
             ),
-            pw.Positioned(right: 12, bottom: 12, child: qr),
+            _pdfQrField(
+              encodeVerificationQrPayload(record),
+              qrField,
+              canvasWidth,
+              canvasHeight,
+              pageWidth,
+              pageHeight,
+            ),
           ],
         ),
       ),
@@ -109,7 +118,7 @@ class CertificateArtifactRenderer {
       );
     }
     for (final field in fields) {
-      if (!_fieldIsVisible(field)) continue;
+      if (!_fieldIsVisible(field) || _isQrField(field)) continue;
       final position = _jsonMap(field['position_json']);
       final style = _jsonMap(field['style_json']);
       final text = _fieldText(values, field);
@@ -121,7 +130,7 @@ class CertificateArtifactRenderer {
       img.drawString(
         canvas,
         text,
-        font: _bitmapFont(_number(style['font_size'], 24)),
+        font: _bitmapFont(_number(style['font_size'], 24) * canvas.width / designWidth),
         x: x,
         y: y,
         color: _imageColor(style['color'] as String?),
@@ -135,18 +144,52 @@ class CertificateArtifactRenderer {
       y: canvas.height - 40,
       color: img.ColorRgb8(90, 90, 90),
     );
-    _drawQr(
-      canvas,
-      encodeVerificationQrPayload(record),
-      x: canvas.width - _qrSize(canvas) - 32,
-      y: canvas.height - _qrSize(canvas) - 32,
-      size: _qrSize(canvas),
-    );
+    final qrFields = fields.where(_isQrField);
+    final qrField = qrFields.isEmpty ? null : qrFields.first;
+    final qrPosition = qrField == null
+        ? <String, dynamic>{}
+        : _jsonMap(qrField['position_json']);
+    final qrSize = _number(qrPosition['width'], _qrSize(canvas).toDouble())
+        .clamp(120, math.min(canvas.width, canvas.height))
+        .round();
+    final qrX = qrField == null
+        ? canvas.width - qrSize - 32
+        : (_number(qrPosition['x'], 0) / designWidth * canvas.width).round();
+    final qrY = qrField == null
+        ? canvas.height - qrSize - 32
+        : (_number(qrPosition['y'], 0) / designHeight * canvas.height).round();
+    _drawQr(canvas, encodeVerificationQrPayload(record), x: qrX, y: qrY, size: qrSize);
     return [...img.encodePng(canvas), ...utf8.encode(_embeddedMarker(record))];
   }
 
   static int _qrSize(img.Image canvas) =>
       (math.min(canvas.width, canvas.height) * .24).round().clamp(220, 520);
+
+  static bool _isQrField(Map<String, Object?> field) =>
+      _jsonMap(field['style_json'])['kind'] == 'qr';
+
+  static pw.Widget _pdfQrField(
+    String payload,
+    Map<String, Object?>? field,
+    double canvasWidth,
+    double canvasHeight,
+    double pageWidth,
+    double pageHeight,
+  ) {
+    if (field == null) {
+      return pw.Positioned(right: 12, bottom: 12, child: _qrWidget(payload, 120));
+    }
+    final position = _jsonMap(field['position_json']);
+    final x = _number(position['x'], 0) / canvasWidth * pageWidth;
+    final y = _number(position['y'], 0) / canvasHeight * pageHeight;
+    final width = _number(position['width'], 220) / canvasWidth * pageWidth;
+    final height = _number(position['height'], 220) / canvasHeight * pageHeight;
+    return pw.Positioned(
+      left: x,
+      top: y,
+      child: _qrWidget(payload, math.min(width, height)),
+    );
+  }
 
   static pw.Widget _qrWidget(String payload, double size) {
     final matrix = Encoder.encode(payload, ErrorCorrectionLevel.l).matrix!;
@@ -290,8 +333,11 @@ class CertificateArtifactRenderer {
     return null;
   }
 
-  static String _normalizeKey(String value) =>
-      value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '_');
+  static String _normalizeKey(String value) => value
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
 
   static Map<String, dynamic> _jsonMap(Object? raw) {
     if (raw is! String || raw.isEmpty) return {};

@@ -13,6 +13,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/database/database_tables.dart';
 import '../../../core/files/certificate_artifact_store.dart';
 import '../../../core/security/keys/institution_key_manager.dart';
+import '../../../shared/utils/field_identifier.dart';
 import 'template_bytes.dart';
 import 'certificate_artifact_renderer.dart';
 
@@ -151,8 +152,13 @@ class CertificateGenerationService {
         }
         for (final field in fields) {
           final source = field['source'] as String?;
-          final className = field['class_name'] as String?;
-          if (source != null && className != null) {
+          final rawClassName = field['class_name'] as String?;
+          final className = canonicalFieldClassId(
+            rawClassName?.trim().isNotEmpty == true
+                ? rawClassName!
+                : source ?? '',
+          );
+          if (source != null && source.trim().isNotEmpty) {
             final value = _valueForKey(data, source) ?? '';
             values[className] = value;
             values[source] = value;

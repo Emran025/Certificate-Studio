@@ -7,6 +7,7 @@ import '../../../../core/database/database_tables.dart';
 import '../../../../features/templates/presentation/template_file_support.dart';
 import '../../../../shared/themes/app_colors.dart';
 import '../../../../shared/themes/app_spacing.dart';
+import '../../../../shared/utils/field_identifier.dart';
 
 class CertificateDesignerScreen extends StatefulWidget {
   const CertificateDesignerScreen({
@@ -121,7 +122,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     final id = 'field-${DateTime.now().microsecondsSinceEpoch}';
     final field = _DesignerField(
       id: id,
-      className: _className(source),
+      className: canonicalFieldClassId(source),
       source: source,
       x: ((_canvasWidth - 420) / 2).clamp(0, _canvasWidth - 120).toDouble(),
       y: (100 + (_fields.length * 70)).clamp(0, _canvasHeight - 64).toDouble(),
@@ -147,6 +148,28 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     if (!mounted) return;
     _updateFields(_fields.where((field) => field.id != selected.id).toList());
     setState(() => _selectedId = null);
+  }
+
+  Future<void> _addQrField() async {
+    final id = 'qr-${DateTime.now().microsecondsSinceEpoch}';
+    const size = 220.0;
+    final field = _DesignerField(
+      id: id,
+      className: 'qr_code',
+      source: '',
+      x: (_canvasWidth - size - 40).clamp(0, _canvasWidth - size).toDouble(),
+      y: (_canvasHeight - size - 40).clamp(0, _canvasHeight - size).toDouble(),
+      width: size,
+      height: size,
+      fontSize: 0,
+      color: '#000000',
+      qr: true,
+    );
+    await widget.database.insert(DatabaseTables.certificateFields,
+        field.toRow(widget.projectId, DateTime.now().toUtc().toIso8601String()));
+    if (!mounted) return;
+    _updateFields([..._fields, field]);
+    setState(() => _selectedId = id);
   }
 
   Future<void> _save() async {
@@ -331,6 +354,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
               fields: _fields,
               selectedId: _selectedId,
               onAdd: _addField,
+              onAddQr: _addQrField,
               onSelect: (id) => setState(() => _selectedId = id),
             ),
           ),
@@ -388,12 +412,14 @@ class _ElementsPanel extends StatelessWidget {
     required this.fields,
     required this.selectedId,
     required this.onAdd,
+    required this.onAddQr,
     required this.onSelect,
   });
   final List<String> columns;
   final List<_DesignerField> fields;
   final String? selectedId;
   final VoidCallback onAdd;
+  final VoidCallback onAddQr;
   final ValueChanged<String> onSelect;
   @override
   Widget build(BuildContext context) => Container(
@@ -415,6 +441,15 @@ class _ElementsPanel extends StatelessWidget {
             label: const Text('Data field'),
           ),
         ),
+        const SizedBox(height: AppSpacing.xs),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: onAddQr,
+            icon: const Icon(Icons.qr_code_2),
+            label: const Text('QR code'),
+          ),
+        ),
         const SizedBox(height: AppSpacing.lg),
         Text('Layers', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: AppSpacing.xs),
@@ -429,8 +464,8 @@ class _ElementsPanel extends StatelessWidget {
                   child: ListTile(
                     selected: field.id == selectedId,
                     dense: true,
-                    leading: const Icon(Icons.text_fields, size: 18),
-                    title: Text(field.source),
+                    leading: Icon(field.qr ? Icons.qr_code_2 : Icons.text_fields, size: 18),
+                    title: Text(field.qr ? 'Verification QR' : field.source),
                     subtitle: Text(
                       '${field.width.round()} × ${field.height.round()}',
                     ),
@@ -503,7 +538,7 @@ class _Canvas extends StatelessWidget {
               _CanvasField(
                 field: field,
                 selected: field.id == selectedId,
-                previewText: '${previewData[field.source] ?? field.source}',
+                previewText: field.qr ? 'QR' : '${previewData[field.source] ?? field.source}',
                 onSelect: () => onSelect(field.id),
                 onMove: (delta) => onMove(field.id, delta),
                 onResize: (delta, fromLeft, fromTop) => onResize(
@@ -560,19 +595,21 @@ class _CanvasField extends StatelessWidget {
                 width: 2,
               ),
             ),
-            child: Text(
-              previewText,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              textDirection: field.textDirection,
-              style: TextStyle(
-                fontFamily: field.fontFamily,
-                fontSize: field.fontSize,
-                color: _hex(field.color),
-                fontWeight: field.bold ? FontWeight.bold : FontWeight.normal,
-                fontStyle: field.italic ? FontStyle.italic : FontStyle.normal,
-              ),
-            ),
+            child: field.qr
+                ? const Center(child: Icon(Icons.qr_code_2, size: 96))
+                : Text(
+                    previewText,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    textDirection: field.textDirection,
+                    style: TextStyle(
+                      fontFamily: field.fontFamily,
+                      fontSize: field.fontSize,
+                      color: _hex(field.color),
+                      fontWeight: field.bold ? FontWeight.bold : FontWeight.normal,
+                      fontStyle: field.italic ? FontStyle.italic : FontStyle.normal,
+                    ),
+                  ),
           ),
           if (selected) ...[
             _ResizeHandle(
@@ -667,7 +704,10 @@ class _PropertiesPanel extends StatelessWidget {
             ],
             onChanged: (value) {
               if (value != null) {
-                onChanged(selected.copyWith(source: value, className: value));
+                onChanged(selected.copyWith(
+                  source: value,
+                  className: canonicalFieldClassId(value),
+                ));
               }
             },
           ),
@@ -949,6 +989,7 @@ class _DesignerField {
     this.fontFamily = 'Cairo',
     this.bold = false,
     this.italic = false,
+    this.qr = false,
   });
   final String id;
   final String className;
@@ -964,6 +1005,7 @@ class _DesignerField {
   final String fontFamily;
   final bool bold;
   final bool italic;
+  final bool qr;
   Alignment get textAlignment => switch (alignment) {
     'center' => Alignment.center,
     'right' => Alignment.centerRight,
@@ -977,7 +1019,7 @@ class _DesignerField {
     final style = _decode(row['style_json']);
     return _DesignerField(
       id: row['id']! as String,
-      className: row['class_name']! as String,
+      className: canonicalFieldClassId(row['class_name']! as String),
       source: (row['source'] as String?) ?? '',
       x: _number(position['x'], 100),
       y: _number(position['y'], 100),
@@ -990,12 +1032,13 @@ class _DesignerField {
       fontFamily: (style['font_family'] as String?) ?? 'Cairo',
       bold: style['bold'] == true || style['font_weight'] == 'bold',
       italic: style['italic'] == true,
+      qr: style['kind'] == 'qr',
     );
   }
   Map<String, Object?> toRow(String projectId, String now) => {
     'id': id,
     'project_id': projectId,
-    'class_name': className,
+    'class_name': canonicalFieldClassId(className),
     'source': source,
     'position_json': jsonEncode({
       'x': x,
@@ -1003,7 +1046,8 @@ class _DesignerField {
       'width': width,
       'height': height,
     }),
-    'style_json': jsonEncode({
+      'style_json': jsonEncode({
+      'kind': qr ? 'qr' : 'text',
       'font_size': fontSize,
       'color': color,
       'alignment': alignment,
@@ -1030,6 +1074,7 @@ class _DesignerField {
     String? fontFamily,
     bool? bold,
     bool? italic,
+    bool? qr,
   }) => _DesignerField(
     id: id,
     className: className ?? this.className,
@@ -1045,6 +1090,7 @@ class _DesignerField {
     fontFamily: fontFamily ?? this.fontFamily,
     bold: bold ?? this.bold,
     italic: italic ?? this.italic,
+    qr: qr ?? this.qr,
   );
   static Map<String, Object?> _decode(Object? raw) {
     if (raw is! String) return {};

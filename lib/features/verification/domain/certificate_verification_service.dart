@@ -363,31 +363,38 @@ class CertificateVerificationService {
     try {
       final decoded = img.decodeImage(Uint8List.fromList(bytes));
       if (decoded == null) return null;
-      final bgra = decoded
-          .convert(numChannels: 4)
-          .getBytes(order: img.ChannelOrder.bgra);
-      final source = RGBLuminanceSource(
-        decoded.width,
-        decoded.height,
-        bgra.buffer.asInt32List(),
-      );
       final reader = QRCodeReader();
       final hints = DecodeHints()
         ..put(DecodeHintType.tryHarder)
         ..put(DecodeHintType.possibleFormats, [BarcodeFormat.qrCode]);
-      try {
-        final result = reader.decode(
-          BinaryBitmap(GlobalHistogramBinarizer(source)),
-          hints: hints,
+      final variants = <img.Image>[
+        decoded,
+        img.grayscale(decoded),
+        img.copyResize(decoded, width: decoded.width * 2),
+        img.rotate(decoded, angle: 90),
+        img.rotate(decoded, angle: 180),
+        img.rotate(decoded, angle: 270),
+      ];
+      for (final variant in variants) {
+        final bgra = variant.convert(numChannels: 4).getBytes(order: img.ChannelOrder.bgra);
+        final source = RGBLuminanceSource(
+          variant.width,
+          variant.height,
+          bgra.buffer.asInt32List(),
         );
-        return decodeVerificationQrPayload(result.text);
-      } catch (_) {
-        final result = reader.decode(
-          BinaryBitmap(HybridBinarizer(source)),
-          hints: hints,
-        );
-        return decodeVerificationQrPayload(result.text);
+        for (final binarizer in [
+          GlobalHistogramBinarizer(source),
+          HybridBinarizer(source),
+        ]) {
+          try {
+            final result = reader.decode(BinaryBitmap(binarizer), hints: hints);
+            return decodeVerificationQrPayload(result.text);
+          } catch (_) {
+            // Continue through the remaining image preprocessing variants.
+          }
+        }
       }
+      return null;
     } catch (_) {
       return null;
     }

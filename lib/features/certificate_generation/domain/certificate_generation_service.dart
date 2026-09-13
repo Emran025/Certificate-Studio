@@ -41,6 +41,8 @@ class CertificateGenerationService {
   final KeyStorage keyStorage;
   final CertificateArtifactStore artifactStore;
   Future<List<int>>? _arabicFontBytes;
+  final Map<String, Future<List<int>?>> _templateBytesCache = {};
+  Future<Map<String, List<int>>>? _projectFontBytes;
 
   Future<CertificateGenerationResult> generate({
     required String projectId,
@@ -72,9 +74,8 @@ class CertificateGenerationService {
     final template = templates.isEmpty
         ? const <String, Object?>{}
         : templates.first;
-    final templateBytes = await readTemplateBytes(
-      template['file_path'] as String? ?? '',
-    );
+    final templatePath = template['file_path'] as String? ?? '';
+    final templateBytes = await _cachedTemplateBytes(templatePath);
     final mappingRows = await database.query(
       DatabaseTables.settings,
       where: {'key': 'mapping:$projectId'},
@@ -313,7 +314,7 @@ class CertificateGenerationService {
     Map<String, Object?> template,
   ) async {
     final fontBytes = await _loadArabicFontBytes();
-    final fontBytesByFamily = await _loadProjectFontBytes(fontBytes);
+    final fontBytesByFamily = await (_projectFontBytes ??= _loadProjectFontBytes(fontBytes));
     return Isolate.run(
       () => CertificateArtifactRenderer.renderPdf(
         values: values,
@@ -342,6 +343,13 @@ class CertificateGenerationService {
       if (bytes != null && bytes.isNotEmpty) result[family] = bytes;
     }
     return result;
+  }
+
+  Future<List<int>?> _cachedTemplateBytes(String path) async {
+    if (path.isEmpty) return null;
+    return (_templateBytesCache[path] ??= readTemplateBytes(path)).then(
+      (bytes) => bytes == null ? null : List<int>.unmodifiable(bytes),
+    );
   }
 
   Future<List<int>> _rasterizePdf(List<int> pdfBytes) async {

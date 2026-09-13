@@ -37,9 +37,27 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Future<void> _pickCertificate() async {
-    final picked = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'], withData: true);
-    if (picked == null || picked.files.single.bytes == null) return;
-    await _run(() => _service.verifyFile(picked.files.single.bytes!, fileName: picked.files.single.name));
+    // Use FileType.any instead of an image-only picker on web/desktop. The
+    // extension is validated here so PDF certificates are selectable too.
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      withData: true,
+    );
+    final file = picked?.files.single;
+    if (file == null) return;
+    final extension = file.name.split('.').last.toLowerCase();
+    const supportedExtensions = {'pdf', 'png', 'jpg', 'jpeg'};
+    if (!supportedExtensions.contains(extension)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a PDF, PNG, JPG, or JPEG certificate.')),
+        );
+      }
+      return;
+    }
+    final bytes = file.bytes;
+    if (bytes == null) return;
+    await _run(() => _service.verifyFile(bytes, fileName: file.name));
   }
 
   Future<void> _verifyId([String? id]) async {

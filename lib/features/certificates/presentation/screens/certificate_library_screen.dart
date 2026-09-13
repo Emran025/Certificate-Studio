@@ -692,7 +692,7 @@ class _ArtifactImage extends StatelessWidget {
             : Image.memory(
                 bytes,
                 fit: fit,
-                errorBuilder: (_, __, ___) => const Center(
+                errorBuilder: (_, _, _) => const Center(
                   child: Icon(Icons.broken_image_outlined, size: 42),
                 ),
               );

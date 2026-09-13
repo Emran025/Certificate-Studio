@@ -1,4 +1,3 @@
-library certificate_crypto;
 
 export 'src/certificate.dart';
 export 'src/encoding.dart';

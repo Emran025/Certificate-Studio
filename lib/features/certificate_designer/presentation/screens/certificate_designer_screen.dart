@@ -397,10 +397,6 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     );
   }
 
-  String _className(String source) => source
-      .toLowerCase()
-      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
-      .replaceAll(RegExp(r'^_|_$'), '');
   Map<String, dynamic> _decodeMap(Object? raw) => raw is String && raw.isNotEmpty ? Map<String, dynamic>.from(jsonDecode(raw) as Map) : <String, dynamic>{};
   double _number(Object? value, double fallback) =>
       value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
@@ -588,7 +584,7 @@ class _CanvasField extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
               color: selected
-                  ? AppColors.primaryLight.withOpacity(.45)
+                  ? AppColors.primaryLight.withValues(alpha: .45)
                   : Colors.transparent,
               border: Border.all(
                 color: selected ? AppColors.primary : Colors.transparent,
@@ -696,7 +692,7 @@ class _PropertiesPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<String>(
-            value: columns.contains(selected.source) ? selected.source : null,
+            initialValue: columns.contains(selected.source) ? selected.source : null,
             decoration: const InputDecoration(labelText: 'Data source field'),
             items: [
               for (final column in columns)
@@ -763,7 +759,7 @@ class _PropertiesPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           DropdownButtonFormField<String>(
-            value: selected.fontFamily,
+            initialValue: selected.fontFamily,
             decoration: const InputDecoration(labelText: 'Font family'),
             isExpanded: true,
             items: [
@@ -786,7 +782,7 @@ class _PropertiesPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           DropdownButtonFormField<String>(
-            value: selected.alignment,
+            initialValue: selected.alignment,
             decoration: const InputDecoration(labelText: 'Text alignment'),
             items: const [
               DropdownMenuItem(value: 'left', child: Text('Left')),
@@ -799,7 +795,7 @@ class _PropertiesPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           DropdownButtonFormField<String>(
-            value: selected.direction,
+            initialValue: selected.direction,
             decoration: const InputDecoration(labelText: 'Text direction'),
             items: const [
               DropdownMenuItem(value: 'ltr', child: Text('LTR')),

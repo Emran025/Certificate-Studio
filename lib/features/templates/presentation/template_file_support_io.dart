@@ -16,7 +16,7 @@ Widget templatePreview(String path) {
     file,
     width: double.infinity,
     fit: BoxFit.cover,
-    errorBuilder: (_, __, ___) =>
+    errorBuilder: (_, _, _) =>
         const Center(child: Icon(Icons.image_not_supported_outlined, size: 40)),
   );
 }
@@ -33,7 +33,7 @@ Widget templateCanvasPreview(String path) {
     width: double.infinity,
     height: double.infinity,
     fit: BoxFit.contain,
-    errorBuilder: (_, __, ___) =>
+    errorBuilder: (_, _, _) =>
         const Center(child: Icon(Icons.image_not_supported_outlined, size: 40)),
   );
 }

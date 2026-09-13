@@ -54,11 +54,12 @@ class _CertificateGenerationScreenState
         projectId: widget.projectId,
         institutionId: widget.institutionId,
         onProgress: (completed, total) {
-          if (mounted)
+          if (mounted) {
             setState(() {
               _completed = completed;
               _total = total;
             });
+          }
         },
       );
       final certificates = await widget.database.query(

@@ -431,7 +431,7 @@ class CertificateGenerationService {
           canvas.setFillColor(PdfColors.black);
           for (var x = 0; x < count; x++) {
             for (var y = 0; y < count; y++) {
-              if (matrix.get(x, y)) {
+              if (matrix.get(x, y) == 1) {
                 canvas.drawRect(x * module, size.y - (y + 1) * module, module, module);
                 canvas.fillPath();
               }
@@ -448,7 +448,7 @@ class CertificateGenerationService {
     img.fillRect(canvas, x1: x, y1: y, x2: x + size, y2: y + size, color: img.ColorRgb8(255, 255, 255));
     for (var row = 0; row < matrix.height; row++) {
       for (var col = 0; col < matrix.width; col++) {
-        if (matrix.get(col, row)) {
+        if (matrix.get(col, row) == 1) {
           final left = x + (col * module).floor();
           final top = y + (row * module).floor();
           final right = x + ((col + 1) * module).ceil() - 1;

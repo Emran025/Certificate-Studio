@@ -371,9 +371,9 @@ class CertificateVerificationService {
         decoded,
         img.grayscale(decoded),
         img.copyResize(decoded, width: decoded.width * 2),
-        img.rotate(decoded, angle: 90),
-        img.rotate(decoded, angle: 180),
-        img.rotate(decoded, angle: 270),
+        img.copyRotate(decoded, angle: 90),
+        img.copyRotate(decoded, angle: 180),
+        img.copyRotate(decoded, angle: 270),
       ];
       for (final variant in variants) {
         final bgra = variant.convert(numChannels: 4).getBytes(order: img.ChannelOrder.bgra);

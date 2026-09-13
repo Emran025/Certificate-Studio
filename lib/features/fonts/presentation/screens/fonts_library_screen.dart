@@ -69,13 +69,13 @@ class _FontsLibraryScreenState extends State<FontsLibraryScreen> {
     floatingActionButton: FloatingActionButton.extended(onPressed: _import, icon: const Icon(Icons.upload_file), label: const Text('Import font')),
     body: _loading ? const Center(child: CircularProgressIndicator()) : Padding(
       padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1000), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      child: SizedBox(width: double.infinity, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Font library', style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: AppSpacing.xs),
         Text('${_fonts.length} persisted font${_fonts.length == 1 ? '' : 's'} available to projects.', style: Theme.of(context).textTheme.bodyLarge),
         const SizedBox(height: AppSpacing.lg),
         Expanded(child: _fonts.isEmpty ? AppSurfaceCard(child: Column(mainAxisSize: MainAxisSize.min, children: [const Text('No fonts have been imported yet.'), const SizedBox(height: AppSpacing.md), FilledButton.icon(onPressed: _import, icon: const Icon(Icons.upload_file), label: const Text('Import font'))])) : ListView.separated(itemCount: _fonts.length, separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm), itemBuilder: (_, index) { final font = _fonts[index]; final id = font['id']! as String; final selected = id == _selectedId; return AppSurfaceCard(child: ListTile(contentPadding: EdgeInsets.zero, leading: const CircleAvatar(child: Icon(Icons.text_fields)), title: Text(font['name']?.toString() ?? 'Unnamed font'), subtitle: Text('${font['family']} · ${font['format'].toString().toUpperCase()}\n${font['file_path']}'), isThreeLine: true, trailing: Row(mainAxisSize: MainAxisSize.min, children: [if (widget.projectId != null) TextButton(onPressed: selected ? null : () => _use(id), child: Text(selected ? 'In use' : 'Use')), IconButton(tooltip: 'Delete', onPressed: () => _delete(id), icon: const Icon(Icons.delete_outline))]))); })),
-      ]))),
+      ])),
     ),
   );
 }

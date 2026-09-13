@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
@@ -13,6 +14,7 @@ import '../../../core/database/database_tables.dart';
 import '../../../core/files/certificate_artifact_store.dart';
 import '../../../core/security/keys/institution_key_manager.dart';
 import 'template_bytes.dart';
+import 'certificate_artifact_renderer.dart';
 
 class CertificateGenerationResult {
   const CertificateGenerationResult({
@@ -42,6 +44,7 @@ class CertificateGenerationService {
   final KeyStorage keyStorage;
   final CertificateArtifactStore artifactStore;
   Future<pw.Font>? _arabicFont;
+  Future<List<int>>? _arabicFontBytes;
 
   Future<CertificateGenerationResult> generate({
     required String projectId,
@@ -178,7 +181,7 @@ class CertificateGenerationService {
         final pdfPath = await artifactStore.save(
           certificateId: certificateId,
           extension: 'pdf',
-            bytes: await _renderPdf(
+            bytes: await _renderPdfInIsolate(
               values,
               fields,
               signedRecord['document_hash'] as String,
@@ -190,7 +193,7 @@ class CertificateGenerationService {
         final imagePath = await artifactStore.save(
           certificateId: certificateId,
           extension: 'png',
-          bytes: _renderPng(
+          bytes: await _renderPngInIsolate(
             values,
             fields,
             signedRecord['document_hash'] as String,
@@ -292,6 +295,53 @@ class CertificateGenerationService {
       failed: students.length - generated,
       errors: errors,
     );
+  }
+
+  Future<List<int>> _renderPdfInIsolate(
+    Map<String, dynamic> values,
+    List<Map<String, Object?>> fields,
+    String hash,
+    Map<String, dynamic> record,
+    List<int>? templateBytes,
+    Map<String, Object?> template,
+  ) async {
+    final fontBytes = await _loadArabicFontBytes();
+    return Isolate.run(
+      () => CertificateArtifactRenderer.renderPdf(
+        values: values,
+        fields: fields,
+        hash: hash,
+        record: record,
+        templateBytes: templateBytes,
+        template: template,
+        fontBytes: fontBytes,
+      ),
+    );
+  }
+
+  Future<List<int>> _renderPngInIsolate(
+    Map<String, dynamic> values,
+    List<Map<String, Object?>> fields,
+    String hash,
+    Map<String, dynamic> record,
+    List<int>? templateBytes,
+    Map<String, Object?> template,
+  ) => Isolate.run(
+    () => CertificateArtifactRenderer.renderPng(
+      values: values,
+      fields: fields,
+      hash: hash,
+      record: record,
+      templateBytes: templateBytes,
+      template: template,
+    ),
+  );
+
+  Future<List<int>> _loadArabicFontBytes() async {
+    return _arabicFontBytes ??= () async {
+      final bytes = await rootBundle.load('assets/fonts/Cairo-Regular.ttf');
+      return bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes);
+    }();
   }
 
   Future<List<int>> _renderPdf(

@@ -35,6 +35,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
   bool _saving = false;
   String _saveLabel = 'Not saved';
   String _projectFontFamily = 'Cairo';
+  List<String> _fontFamilies = const ['Cairo', 'Arial', 'sans-serif'];
   double _zoom = 0.85;
   final List<List<_DesignerField>> _undoStack = [];
   final List<List<_DesignerField>> _redoStack = [];
@@ -68,6 +69,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     final projectSettings = _decodeMap(projects.firstOrNull?['settings_json']);
     final projectFontId = projectSettings['font_id']?.toString();
     final projectFonts = projectFontId == null ? const <Map<String, Object?>>[] : await widget.database.query(DatabaseTables.fonts, where: {'id': projectFontId});
+    final fontRows = await widget.database.query(DatabaseTables.fonts);
     final templates = projectTemplateId == null
         ? <Map<String, Object?>>[]
         : await widget.database.query(
@@ -93,6 +95,15 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
       _previewData = preview;
       _template = templates.firstOrNull;
       _projectFontFamily = projectFonts.firstOrNull?['family']?.toString() ?? 'Cairo';
+      _fontFamilies = {
+        'Cairo',
+        'Arial',
+        'sans-serif',
+        for (final font in fontRows)
+          if (font['family']?.toString().trim().isNotEmpty ?? false)
+            font['family']!.toString(),
+        _projectFontFamily,
+      }.toList();
       _fields = rows.map(_DesignerField.fromRow).toList();
       _undoStack
         ..clear()
@@ -352,6 +363,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
             child: _PropertiesPanel(
               field: _selected,
               columns: _columns,
+              fontFamilies: _fontFamilies,
               onChanged: _replaceField,
               onDelete: _deleteSelected,
             ),
@@ -613,11 +625,13 @@ class _PropertiesPanel extends StatelessWidget {
   const _PropertiesPanel({
     required this.field,
     required this.columns,
+    required this.fontFamilies,
     required this.onChanged,
     required this.onDelete,
   });
   final _DesignerField? field;
   final List<String> columns;
+  final List<String> fontFamilies;
   final ValueChanged<_DesignerField> onChanged;
   final VoidCallback onDelete;
   @override
@@ -703,10 +717,10 @@ class _PropertiesPanel extends StatelessWidget {
           DropdownButtonFormField<String>(
             value: selected.fontFamily,
             decoration: const InputDecoration(labelText: 'Font family'),
-            items: const [
-              DropdownMenuItem(value: 'Cairo', child: Text('Cairo')),
-              DropdownMenuItem(value: 'Arial', child: Text('Arial')),
-              DropdownMenuItem(value: 'sans-serif', child: Text('Sans serif')),
+            isExpanded: true,
+            items: [
+              for (final family in fontFamilies)
+                DropdownMenuItem(value: family, child: Text(family)),
             ],
             onChanged: (value) {
               if (value != null) {
@@ -714,12 +728,14 @@ class _PropertiesPanel extends StatelessWidget {
               }
             },
           ),
+          const SizedBox(height: AppSpacing.sm),
           _NumberInput(
             label: 'Font size',
             value: selected.fontSize,
             onChanged: (value) =>
                 onChanged(selected.copyWith(fontSize: value.clamp(8, 180))),
           ),
+          const SizedBox(height: AppSpacing.sm),
           DropdownButtonFormField<String>(
             value: selected.alignment,
             decoration: const InputDecoration(labelText: 'Text alignment'),
@@ -732,6 +748,7 @@ class _PropertiesPanel extends StatelessWidget {
               if (value != null) onChanged(selected.copyWith(alignment: value));
             },
           ),
+          const SizedBox(height: AppSpacing.sm),
           DropdownButtonFormField<String>(
             value: selected.direction,
             decoration: const InputDecoration(labelText: 'Text direction'),
@@ -743,18 +760,21 @@ class _PropertiesPanel extends StatelessWidget {
               if (value != null) onChanged(selected.copyWith(direction: value));
             },
           ),
+          const SizedBox(height: AppSpacing.xs),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Bold'),
             value: selected.bold,
             onChanged: (value) => onChanged(selected.copyWith(bold: value)),
           ),
+          const SizedBox(height: AppSpacing.xs),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Italic'),
             value: selected.italic,
             onChanged: (value) => onChanged(selected.copyWith(italic: value)),
           ),
+          const SizedBox(height: AppSpacing.sm),
           TextFormField(
             initialValue: selected.color,
             decoration: const InputDecoration(

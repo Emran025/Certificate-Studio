@@ -78,16 +78,10 @@ class CertificateArtifactRenderer {
         ? img.Image(width: fallbackWidth, height: fallbackHeight)
         : img.decodeImage(Uint8List.fromList(templateBytes)) ??
             img.Image(width: fallbackWidth, height: fallbackHeight);
-    final designWidth = _number(template['width'], canvas.width).round();
-    final designHeight = _number(template['height'], canvas.height).round();
-    final targetWidth = math.max(
-      canvas.width,
-      designWidth * 2,
-    );
-    final targetHeight = math.max(
-      canvas.height,
-      designHeight * 2,
-    );
+    final designWidth = _number(template['width'], canvas.width.toDouble());
+    final designHeight = _number(template['height'], canvas.height.toDouble());
+    final targetWidth = math.max(canvas.width.toDouble(), designWidth * 2).round();
+    final targetHeight = math.max(canvas.height.toDouble(), designHeight * 2).round();
     if (canvas.width != targetWidth || canvas.height != targetHeight) {
       canvas = img.copyResize(
         canvas,
@@ -108,8 +102,6 @@ class CertificateArtifactRenderer {
         thickness: 8,
       );
     }
-    final designWidth = _number(template['width'], 1000);
-    final designHeight = _number(template['height'], 700);
     for (final field in fields) {
       if (!_fieldIsVisible(field)) continue;
       final position = _jsonMap(field['position_json']);

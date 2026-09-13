@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:cryptography/cryptography.dart';
+import 'package:image/image.dart' as img;
+import 'package:zxing2/qrcode.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/database_tables.dart';
@@ -30,6 +32,7 @@ class CertificateVerificationResult {
     this.algorithm,
     this.protocolVersion,
     this.reason,
+    this.qrExtracted = false,
   });
   final CertificateVerificationStatus status;
   final String? certificateId;
@@ -42,6 +45,7 @@ class CertificateVerificationResult {
   final String? algorithm;
   final String? protocolVersion;
   final String? reason;
+  final bool qrExtracted;
   bool get isValid => status == CertificateVerificationStatus.valid;
 }
 
@@ -107,6 +111,30 @@ class CertificateVerificationService {
     String? fileName,
   }) async {
     try {
+      final extension = (fileName?.split('.').last ?? '').toLowerCase();
+      if (const {'png', 'jpg', 'jpeg'}.contains(extension)) {
+        final qrRecord = _extractQrRecord(bytes);
+        if (qrRecord == null) {
+          return _result(
+            CertificateVerificationStatus.verificationDataMissing,
+            reason: 'QR extraction failed: no readable QR code was found in the image.',
+          );
+        }
+        final qrKey = _embeddedPublicKey(qrRecord);
+        if (qrKey == null) {
+          return _fromRecord(
+            qrRecord,
+            CertificateVerificationStatus.verificationDataMissing,
+            'QR extraction succeeded, but the QR payload has no public key.',
+          );
+        }
+        final result = await _verifyRecord(
+          qrRecord,
+          _documentFromRecord(qrRecord),
+          qrKey,
+        );
+        return _copyWithQrExtracted(result);
+      }
       final extracted = _extractRecord(bytes);
       if (extracted == null) {
         return const CertificateVerificationResult(
@@ -124,17 +152,14 @@ class CertificateVerificationService {
           'The certificate public-key data is missing or unsupported.',
         );
       }
-      final extension = (fileName?.split('.').last ?? '').toLowerCase();
       final hashes = record['artifact_hashes'];
       final expectedArtifactHash = hashes is Map
           ? hashes[extension]
           : record['artifact_hash'];
       if (expectedArtifactHash is! String || expectedArtifactHash.isEmpty) {
-        return _fromRecord(
-          record,
-          CertificateVerificationStatus.verificationDataMissing,
-          'This certificate does not contain a rendered-artifact integrity hash.',
-        );
+        // New QR-bearing artifacts deliberately do not place their own hash
+        // inside the signed QR payload (that would be a circular hash).
+        return await _verifyRecord(record, _documentFromRecord(record), publicKey);
       }
       if (expectedArtifactHash !=
           await sha256Base64Url(extracted.artifactBytes)) {
@@ -275,6 +300,23 @@ class CertificateVerificationService {
     reason: reason,
   );
 
+  CertificateVerificationResult _copyWithQrExtracted(
+    CertificateVerificationResult result,
+  ) => CertificateVerificationResult(
+    status: result.status,
+    certificateId: result.certificateId,
+    recipient: result.recipient,
+    studentClass: result.studentClass,
+    institution: result.institution,
+    course: result.course,
+    issueDate: result.issueDate,
+    hash: result.hash,
+    algorithm: result.algorithm,
+    protocolVersion: result.protocolVersion,
+    reason: result.reason,
+    qrExtracted: true,
+  );
+
   _ExtractedCertificate? _extractRecord(List<int> bytes) {
     final text = latin1.decode(bytes, allowInvalid: true);
     const marker = 'CSTUDIO_RECORD_V1:';
@@ -293,6 +335,19 @@ class CertificateVerificationService {
       Map<String, dynamic>.from(value),
       bytes.sublist(0, markerIndex),
     );
+  }
+
+  Map<String, dynamic>? _extractQrRecord(List<int> bytes) {
+    try {
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) return null;
+      final rgba = decoded.convert(numChannels: 4).getBytes(order: img.ChannelOrder.abgr);
+      final source = RGBLuminanceSource(decoded.width, decoded.height, rgba.buffer.asInt32List());
+      final result = QRCodeReader().decode(BinaryBitmap(GlobalHistogramBinarizer(source)));
+      return decodeVerificationQrPayload(result.text);
+    } catch (_) {
+      return null;
+    }
   }
 
   SimplePublicKey? _embeddedPublicKey(Map<String, dynamic> record) {

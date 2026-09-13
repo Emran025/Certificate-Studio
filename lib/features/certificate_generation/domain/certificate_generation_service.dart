@@ -5,6 +5,7 @@ import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:image/image.dart' as img;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:zxing2/qrcode.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/database_tables.dart';
@@ -166,20 +167,11 @@ class CertificateGenerationService {
           document,
           keyPair.privateKey,
         );
-        final unsignedPdf = await _renderPdf(
-          values, fields, record['document_hash'] as String, record,
-          templateBytes, template, embedMarker: false,
-        );
-        final unsignedPng = _renderPng(
-          values, fields, record['document_hash'] as String, record,
-          templateBytes, template, embedMarker: false,
-        );
-        final artifactHashes = {
-          'pdf': await sha256Base64Url(unsignedPdf),
-          'png': await sha256Base64Url(unsignedPng),
-        };
+        // The QR payload is rendered into the artifact itself. Including an
+        // artifact hash inside that payload would create a circular hash, so
+        // the signed document record is intentionally the QR source of truth.
         final signedRecord = await createVerificationRecord(
-          {...record, 'artifact_hashes': artifactHashes}, document, keyPair.privateKey,
+          record, document, keyPair.privateKey,
         );
         final pdfPath = await artifactStore.save(
           certificateId: certificateId,
@@ -318,6 +310,7 @@ class CertificateGenerationService {
         : pw.MemoryImage(Uint8List.fromList(templateBytes));
     final pageWidth = canvasWidth / dpi * 72;
     final pageHeight = canvasHeight / dpi * 72;
+    final qr = _qrWidget(encodeVerificationQrPayload(record), 86);
     document.addPage(
       pw.Page(
         pageFormat: PdfPageFormat(pageWidth, pageHeight),
@@ -343,6 +336,7 @@ class CertificateGenerationService {
               bottom: 6,
               child: pw.Text(hash, style: const pw.TextStyle(fontSize: 5)),
             ),
+            pw.Positioned(right: 12, bottom: 12, child: qr),
           ],
         ),
       ),
@@ -408,12 +402,62 @@ class CertificateGenerationService {
       y: canvas.height - 40,
       color: img.ColorRgb8(90, 90, 90),
     );
+    _drawQr(
+      canvas,
+      encodeVerificationQrPayload(record),
+      x: canvas.width - 190,
+      y: canvas.height - 190,
+      size: 170,
+    );
     final bytes = img.encodePng(canvas);
     return embedMarker ? [...bytes, ...utf8.encode(_embeddedMarker(record))] : bytes;
   }
 
   String _embeddedMarker(Map<String, dynamic> record) =>
       'CSTUDIO_RECORD_V1:${base64UrlEncodeNoPadding(utf8.encode(canonicalJson(record)))}';
+
+  pw.Widget _qrWidget(String payload, double size) {
+    final matrix = Encoder.encode(payload, ErrorCorrectionLevel.m).matrix!;
+    final count = matrix.width;
+    return pw.Container(
+      width: size,
+      height: size,
+      color: PdfColors.white,
+      padding: const pw.EdgeInsets.all(6),
+      child: pw.CustomPaint(
+        size: PdfPoint(size - 12, size - 12),
+        painter: (canvas, size) {
+          final module = size.x / count;
+          canvas.setFillColor(PdfColors.black);
+          for (var x = 0; x < count; x++) {
+            for (var y = 0; y < count; y++) {
+              if (matrix.get(x, y)) {
+                canvas.drawRect(x * module, size.y - (y + 1) * module, module, module);
+                canvas.fillPath();
+              }
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  void _drawQr(img.Image canvas, String payload, {required int x, required int y, required int size}) {
+    final matrix = Encoder.encode(payload, ErrorCorrectionLevel.m).matrix!;
+    final module = size / matrix.width;
+    img.fillRect(canvas, x1: x, y1: y, x2: x + size, y2: y + size, color: img.ColorRgb8(255, 255, 255));
+    for (var row = 0; row < matrix.height; row++) {
+      for (var col = 0; col < matrix.width; col++) {
+        if (matrix.get(col, row)) {
+          final left = x + (col * module).floor();
+          final top = y + (row * module).floor();
+          final right = x + ((col + 1) * module).ceil() - 1;
+          final bottom = y + ((row + 1) * module).ceil() - 1;
+          img.fillRect(canvas, x1: left, y1: top, x2: right, y2: bottom, color: img.ColorRgb8(0, 0, 0));
+        }
+      }
+    }
+  }
 
   pw.Widget _pdfField(
     Map<String, dynamic> values,

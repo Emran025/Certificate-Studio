@@ -84,7 +84,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         AppSurfaceCard(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Text('Certificate file', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: AppSpacing.xs),
-          const Text('Select an issued PDF, PNG, JPG, or JPEG certificate. Do not upload a standalone signature.'),
+          const Text('Select an issued certificate. For PNG/JPG images, the QR code is extracted automatically and the result reports extraction success or failure.'),
           const SizedBox(height: AppSpacing.md),
           FilledButton.icon(onPressed: _checking ? null : _pickCertificate, icon: const Icon(Icons.upload_file), label: const Text('Select certificate file')),
         ])),
@@ -130,7 +130,7 @@ class _ResultCard extends StatelessWidget {
       CertificateVerificationStatus.unsupported => 'Unsupported or malformed certificate',
       CertificateVerificationStatus.failed => 'Verification failed',
     };
-    return AppSurfaceCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Icon(result.isValid ? Icons.verified : Icons.gpp_bad_outlined, color: color, size: 32), const SizedBox(width: AppSpacing.md), Expanded(child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color)))]), const SizedBox(height: AppSpacing.md), if (result.isValid) ...[_Info(label: 'Certificate ID', value: result.certificateId), _Info(label: 'Recipient', value: result.recipient), _Info(label: 'Institution', value: result.institution), _Info(label: 'Course / project', value: result.course), _Info(label: 'Issue date', value: result.issueDate), _Info(label: 'Integrity', value: 'Hash matches embedded certificate data'), _Info(label: 'Digital signature', value: 'Valid Ed25519 signature')] else Text(result.reason ?? 'The certificate could not be verified.', style: TextStyle(color: color))]));
+    return AppSurfaceCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Icon(result.isValid ? Icons.verified : Icons.gpp_bad_outlined, color: color, size: 32), const SizedBox(width: AppSpacing.md), Expanded(child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color)))]), const SizedBox(height: AppSpacing.md), if (result.qrExtracted) ...[_Info(label: 'QR extraction', value: 'Success — QR payload was extracted from the image')] else if (result.reason?.contains('QR extraction failed') ?? false) _Info(label: 'QR extraction', value: 'Failed — no readable QR code was found'), if (result.isValid) ...[_Info(label: 'Certificate ID', value: result.certificateId), _Info(label: 'Recipient', value: result.recipient), _Info(label: 'Institution', value: result.institution), _Info(label: 'Course / project', value: result.course), _Info(label: 'Issue date', value: result.issueDate), _Info(label: 'Integrity', value: 'Hash matches embedded certificate data'), _Info(label: 'Digital signature', value: 'Valid Ed25519 signature')] else Text(result.reason ?? 'The certificate could not be verified.', style: TextStyle(color: color))]));
   }
 }
 

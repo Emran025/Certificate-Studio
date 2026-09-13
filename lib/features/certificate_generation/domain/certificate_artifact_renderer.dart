@@ -29,9 +29,17 @@ class CertificateArtifactRenderer {
     final canvasWidth = _number(template['width'], 1000);
     final canvasHeight = _number(template['height'], 700);
     final dpi = _number(template['dpi'], 96);
+    final enhancedBackground = templateBytes == null
+        ? null
+        : _enhanceBackground(
+            templateBytes,
+            width: canvasWidth.round(),
+            height: canvasHeight.round(),
+            scale: 3,
+          );
     final background = templateBytes == null
         ? null
-        : pw.MemoryImage(Uint8List.fromList(templateBytes));
+        : pw.MemoryImage(Uint8List.fromList(enhancedBackground!));
     // Field positions are stored in the designer's logical canvas coordinate
     // system. Keep the PDF page in that same system; the background uses the
     // same contain behavior as the designer preview.
@@ -202,6 +210,41 @@ class CertificateArtifactRenderer {
 
   static bool _isQrField(Map<String, Object?> field) =>
       _jsonMap(field['style_json'])['kind'] == 'qr';
+
+  static List<int> _enhanceBackground(
+    List<int> sourceBytes, {
+    required int width,
+    required int height,
+    required int scale,
+  }) {
+    final source = img.decodeImage(Uint8List.fromList(sourceBytes));
+    if (source == null || source.width <= 0 || source.height <= 0) {
+      return sourceBytes;
+    }
+    final targetWidth = width * scale;
+    final targetHeight = height * scale;
+    final fitScale = math.min(
+      targetWidth / source.width,
+      targetHeight / source.height,
+    );
+    final fittedWidth = (source.width * fitScale).round();
+    final fittedHeight = (source.height * fitScale).round();
+    final fitted = img.copyResize(
+      source,
+      width: fittedWidth,
+      height: fittedHeight,
+      interpolation: img.Interpolation.cubic,
+    );
+    final canvas = img.Image(width: targetWidth, height: targetHeight);
+    img.fill(canvas, color: img.ColorRgb8(255, 255, 255));
+    img.compositeImage(
+      canvas,
+      fitted,
+      dstX: ((targetWidth - fittedWidth) / 2).round(),
+      dstY: ((targetHeight - fittedHeight) / 2).round(),
+    );
+    return img.encodePng(canvas);
+  }
 
   static pw.Widget _pdfQrField(
     String payload,

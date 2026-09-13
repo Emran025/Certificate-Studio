@@ -45,7 +45,14 @@ class CertificateArtifactRenderer {
           children: [
             if (background != null)
               pw.Positioned.fill(
-                child: pw.Image(background, fit: pw.BoxFit.contain),
+                child: pw.Center(
+                  child: pw.Image(
+                    background,
+                    width: pageWidth,
+                    height: pageHeight,
+                    fit: pw.BoxFit.contain,
+                  ),
+                ),
               ),
             for (final field in fields)
               if (_fieldIsVisible(field) && !_isQrField(field))
@@ -321,6 +328,11 @@ class CertificateArtifactRenderer {
       'right' => pw.TextAlign.right,
       _ => pw.TextAlign.left,
     };
+    final boxAlignment = switch (style['alignment']) {
+      'center' => pw.Alignment.center,
+      'right' => pw.Alignment.centerRight,
+      _ => pw.Alignment.centerLeft,
+    };
     final direction = style['direction'] == 'rtl'
         ? pw.TextDirection.rtl
         : pw.TextDirection.ltr;
@@ -336,12 +348,18 @@ class CertificateArtifactRenderer {
       child: pw.SizedBox(
         width: width,
         height: height,
-        child: pw.Directionality(
-          textDirection: direction,
-          child: pw.Text(
-            _fieldText(values, field),
-            textAlign: alignment,
-            style: textStyle,
+        child: pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 10),
+          child: pw.Align(
+            alignment: boxAlignment,
+            child: pw.Directionality(
+              textDirection: direction,
+              child: pw.Text(
+                _fieldText(values, field),
+                textAlign: alignment,
+                style: textStyle,
+              ),
+            ),
           ),
         ),
       ),

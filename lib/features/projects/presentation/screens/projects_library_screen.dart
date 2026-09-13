@@ -282,7 +282,9 @@ class _ProjectTile extends StatelessWidget {
   final VoidCallback onDelete;
   @override
   Widget build(BuildContext context) => AppSurfaceCard(
-    child: ListTile(
+    child: Material(
+      color: Colors.transparent,
+      child: ListTile(
       contentPadding: EdgeInsets.zero,
       onTap: onTap,
       leading: const CircleAvatar(child: Icon(Icons.folder_outlined)),
@@ -314,6 +316,7 @@ class _ProjectTile extends StatelessWidget {
           const Icon(Icons.chevron_right),
         ],
       ),
+    ),
     ),
   );
 }

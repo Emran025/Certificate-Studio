@@ -159,6 +159,8 @@ class CertificateGenerationService {
             'institution_id': institutionId,
             'project_id': projectId,
             'certificate_id': certificateId,
+            'document_data': base64UrlEncodeNoPadding(document),
+            'public_key': keyPair.publicRecord(),
             ...values,
           },
           document,
@@ -167,12 +169,13 @@ class CertificateGenerationService {
         final pdfPath = await artifactStore.save(
           certificateId: certificateId,
           extension: 'pdf',
-          bytes: await _renderPdf(
-            values,
-            fields,
-            record['document_hash'] as String,
-            templateBytes,
-            template,
+            bytes: await _renderPdf(
+              values,
+              fields,
+              record['document_hash'] as String,
+              record,
+              templateBytes,
+              template,
           ),
         );
         final imagePath = await artifactStore.save(
@@ -182,6 +185,7 @@ class CertificateGenerationService {
             values,
             fields,
             record['document_hash'] as String,
+            record,
             templateBytes,
             template,
           ),
@@ -284,6 +288,7 @@ class CertificateGenerationService {
     Map<String, dynamic> values,
     List<Map<String, Object?>> fields,
     String hash,
+    Map<String, dynamic> record,
     List<int>? templateBytes,
     Map<String, Object?> template,
   ) async {
@@ -325,13 +330,15 @@ class CertificateGenerationService {
         ),
       ),
     );
-    return document.save();
+    final bytes = await document.save();
+    return [...bytes, ...utf8.encode(_embeddedMarker(record))];
   }
 
   List<int> _renderPng(
     Map<String, dynamic> values,
     List<Map<String, Object?>> fields,
     String hash,
+    Map<String, dynamic> record,
     List<int>? templateBytes,
     Map<String, Object?> template,
   ) {
@@ -383,8 +390,11 @@ class CertificateGenerationService {
       y: canvas.height - 40,
       color: img.ColorRgb8(90, 90, 90),
     );
-    return img.encodePng(canvas);
+    return [...img.encodePng(canvas), ...utf8.encode(_embeddedMarker(record))];
   }
+
+  String _embeddedMarker(Map<String, dynamic> record) =>
+      'CSTUDIO_RECORD_V1:${base64UrlEncodeNoPadding(utf8.encode(canonicalJson(record)))}';
 
   pw.Widget _pdfField(
     Map<String, dynamic> values,

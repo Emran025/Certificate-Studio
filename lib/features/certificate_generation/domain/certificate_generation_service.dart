@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:flutter/services.dart';
+import 'package:printing/printing.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/database_tables.dart';
@@ -182,7 +184,7 @@ class CertificateGenerationService {
         // The QR payload is rendered into the artifact itself. Including an
         // artifact hash inside that payload would create a circular hash, so
         // the signed document record is intentionally the QR source of truth.
-        final renderedArtifacts = await _renderArtifactsInIsolate(
+        final pdfBytes = await _renderPdfInIsolate(
           values,
           fields,
           signedRecord['document_hash'] as String,
@@ -190,16 +192,17 @@ class CertificateGenerationService {
           templateBytes,
           template,
         );
+        final pngBytes = await _rasterizePdf(pdfBytes);
         final savedArtifacts = await Future.wait([
           artifactStore.save(
             certificateId: certificateId,
             extension: 'pdf',
-            bytes: renderedArtifacts[0],
+            bytes: pdfBytes,
           ),
           artifactStore.save(
             certificateId: certificateId,
             extension: 'png',
-            bytes: renderedArtifacts[1],
+            bytes: pngBytes,
           ),
         ]);
         final pdfPath = savedArtifacts[0];
@@ -302,7 +305,7 @@ class CertificateGenerationService {
     );
   }
 
-  Future<List<List<int>>> _renderArtifactsInIsolate(
+  Future<List<int>> _renderPdfInIsolate(
     Map<String, dynamic> values,
     List<Map<String, Object?>> fields,
     String hash,
@@ -312,26 +315,25 @@ class CertificateGenerationService {
   ) async {
     final fontBytes = await _loadArabicFontBytes();
     return Isolate.run(
-      () async => [
-        await CertificateArtifactRenderer.renderPdf(
-          values: values,
-          fields: fields,
-          hash: hash,
-          record: record,
-          templateBytes: templateBytes,
-          template: template,
-          fontBytes: fontBytes,
-        ),
-        CertificateArtifactRenderer.renderPng(
-          values: values,
-          fields: fields,
-          hash: hash,
-          record: record,
-          templateBytes: templateBytes,
-          template: template,
-        ),
-      ],
+      () => CertificateArtifactRenderer.renderPdf(
+        values: values,
+        fields: fields,
+        hash: hash,
+        record: record,
+        templateBytes: templateBytes,
+        template: template,
+        fontBytes: fontBytes,
+      ),
     );
+  }
+
+  Future<List<int>> _rasterizePdf(List<int> pdfBytes) async {
+    final raster = await Printing.raster(
+      Uint8List.fromList(pdfBytes),
+      dpi: 144,
+    ).first;
+    final pngBytes = await raster.toPng();
+    return pngBytes;
   }
 
   Future<List<int>> _loadArabicFontBytes() async {

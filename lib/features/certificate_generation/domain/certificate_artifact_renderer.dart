@@ -58,6 +58,7 @@ class CertificateArtifactRenderer {
                   pageHeight,
                   fonts,
                   defaultFont,
+                  pageWidth / canvasWidth,
                 ),
             pw.Positioned(
               left: 8,
@@ -306,6 +307,7 @@ class CertificateArtifactRenderer {
     double pageHeight,
     Map<String, pw.Font> fonts,
     pw.Font defaultFont,
+    double canvasToPdfScale,
   ) {
     final position = _jsonMap(field['position_json']);
     final style = _jsonMap(field['style_json']);
@@ -319,19 +321,27 @@ class CertificateArtifactRenderer {
       'right' => pw.TextAlign.right,
       _ => pw.TextAlign.left,
     };
+    final direction = style['direction'] == 'rtl'
+        ? pw.TextDirection.rtl
+        : pw.TextDirection.ltr;
+    final textStyle = pw.TextStyle(
+      color: _pdfColor(style['color'] as String?),
+      font: font,
+      fontFallback: fonts.values.where((item) => item != font).toList(),
+      fontSize: _number(style['font_size'], 24) * canvasToPdfScale,
+    );
     return pw.Positioned(
       left: x,
       top: y,
       child: pw.SizedBox(
         width: width,
         height: height,
-        child: pw.Text(
-          _fieldText(values, field),
-          textAlign: alignment,
-          style: pw.TextStyle(
-            font: font,
-            fontFallback: fonts.values.where((item) => item != font).toList(),
-            fontSize: _number(style['font_size'], 24),
+        child: pw.Directionality(
+          textDirection: direction,
+          child: pw.Text(
+            _fieldText(values, field),
+            textAlign: alignment,
+            style: textStyle,
           ),
         ),
       ),
@@ -380,6 +390,23 @@ class CertificateArtifactRenderer {
 
   static double _number(Object? value, double fallback) =>
       value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
+
+  static PdfColor _pdfColor(String? value) {
+    final raw = value?.replaceFirst('#', '');
+    if (raw == null || (raw.length != 6 && raw.length != 8)) {
+      return PdfColors.black;
+    }
+    final parsed = int.tryParse(raw, radix: 16);
+    if (parsed == null) return PdfColors.black;
+    final rgb = raw.length == 8 ? parsed & 0xFFFFFF : parsed;
+    final alpha = raw.length == 8 ? ((parsed >> 24) & 0xFF) / 255 : 1.0;
+    return PdfColor(
+      ((rgb >> 16) & 0xFF) / 255,
+      ((rgb >> 8) & 0xFF) / 255,
+      (rgb & 0xFF) / 255,
+      alpha,
+    );
+  }
 
   static img.BitmapFont _bitmapFont(double size) {
     if (size >= 40) return img.arial48;

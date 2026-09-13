@@ -41,6 +41,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   Future<List<Project>>? _projectsFuture;
   Project? _activeProject;
   bool _showProjects = false;
+  String _selectedNavigation = 'home';
 
   @override
   void initState() {
@@ -88,27 +89,25 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
     setState(() {
       _activeProject = project;
       _showProjects = false;
+      _selectedNavigation = 'projects';
     });
   }
 
-  Future<void> _openCertificateLibrary() async {
-    final database = widget.database;
-    if (database == null) return;
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => CertificateLibraryScreen(
-          database: database,
-          keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
-        ),
-      ),
-    );
+  void _openCertificateLibrary() {
+    if (!mounted || widget.database == null) return;
+    setState(() {
+      _activeProject = null;
+      _showProjects = false;
+      _selectedNavigation = 'certificates';
+    });
   }
 
-  Future<void> _openProjects() async {
+  void _openProjects() {
     if (!mounted || widget.database == null || widget.institution == null) return;
     setState(() {
       _activeProject = null;
       _showProjects = true;
+      _selectedNavigation = 'projects';
     });
   }
 
@@ -116,38 +115,35 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
     setState(() {
       _activeProject = null;
       _showProjects = false;
+      _selectedNavigation = 'home';
     });
   }
 
-  Future<void> _openTemplates() async {
-    final database = widget.database;
-    if (database == null) return;
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => TemplatePickerScreen(database: database),
-      ),
-    );
+  void _openTemplates() {
+    if (!mounted || widget.database == null) return;
+    setState(() {
+      _activeProject = null;
+      _showProjects = false;
+      _selectedNavigation = 'templates';
+    });
   }
 
-  Future<void> _openFonts() async {
-    final database = widget.database;
-    if (database == null) return;
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(builder: (_) => FontsLibraryScreen(database: database)),
-    );
+  void _openFonts() {
+    if (!mounted || widget.database == null) return;
+    setState(() {
+      _activeProject = null;
+      _showProjects = false;
+      _selectedNavigation = 'fonts';
+    });
   }
 
-  Future<void> _openVerification() async {
-    final database = widget.database;
-    if (database == null) return;
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => VerificationScreen(
-          database: database,
-          keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
-        ),
-      ),
-    );
+  void _openVerification() {
+    if (!mounted || widget.database == null) return;
+    setState(() {
+      _activeProject = null;
+      _showProjects = false;
+      _selectedNavigation = 'verification';
+    });
   }
 
   @override
@@ -157,6 +153,8 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
         child: Row(
           children: [
             _WorkspaceNavigation(
+              selected: _selectedNavigation,
+              onHome: _showHome,
               onProjects: _openProjects,
               onTemplates: _openTemplates,
               onFonts: _openFonts,
@@ -179,14 +177,28 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
                           onOpenProject: _openProject,
                           onClose: _showHome,
                         )
-                      : _WorkspaceContent(
-                          database: widget.database,
-                          institution: widget.institution,
-                          projectsFuture: _projectsFuture,
-                          onCreateProject: _openCreateProject,
-                          onVerify: _openVerification,
-                          onOpenProject: _openProject,
-                        ),
+                      : _selectedNavigation == 'templates'
+                          ? TemplatePickerScreen(database: widget.database!)
+                          : _selectedNavigation == 'fonts'
+                              ? FontsLibraryScreen(database: widget.database!)
+                              : _selectedNavigation == 'certificates'
+                                  ? CertificateLibraryScreen(
+                                      database: widget.database!,
+                                      keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
+                                    )
+                                  : _selectedNavigation == 'verification'
+                                      ? VerificationScreen(
+                                          database: widget.database!,
+                                          keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
+                                        )
+                                      : _WorkspaceContent(
+                                          database: widget.database,
+                                          institution: widget.institution,
+                                          projectsFuture: _projectsFuture,
+                                          onCreateProject: _openCreateProject,
+                                          onVerify: _openVerification,
+                                          onOpenProject: _openProject,
+                                        ),
             ),
           ],
         ),
@@ -197,6 +209,8 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
 
 class _WorkspaceNavigation extends StatelessWidget {
   const _WorkspaceNavigation({
+    required this.selected,
+    this.onHome,
     this.onProjects,
     this.onTemplates,
     this.onFonts,
@@ -204,6 +218,8 @@ class _WorkspaceNavigation extends StatelessWidget {
     this.onVerification,
   });
 
+  final String selected;
+  final VoidCallback? onHome;
   final VoidCallback? onProjects;
   final VoidCallback? onTemplates;
   final VoidCallback? onFonts;
@@ -247,35 +263,41 @@ class _WorkspaceNavigation extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xxl),
-            const _NavigationItem(
+            _NavigationItem(
               icon: Icons.home_outlined,
               label: 'Home',
-              selected: true,
+              selected: selected == 'home',
+              onTap: onHome,
             ),
             _NavigationItem(
               icon: Icons.folder_outlined,
               label: 'Projects',
+              selected: selected == 'projects',
               onTap: onProjects,
             ),
             _NavigationItem(
               icon: Icons.image_outlined,
               label: 'Templates',
+              selected: selected == 'templates',
               onTap: onTemplates,
             ),
             _NavigationItem(
               icon: Icons.text_fields_outlined,
               label: 'Fonts',
+              selected: selected == 'fonts',
               onTap: onFonts,
             ),
             _NavigationItem(
               icon: Icons.workspace_premium_outlined,
               label: 'Certificates',
+              selected: selected == 'certificates',
               onTap: onCertificates,
             ),
             const Spacer(),
             _NavigationItem(
               icon: Icons.verified_user_outlined,
               label: 'Verification',
+              selected: selected == 'verification',
               onTap: onVerification,
             ),
             const _NavigationItem(

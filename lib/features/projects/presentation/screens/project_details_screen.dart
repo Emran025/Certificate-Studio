@@ -6,6 +6,7 @@ import '../../../data_import/presentation/screens/data_import_screen.dart';
 import '../../../certificate_designer/presentation/screens/certificate_designer_screen.dart';
 import '../../../certificate_generation/presentation/screens/certificate_generation_screen.dart';
 import '../../../templates/presentation/screens/template_picker_screen.dart';
+import '../../../fonts/presentation/screens/fonts_library_screen.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
 import '../../domain/entities/project.dart';
@@ -83,6 +84,14 @@ class ProjectDetailsScreen extends StatelessWidget {
                             projectId: project.id,
                           ),
                         ),
+                      ),
+                    ),
+                    _ProjectAction(
+                      icon: Icons.text_fields_outlined,
+                      title: 'Fonts',
+                      description: 'Choose the font available to this project.',
+                      onPressed: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(builder: (_) => FontsLibraryScreen(database: database, projectId: project.id)),
                       ),
                     ),
                     _ProjectAction(

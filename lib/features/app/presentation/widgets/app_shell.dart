@@ -15,6 +15,9 @@ import '../../../projects/domain/entities/project.dart';
 import '../../../projects/domain/usecases/create_project.dart';
 import '../../../projects/presentation/screens/create_project_screen.dart';
 import '../../../projects/presentation/screens/project_details_screen.dart';
+import '../../../projects/presentation/screens/projects_library_screen.dart';
+import '../../../templates/presentation/screens/template_picker_screen.dart';
+import '../../../fonts/presentation/screens/fonts_library_screen.dart';
 
 class WorkspaceShell extends StatefulWidget {
   const WorkspaceShell({
@@ -132,8 +135,11 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
 }
 
 class _WorkspaceNavigation extends StatelessWidget {
-  const _WorkspaceNavigation({required this.onCertificates});
+  const _WorkspaceNavigation({required this.onProjects, required this.onTemplates, required this.onFonts, required this.onCertificates});
 
+  final VoidCallback onProjects;
+  final VoidCallback onTemplates;
+  final VoidCallback onFonts;
   final VoidCallback onCertificates;
 
   @override
@@ -178,9 +184,9 @@ class _WorkspaceNavigation extends StatelessWidget {
           label: 'Home',
           selected: true,
         ),
-        const _NavigationItem(icon: Icons.folder_outlined, label: 'Projects'),
-        const _NavigationItem(icon: Icons.image_outlined, label: 'Templates'),
-        const _NavigationItem(icon: Icons.text_fields_outlined, label: 'Fonts'),
+        _NavigationItem(icon: Icons.folder_outlined, label: 'Projects', onTap: onProjects),
+        _NavigationItem(icon: Icons.image_outlined, label: 'Templates', onTap: onTemplates),
+        _NavigationItem(icon: Icons.text_fields_outlined, label: 'Fonts', onTap: onFonts),
         _NavigationItem(
           icon: Icons.workspace_premium_outlined,
           label: 'Certificates',

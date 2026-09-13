@@ -28,7 +28,7 @@ class CertificateArtifactRenderer {
         : pw.MemoryImage(Uint8List.fromList(templateBytes));
     final pageWidth = canvasWidth / dpi * 72;
     final pageHeight = canvasHeight / dpi * 72;
-    final qr = _qrWidget(encodeVerificationQrPayload(record), 150);
+    final qr = _qrWidget(encodeVerificationQrPayload(record), 120);
     document.addPage(
       pw.Page(
         pageFormat: PdfPageFormat(pageWidth, pageHeight),
@@ -78,13 +78,15 @@ class CertificateArtifactRenderer {
         ? img.Image(width: fallbackWidth, height: fallbackHeight)
         : img.decodeImage(Uint8List.fromList(templateBytes)) ??
             img.Image(width: fallbackWidth, height: fallbackHeight);
+    final designWidth = _number(template['width'], canvas.width).round();
+    final designHeight = _number(template['height'], canvas.height).round();
     final targetWidth = math.max(
       canvas.width,
-      _number(template['width'], canvas.width).round(),
+      designWidth * 2,
     );
     final targetHeight = math.max(
       canvas.height,
-      _number(template['height'], canvas.height).round(),
+      designHeight * 2,
     );
     if (canvas.width != targetWidth || canvas.height != targetHeight) {
       canvas = img.copyResize(
@@ -139,7 +141,7 @@ class CertificateArtifactRenderer {
       encodeVerificationQrPayload(record),
       x: canvas.width - 240,
       y: canvas.height - 240,
-      size: 220,
+      size: 160,
     );
     return [...img.encodePng(canvas), ...utf8.encode(_embeddedMarker(record))];
   }

@@ -227,10 +227,12 @@ class CertificateArtifactRenderer {
     return pw.Positioned(
       left: x,
       top: y,
-      width: width,
-      height: height,
-      child: pw.Center(
-        child: _qrWidget(payload, math.min(width, height)),
+      child: pw.SizedBox(
+        width: width,
+        height: height,
+        child: pw.Center(
+          child: _qrWidget(payload, math.min(width, height)),
+        ),
       ),
     );
   }

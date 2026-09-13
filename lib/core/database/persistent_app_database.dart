@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
@@ -43,6 +44,8 @@ class PersistentAppDatabase implements AppDatabase {
   late final List<int> _databaseKey;
   int _version = 0;
   bool _isOpen = false;
+  Completer<void>? _persistCompleter;
+  bool _persistScheduled = false;
 
   static Future<PersistentAppDatabase> create({KeyStorage? keyStorage}) async {
     final storage = keyStorage ?? await PersistentKeyStorage.create();
@@ -72,13 +75,14 @@ class PersistentAppDatabase implements AppDatabase {
     }
     _version = _version < DatabaseSchema.version ? DatabaseSchema.version : _version;
     _isOpen = true;
-    if (wasPlaintext) await _persist();
+    if (wasPlaintext) await _persistNow();
   }
 
   @override
   Future<void> close() async {
     if (!_isOpen) return;
-    await _persist();
+    await _flushPersist();
+    await _persistNow();
     _isOpen = false;
   }
 
@@ -97,7 +101,7 @@ class PersistentAppDatabase implements AppDatabase {
     _ensureReady(table);
     final row = Map<String, Object?>.from(values);
     _tables[table]!.add(row);
-    await _persist();
+    _queuePersist();
     return Map<String, Object?>.from(row);
   }
 
@@ -108,14 +112,14 @@ class PersistentAppDatabase implements AppDatabase {
     final index = rows.indexWhere((row) => row['id'] == id || row['key'] == id);
     if (index < 0) throw StateError('No record with id "$id" exists in $table.');
     rows[index] = {...rows[index], ...values};
-    await _persist();
+    _queuePersist();
   }
 
   @override
   Future<void> delete(String table, String id) async {
     _ensureReady(table);
     _tables[table]!.removeWhere((row) => row['id'] == id || row['key'] == id);
-    await _persist();
+    _queuePersist();
   }
 
   Future<List<int>> _loadOrCreateDatabaseKey() async {
@@ -171,7 +175,31 @@ class PersistentAppDatabase implements AppDatabase {
     }
   }
 
-  Future<void> _persist() async {
+  void _queuePersist() {
+    _persistCompleter ??= Completer<void>();
+    if (_persistScheduled) return;
+    _persistScheduled = true;
+    Timer.run(() async {
+      _persistScheduled = false;
+      final completer = _persistCompleter!;
+      try {
+        await _persistNow();
+        if (_persistScheduled) return;
+        _persistCompleter = null;
+        completer.complete();
+      } catch (error, stackTrace) {
+        _persistCompleter = null;
+        completer.completeError(error, stackTrace);
+      }
+    });
+  }
+
+  Future<void> _flushPersist() async {
+    final pending = _persistCompleter;
+    if (pending != null) await pending.future;
+  }
+
+  Future<void> _persistNow() async {
     final envelope = await encryptJson(
       {'version': _version, 'tables': _tables},
       _databaseKey,

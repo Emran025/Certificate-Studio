@@ -83,17 +83,26 @@ class CertificateArtifactRenderer {
     required List<int>? templateBytes,
     required Map<String, Object?> template,
   }) {
-    final fallbackWidth = _number(template['width'], 1600).round();
-    final fallbackHeight = _number(template['height'], 1100).round();
+    final designWidth = _number(template['width'], 1600);
+    final designHeight = _number(template['height'], 1100);
+    final fallbackWidth = designWidth.round();
+    final fallbackHeight = designHeight.round();
     var canvas = templateBytes == null
         ? img.Image(width: fallbackWidth, height: fallbackHeight)
         : img.decodeImage(Uint8List.fromList(templateBytes)) ??
               img.Image(width: fallbackWidth, height: fallbackHeight);
-    final designWidth = _number(template['width'], canvas.width.toDouble());
-    final designHeight = _number(template['height'], canvas.height.toDouble());
-    // Upscale the actual source dimensions by one factor. Using the template
-    // metadata here can stretch an image when its stored dimensions differ
-    // from the decoded source image.
+    // The designer stores positions in the template's logical coordinate
+    // space. Normalize the background to that same space before upscaling;
+    // otherwise a source image whose pixels differ from the stored metadata
+    // makes every field and the QR code drift from the designer preview.
+    if (canvas.width != fallbackWidth || canvas.height != fallbackHeight) {
+      canvas = img.copyResize(
+        canvas,
+        width: fallbackWidth,
+        height: fallbackHeight,
+        interpolation: img.Interpolation.cubic,
+      );
+    }
     const scale = 2;
     final targetWidth = canvas.width * scale;
     final targetHeight = canvas.height * scale;
@@ -149,15 +158,19 @@ class CertificateArtifactRenderer {
     final qrPosition = qrField == null
         ? <String, dynamic>{}
         : _jsonMap(qrField['position_json']);
-    final qrSize = _number(qrPosition['width'], _qrSize(canvas).toDouble())
+    final scaleX = canvas.width / designWidth;
+    final scaleY = canvas.height / designHeight;
+    final qrLogicalWidth = _number(qrPosition['width'], 220);
+    final qrLogicalHeight = _number(qrPosition['height'], qrLogicalWidth);
+    final qrSize = (math.min(qrLogicalWidth * scaleX, qrLogicalHeight * scaleY))
         .clamp(120, math.min(canvas.width, canvas.height))
         .round();
     final qrX = qrField == null
         ? canvas.width - qrSize - 32
-        : (_number(qrPosition['x'], 0) / designWidth * canvas.width).round();
+        : (_number(qrPosition['x'], 0) * scaleX).round();
     final qrY = qrField == null
         ? canvas.height - qrSize - 32
-        : (_number(qrPosition['y'], 0) / designHeight * canvas.height).round();
+        : (_number(qrPosition['y'], 0) * scaleY).round();
     _drawQr(canvas, encodeVerificationQrPayload(record), x: qrX, y: qrY, size: qrSize);
     return [...img.encodePng(canvas), ...utf8.encode(_embeddedMarker(record))];
   }

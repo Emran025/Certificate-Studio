@@ -2,7 +2,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
-import '../../../../core/database/database_tables.dart';
 import '../../../../core/security/keys/institution_key_manager.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
+import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -40,6 +41,7 @@ class CertificateGenerationService {
   final AppDatabase database;
   final KeyStorage keyStorage;
   final CertificateArtifactStore artifactStore;
+  Future<pw.Font>? _arabicFont;
 
   Future<CertificateGenerationResult> generate({
     required String projectId,
@@ -113,6 +115,7 @@ class CertificateGenerationService {
     var generated = 0;
     final keyPair = await _keyPair(projectId);
     for (var index = 0; index < students.length; index++) {
+      await _yieldToUi();
       final student = students[index];
       final studentId = student['id']! as String;
       final itemId = '$jobId-item-$index';
@@ -155,7 +158,9 @@ class CertificateGenerationService {
             'fields': values,
           }),
         );
-        final record = await createVerificationRecord(
+        // Sign the unsigned verification record exactly once. Signing an
+        // already signed record makes verification fail after regeneration.
+        final signedRecord = await createVerificationRecord(
           {
             'institution_id': institutionId,
             'project_id': projectId,
@@ -170,9 +175,6 @@ class CertificateGenerationService {
         // The QR payload is rendered into the artifact itself. Including an
         // artifact hash inside that payload would create a circular hash, so
         // the signed document record is intentionally the QR source of truth.
-        final signedRecord = await createVerificationRecord(
-          record, document, keyPair.privateKey,
-        );
         final pdfPath = await artifactStore.save(
           certificateId: certificateId,
           extension: 'pdf',
@@ -270,6 +272,7 @@ class CertificateGenerationService {
         'failed_count': completed - generated,
       });
       onProgress?.call(completed, students.length);
+      await _yieldToUi();
     }
     final status = generated == students.length
         ? 'completed'
@@ -302,6 +305,7 @@ class CertificateGenerationService {
   }
   ) async {
     final document = pw.Document(title: 'Certificate');
+    final arabicFont = await _loadArabicFont();
     final canvasWidth = _number(template['width'], 1000);
     final canvasHeight = _number(template['height'], 700);
     final dpi = _number(template['dpi'], 96);
@@ -330,6 +334,7 @@ class CertificateGenerationService {
                   canvasHeight,
                   pageWidth,
                   pageHeight,
+                  arabicFont,
                 ),
             pw.Positioned(
               left: 8,
@@ -343,6 +348,13 @@ class CertificateGenerationService {
     );
     final bytes = await document.save();
     return embedMarker ? [...bytes, ...utf8.encode(_embeddedMarker(record))] : bytes;
+  }
+
+  Future<pw.Font> _loadArabicFont() async {
+    return _arabicFont ??= () async {
+      final bytes = await rootBundle.load('assets/fonts/Cairo-Regular.ttf');
+      return pw.Font.ttf(bytes);
+    }();
   }
 
   List<int> _renderPng(
@@ -466,6 +478,7 @@ class CertificateGenerationService {
     double canvasHeight,
     double pageWidth,
     double pageHeight,
+    pw.Font font,
   ) {
     final position = _jsonMap(field['position_json']);
     final style = _jsonMap(field['style_json']);
@@ -488,7 +501,11 @@ class CertificateGenerationService {
         child: pw.Text(
           '${values[className] ?? ''}',
           textAlign: alignment,
-          style: pw.TextStyle(fontSize: _number(style['font_size'], 24)),
+          style: pw.TextStyle(
+            font: font,
+            fontFallback: [font],
+            fontSize: _number(style['font_size'], 24),
+          ),
         ),
       ),
     );
@@ -505,6 +522,8 @@ class CertificateGenerationService {
 
   double _number(Object? value, double fallback) =>
       value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
+
+  Future<void> _yieldToUi() => Future<void>.delayed(Duration.zero);
 
   img.BitmapFont _bitmapFont(double size) {
     if (size >= 40) return img.arial48;

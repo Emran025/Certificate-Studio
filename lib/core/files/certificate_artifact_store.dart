@@ -24,6 +24,11 @@ class CertificateArtifactStore {
     return encoded == null ? null : Uint8List.fromList(base64Decode(encoded));
   }
 
+  Future<void> delete(String reference) async {
+    final preferences = _preferences ??= await SharedPreferences.getInstance();
+    await preferences.remove(_key(reference));
+  }
+
   String _key(String reference) => 'certificate_artifact:$reference';
 }
 

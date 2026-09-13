@@ -21,6 +21,7 @@ class CertificateVerificationResult {
     required this.status,
     this.certificateId,
     this.recipient,
+    this.studentClass,
     this.institution,
     this.course,
     this.issueDate,
@@ -32,6 +33,7 @@ class CertificateVerificationResult {
   final CertificateVerificationStatus status;
   final String? certificateId;
   final String? recipient;
+  final String? studentClass;
   final String? institution;
   final String? course;
   final String? issueDate;
@@ -40,6 +42,12 @@ class CertificateVerificationResult {
   final String? protocolVersion;
   final String? reason;
   bool get isValid => status == CertificateVerificationStatus.valid;
+}
+
+class _ExtractedCertificate {
+  const _ExtractedCertificate(this.record, this.artifactBytes);
+  final Map<String, dynamic> record;
+  final List<int> artifactBytes;
 }
 
 class CertificateVerificationService {
@@ -68,10 +76,16 @@ class CertificateVerificationService {
 
   Future<CertificateVerificationResult> verifyFile(List<int> bytes, {String? fileName}) async {
     try {
-      final record = _extractRecord(bytes);
-      if (record == null) return const CertificateVerificationResult(status: CertificateVerificationStatus.verificationDataMissing, reason: 'This certificate does not contain embedded verification data.');
+      final extracted = _extractRecord(bytes);
+      if (extracted == null) return const CertificateVerificationResult(status: CertificateVerificationStatus.verificationDataMissing, reason: 'This certificate does not contain embedded verification data.');
+      final record = extracted.record;
       final publicKey = _embeddedPublicKey(record);
       if (publicKey == null) return _fromRecord(record, CertificateVerificationStatus.verificationDataMissing, 'The certificate public-key data is missing or unsupported.');
+      final extension = (fileName?.split('.').last ?? '').toLowerCase();
+      final hashes = record['artifact_hashes'];
+      final expectedArtifactHash = hashes is Map ? hashes[extension] : record['artifact_hash'];
+      if (expectedArtifactHash is! String || expectedArtifactHash.isEmpty) return _fromRecord(record, CertificateVerificationStatus.verificationDataMissing, 'This certificate does not contain a rendered-artifact integrity hash.');
+      if (expectedArtifactHash != await sha256Base64Url(extracted.artifactBytes)) return _fromRecord(record, CertificateVerificationStatus.integrityCompromised, 'The PDF or image bytes were modified after issuance.');
       return _verifyRecord(record, _documentFromRecord(record), publicKey);
     } on FormatException catch (error) {
       return _result(CertificateVerificationStatus.unsupported, reason: 'Unsupported or malformed certificate${fileName == null ? '' : ' ($fileName)'}: $error');
@@ -115,18 +129,21 @@ class CertificateVerificationService {
 
   CertificateVerificationResult _fromRecord(Map<String, dynamic> record, CertificateVerificationStatus status, String? reason) {
     final fields = record['fields'] is Map ? Map<String, dynamic>.from(record['fields'] as Map) : record;
-    return _result(status, certificateId: record['certificate_id']?.toString(), recipient: fields['recipient']?.toString() ?? fields['student_name']?.toString() ?? fields['name']?.toString(), institution: record['institution_id']?.toString(), course: fields['course_name']?.toString() ?? fields['course']?.toString(), issueDate: fields['issue_date']?.toString(), hash: record['document_hash']?.toString(), algorithm: 'Ed25519', protocolVersion: record['format']?.toString(), reason: reason);
+    return _result(status, certificateId: record['certificate_id']?.toString(), recipient: fields['recipient']?.toString() ?? fields['student_name']?.toString() ?? fields['name']?.toString(), studentClass: fields['student_class']?.toString(), institution: record['institution_id']?.toString(), course: fields['course_name']?.toString() ?? fields['course']?.toString(), issueDate: fields['issue_date']?.toString(), hash: record['document_hash']?.toString(), algorithm: 'Ed25519', protocolVersion: record['format']?.toString(), reason: reason);
   }
 
-  CertificateVerificationResult _result(CertificateVerificationStatus status, {String? certificateId, String? recipient, String? institution, String? course, String? issueDate, String? hash, String? algorithm, String? protocolVersion, String? reason}) => CertificateVerificationResult(status: status, certificateId: certificateId, recipient: recipient, institution: institution, course: course, issueDate: issueDate, hash: hash, algorithm: algorithm, protocolVersion: protocolVersion, reason: reason);
+  CertificateVerificationResult _result(CertificateVerificationStatus status, {String? certificateId, String? recipient, String? studentClass, String? institution, String? course, String? issueDate, String? hash, String? algorithm, String? protocolVersion, String? reason}) => CertificateVerificationResult(status: status, certificateId: certificateId, recipient: recipient, studentClass: studentClass, institution: institution, course: course, issueDate: issueDate, hash: hash, algorithm: algorithm, protocolVersion: protocolVersion, reason: reason);
 
-  Map<String, dynamic>? _extractRecord(List<int> bytes) {
+  _ExtractedCertificate? _extractRecord(List<int> bytes) {
     final text = latin1.decode(bytes, allowInvalid: true);
-    final match = RegExp(r'CSTUDIO_RECORD_V1:([A-Za-z0-9_-]+)').firstMatch(text);
+    const marker = 'CSTUDIO_RECORD_V1:';
+    final markerIndex = text.lastIndexOf(marker);
+    if (markerIndex < 0) return null;
+    final match = RegExp(r'CSTUDIO_RECORD_V1:([A-Za-z0-9_-]+)').firstMatch(text.substring(markerIndex));
     if (match == null) return null;
     final value = jsonDecode(utf8.decode(base64Url.decode(base64Url.normalize(match.group(1)!))));
     if (value is! Map) throw const FormatException('embedded record is not an object');
-    return Map<String, dynamic>.from(value);
+    return _ExtractedCertificate(Map<String, dynamic>.from(value), bytes.sublist(0, markerIndex));
   }
 
   SimplePublicKey? _embeddedPublicKey(Map<String, dynamic> record) {

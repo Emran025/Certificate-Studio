@@ -166,14 +166,29 @@ class CertificateGenerationService {
           document,
           keyPair.privateKey,
         );
+        final unsignedPdf = await _renderPdf(
+          values, fields, record['document_hash'] as String, record,
+          templateBytes, template, embedMarker: false,
+        );
+        final unsignedPng = _renderPng(
+          values, fields, record['document_hash'] as String, record,
+          templateBytes, template, embedMarker: false,
+        );
+        final artifactHashes = {
+          'pdf': await sha256Base64Url(unsignedPdf),
+          'png': await sha256Base64Url(unsignedPng),
+        };
+        final signedRecord = await createVerificationRecord(
+          {...record, 'artifact_hashes': artifactHashes}, document, keyPair.privateKey,
+        );
         final pdfPath = await artifactStore.save(
           certificateId: certificateId,
           extension: 'pdf',
             bytes: await _renderPdf(
               values,
               fields,
-              record['document_hash'] as String,
-              record,
+              signedRecord['document_hash'] as String,
+              signedRecord,
               templateBytes,
               template,
           ),
@@ -184,8 +199,8 @@ class CertificateGenerationService {
           bytes: _renderPng(
             values,
             fields,
-            record['document_hash'] as String,
-            record,
+            signedRecord['document_hash'] as String,
+            signedRecord,
             templateBytes,
             template,
           ),
@@ -199,7 +214,7 @@ class CertificateGenerationService {
           'image_path': imagePath,
           'document_json': utf8.decode(document),
           'status': 'signed',
-          'document_hash': record['document_hash'],
+          'document_hash': signedRecord['document_hash'],
           'created_at': now,
           'updated_at': now,
         };
@@ -222,8 +237,8 @@ class CertificateGenerationService {
           'certificate_id': certificateId,
           'institution_id': institutionId,
           'project_id': projectId,
-          'payload_json': jsonEncode(record),
-          'signature': record['signature'],
+          'payload_json': jsonEncode(signedRecord),
+          'signature': signedRecord['signature'],
           'created_at': now,
         };
         final existingVerification = await database.query(
@@ -290,7 +305,9 @@ class CertificateGenerationService {
     String hash,
     Map<String, dynamic> record,
     List<int>? templateBytes,
-    Map<String, Object?> template,
+    Map<String, Object?> template, {
+    bool embedMarker = true,
+  }
   ) async {
     final document = pw.Document(title: 'Certificate');
     final canvasWidth = _number(template['width'], 1000);
@@ -331,7 +348,7 @@ class CertificateGenerationService {
       ),
     );
     final bytes = await document.save();
-    return [...bytes, ...utf8.encode(_embeddedMarker(record))];
+    return embedMarker ? [...bytes, ...utf8.encode(_embeddedMarker(record))] : bytes;
   }
 
   List<int> _renderPng(
@@ -341,6 +358,7 @@ class CertificateGenerationService {
     Map<String, dynamic> record,
     List<int>? templateBytes,
     Map<String, Object?> template,
+    {bool embedMarker = true}
   ) {
     final fallbackWidth = _number(template['width'], 1600).round();
     final fallbackHeight = _number(template['height'], 1100).round();
@@ -390,7 +408,8 @@ class CertificateGenerationService {
       y: canvas.height - 40,
       color: img.ColorRgb8(90, 90, 90),
     );
-    return [...img.encodePng(canvas), ...utf8.encode(_embeddedMarker(record))];
+    final bytes = img.encodePng(canvas);
+    return embedMarker ? [...bytes, ...utf8.encode(_embeddedMarker(record))] : bytes;
   }
 
   String _embeddedMarker(Map<String, dynamic> record) =>

@@ -94,7 +94,7 @@ class InMemoryAppDatabase implements AppDatabase {
   @override
   Future<void> delete(String table, String id) async {
     _ensureReady(table);
-    _tables[table]!.removeWhere((row) => row['id'] == id);
+    _tables[table]!.removeWhere((row) => row['id'] == id || row['key'] == id);
   }
 
   void _ensureReady(String table) {

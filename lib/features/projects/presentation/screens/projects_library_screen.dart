@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/database/database_tables.dart';
+import '../../../../core/files/certificate_artifact_store.dart';
 import '../../../../core/security/keys/institution_key_manager.dart';
 import '../../../../core/security/keys/project_key_manager.dart';
 import '../../../../shared/themes/app_spacing.dart';
@@ -8,6 +10,7 @@ import '../../../../shared/widgets/design_system.dart';
 import '../../data/repositories/project_repository_impl.dart';
 import '../../domain/entities/project.dart';
 import '../../domain/usecases/create_project.dart';
+import '../../../certificate_generation/presentation/screens/certificate_generation_screen.dart';
 import 'create_project_screen.dart';
 import 'project_details_screen.dart';
 
@@ -62,6 +65,117 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
     }
   }
 
+  Future<void> _generate(Project project) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => CertificateGenerationScreen(
+          database: widget.database,
+          keyStorage: widget.keyStorage,
+          projectId: project.id,
+          projectName: project.name,
+          institutionId: project.institutionId,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _delete(Project project) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete ${project.name}?'),
+        content: const Text(
+          'This permanently removes the project, recipient data, design, generated certificates, verification records, and project key.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete project'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final certificates = await widget.database.query(
+      DatabaseTables.certificates,
+      where: {'project_id': project.id},
+    );
+    final artifacts = CertificateArtifactStore();
+    for (final certificate in certificates) {
+      for (final key in ['file_path', 'image_path']) {
+        final reference = certificate[key] as String?;
+        if (reference != null && reference.isNotEmpty) {
+          await artifacts.delete(reference);
+        }
+      }
+      final verificationRows = await widget.database.query(
+        DatabaseTables.verificationRecords,
+        where: {'certificate_id': certificate['id']},
+      );
+      for (final verification in verificationRows) {
+        final verificationId = verification['id']?.toString();
+        if (verificationId != null) {
+          await widget.database.delete(
+            DatabaseTables.verificationRecords,
+            verificationId,
+          );
+        }
+      }
+      await widget.database.delete(
+        DatabaseTables.certificates,
+        certificate['id']! as String,
+      );
+    }
+    for (final table in [
+      DatabaseTables.generationItems,
+      DatabaseTables.generationJobs,
+      DatabaseTables.certificateFields,
+      DatabaseTables.certificateLayouts,
+      DatabaseTables.students,
+      DatabaseTables.signatures,
+    ]) {
+      final rows = await widget.database.query(
+        table,
+        where: table == DatabaseTables.generationItems
+            ? const {}
+            : {'project_id': project.id},
+      );
+      for (final row in rows) {
+        if (table == DatabaseTables.generationItems) {
+          final jobId = row['job_id']?.toString();
+          if (jobId == null) continue;
+          final jobs = await widget.database.query(
+            DatabaseTables.generationJobs,
+            where: {'id': jobId, 'project_id': project.id},
+          );
+          if (jobs.isEmpty) continue;
+        }
+        final id = (row['id'] ?? row['key'])?.toString();
+        if (id != null) await widget.database.delete(table, id);
+      }
+    }
+    await widget.database.delete(
+      DatabaseTables.settings,
+      'mapping:${project.id}',
+    );
+    await widget.database.delete(DatabaseTables.projects, project.id);
+    await widget.keyStorage.delete('project.${project.id}.key');
+    if (mounted) {
+      setState(() => _projects = _load());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${project.name} deleted')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
@@ -82,7 +196,7 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
             const SizedBox(height: AppSpacing.xs),
             Text('${projects.length} persisted project${projects.length == 1 ? '' : 's'}', style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: AppSpacing.lg),
-            Expanded(child: projects.isEmpty ? AppSurfaceCard(child: Column(mainAxisSize: MainAxisSize.min, children: [const Text('No projects have been created yet.'), const SizedBox(height: AppSpacing.md), FilledButton.icon(onPressed: _create, icon: const Icon(Icons.add), label: const Text('Create project'))])) : ListView.separated(itemCount: projects.length, separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm), itemBuilder: (_, index) => _ProjectTile(project: projects[index], onTap: () => _open(projects[index])))),
+            Expanded(child: projects.isEmpty ? AppSurfaceCard(child: Column(mainAxisSize: MainAxisSize.min, children: [const Text('No projects have been created yet.'), const SizedBox(height: AppSpacing.md), FilledButton.icon(onPressed: _create, icon: const Icon(Icons.add), label: const Text('Create project'))])) : ListView.separated(itemCount: projects.length, separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm), itemBuilder: (_, index) => _ProjectTile(project: projects[index], onTap: () => _open(projects[index]), onGenerate: () => _generate(projects[index]), onDelete: () => _delete(projects[index])))),
           ]))),
         );
       },
@@ -91,9 +205,11 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
 }
 
 class _ProjectTile extends StatelessWidget {
-  const _ProjectTile({required this.project, required this.onTap});
+  const _ProjectTile({required this.project, required this.onTap, required this.onGenerate, required this.onDelete});
   final Project project;
   final VoidCallback onTap;
+  final VoidCallback onGenerate;
+  final VoidCallback onDelete;
   @override
-  Widget build(BuildContext context) => AppSurfaceCard(child: ListTile(contentPadding: EdgeInsets.zero, onTap: onTap, leading: const CircleAvatar(child: Icon(Icons.folder_outlined)), title: Text(project.name), subtitle: Text([if (project.courseName?.isNotEmpty == true) project.courseName!, if (project.organizationName?.isNotEmpty == true) project.organizationName!, 'Created ${project.createdAt.day}/${project.createdAt.month}/${project.createdAt.year}'].join(' · ')), trailing: const Icon(Icons.chevron_right)));
+  Widget build(BuildContext context) => AppSurfaceCard(child: ListTile(contentPadding: EdgeInsets.zero, onTap: onTap, leading: const CircleAvatar(child: Icon(Icons.folder_outlined)), title: Text(project.name), subtitle: Text([if (project.courseName?.isNotEmpty == true) project.courseName!, if (project.organizationName?.isNotEmpty == true) project.organizationName!, 'Created ${project.createdAt.day}/${project.createdAt.month}/${project.createdAt.year}'].join(' · ')), trailing: Row(mainAxisSize: MainAxisSize.min, children: [IconButton(tooltip: 'Generate and create verification records', onPressed: onGenerate, icon: const Icon(Icons.verified_outlined)), IconButton(tooltip: 'Delete project', onPressed: onDelete, icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error)), const Icon(Icons.chevron_right)])));
 }

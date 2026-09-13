@@ -697,6 +697,7 @@ class _PropertiesPanel extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
               Expanded(

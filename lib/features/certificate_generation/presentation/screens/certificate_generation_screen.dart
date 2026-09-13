@@ -46,31 +46,38 @@ class _CertificateGenerationScreenState
       where: {'project_id': widget.projectId},
     );
     setState(() => _total = students.length);
-    final result =
-        await CertificateGenerationService(
-          widget.database,
-          widget.keyStorage,
-        ).generate(
-          projectId: widget.projectId,
-          institutionId: widget.institutionId,
-          onProgress: (completed, total) {
-            if (mounted)
-              setState(() {
-                _completed = completed;
-                _total = total;
-              });
-          },
-        );
-    final certificates = await widget.database.query(
-      DatabaseTables.certificates,
-      where: {'project_id': widget.projectId},
-    );
-    if (!mounted) return;
-    setState(() {
-      _running = false;
-      _result = result;
-      _certificates = certificates.reversed.toList();
-    });
+    try {
+      final result = await CertificateGenerationService(
+        widget.database,
+        widget.keyStorage,
+      ).generate(
+        projectId: widget.projectId,
+        institutionId: widget.institutionId,
+        onProgress: (completed, total) {
+          if (mounted)
+            setState(() {
+              _completed = completed;
+              _total = total;
+            });
+        },
+      );
+      final certificates = await widget.database.query(
+        DatabaseTables.certificates,
+        where: {'project_id': widget.projectId},
+      );
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _result = result;
+        _certificates = certificates.reversed.toList();
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _running = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Generation failed: $error')),
+      );
+    }
   }
 
   @override

@@ -30,22 +30,33 @@ class CertificateArtifactRenderer {
     final canvasWidth = _number(template['width'], 1000);
     final canvasHeight = _number(template['height'], 700);
     final dpi = _number(template['dpi'], 96);
+    final sourceImage = templateBytes == null
+        ? null
+        : img.decodeImage(Uint8List.fromList(templateBytes));
     final enhancedBackground = templateBytes == null
         ? null
         : _enhanceBackground(
             templateBytes,
-            width: canvasWidth.round(),
-            height: canvasHeight.round(),
+            width: sourceImage?.width ?? canvasWidth.round(),
+            height: sourceImage?.height ?? canvasHeight.round(),
             scale: 3,
           );
     final background = templateBytes == null
         ? null
         : pw.MemoryImage(Uint8List.fromList(enhancedBackground!));
-    // Field positions are stored in the designer's logical canvas coordinate
-    // system. Keep the PDF page in that same system; the background uses the
-    // same contain behavior as the designer preview.
-    final pageWidth = canvasWidth / dpi * 72;
-    final pageHeight = canvasHeight / dpi * 72;
+    // The final PDF page follows the actual background image dimensions. The
+    // designer fields are mapped from the image's contain rectangle inside
+    // the logical design canvas into this page.
+    final imageWidth = sourceImage?.width.toDouble() ?? canvasWidth;
+    final imageHeight = sourceImage?.height.toDouble() ?? canvasHeight;
+    final containScale = math.min(
+      canvasWidth / imageWidth,
+      canvasHeight / imageHeight,
+    );
+    final containOffsetX = (canvasWidth - imageWidth * containScale) / 2;
+    final containOffsetY = (canvasHeight - imageHeight * containScale) / 2;
+    final pageWidth = imageWidth / dpi * 72;
+    final pageHeight = imageHeight / dpi * 72;
     final qrField = fields.where(_isQrField).isEmpty
         ? null
         : fields.where(_isQrField).first;
@@ -57,7 +68,7 @@ class CertificateArtifactRenderer {
           children: [
             if (background != null)
               pw.Positioned.fill(
-                child: pw.Image(background, fit: pw.BoxFit.contain),
+                child: pw.Image(background, fit: pw.BoxFit.fill),
               ),
             for (final field in fields)
               if (_fieldIsVisible(field) && !_isQrField(field))
@@ -70,7 +81,11 @@ class CertificateArtifactRenderer {
                   pageHeight,
                   fonts,
                   defaultFont,
-                  pageWidth / canvasWidth,
+                  imageWidth,
+                  imageHeight,
+                  containScale,
+                  containOffsetX,
+                  containOffsetY,
                 ),
             pw.Positioned(
               left: 8,
@@ -91,6 +106,11 @@ class CertificateArtifactRenderer {
               canvasHeight,
               pageWidth,
               pageHeight,
+              imageWidth,
+              imageHeight,
+              containScale,
+              containOffsetX,
+              containOffsetY,
             ),
           ],
         ),
@@ -254,15 +274,28 @@ class CertificateArtifactRenderer {
     double canvasHeight,
     double pageWidth,
     double pageHeight,
+    double imageWidth,
+    double imageHeight,
+    double containScale,
+    double containOffsetX,
+    double containOffsetY,
   ) {
     if (field == null) {
       return pw.Positioned(right: 12, bottom: 12, child: _qrWidget(payload, 120));
     }
     final position = _jsonMap(field['position_json']);
-    final x = _number(position['x'], 0) / canvasWidth * pageWidth;
-    final y = _number(position['y'], 0) / canvasHeight * pageHeight;
-    final width = _number(position['width'], 220) / canvasWidth * pageWidth;
-    final height = _number(position['height'], 220) / canvasHeight * pageHeight;
+    final designX = _number(position['x'], 0);
+    final designY = _number(position['y'], 0);
+    final designWidth = _number(position['width'], 220);
+    final designHeight = _number(position['height'], 220);
+    final imageX = (designX - containOffsetX) / containScale;
+    final imageY = (designY - containOffsetY) / containScale;
+    final imageFieldWidth = designWidth / containScale;
+    final imageFieldHeight = designHeight / containScale;
+    final x = imageX / imageWidth * pageWidth;
+    final y = imageY / imageHeight * pageHeight;
+    final width = imageFieldWidth / imageWidth * pageWidth;
+    final height = imageFieldHeight / imageHeight * pageHeight;
     return pw.Positioned(
       left: x,
       top: y,
@@ -360,16 +393,28 @@ class CertificateArtifactRenderer {
     double pageHeight,
     Map<String, pw.Font> fonts,
     pw.Font defaultFont,
-    double canvasToPdfScale,
+    double imageWidth,
+    double imageHeight,
+    double containScale,
+    double containOffsetX,
+    double containOffsetY,
   ) {
     final position = _jsonMap(field['position_json']);
     final style = _jsonMap(field['style_json']);
     final font = fonts[style['font_family']?.toString()] ?? defaultFont;
     final text = _fieldText(values, field);
-    final x = _number(position['x'], 0) / canvasWidth * pageWidth;
-    final y = _number(position['y'], 0) / canvasHeight * pageHeight;
-    final width = _number(position['width'], 420) / canvasWidth * pageWidth;
-    final height = _number(position['height'], 64) / canvasHeight * pageHeight;
+    final designX = _number(position['x'], 0);
+    final designY = _number(position['y'], 0);
+    final designWidth = _number(position['width'], 420);
+    final designHeight = _number(position['height'], 64);
+    final imageX = (designX - containOffsetX) / containScale;
+    final imageY = (designY - containOffsetY) / containScale;
+    final imageFieldWidth = designWidth / containScale;
+    final imageFieldHeight = designHeight / containScale;
+    final x = imageX / imageWidth * pageWidth;
+    final y = imageY / imageHeight * pageHeight;
+    final width = imageFieldWidth / imageWidth * pageWidth;
+    final height = imageFieldHeight / imageHeight * pageHeight;
     final alignment = switch (style['alignment']) {
       'center' => pw.TextAlign.center,
       'right' => pw.TextAlign.right,
@@ -389,7 +434,7 @@ class CertificateArtifactRenderer {
       color: _pdfColor(style['color'] as String?),
       font: font,
       fontFallback: fonts.values.where((item) => item != font).toList(),
-      fontSize: _number(style['font_size'], 24) * canvasToPdfScale,
+      fontSize: _number(style['font_size'], 24) / containScale * pageWidth / imageWidth,
     );
     return pw.Positioned(
       left: x,

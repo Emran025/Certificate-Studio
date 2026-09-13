@@ -623,29 +623,32 @@ class _ProjectPreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppSurfaceCard(
       padding: const EdgeInsets.all(AppSpacing.md),
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceMuted,
-            borderRadius: BorderRadius.circular(AppRadius.input),
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(AppRadius.input),
+            ),
+            child: const Icon(
+              Icons.description_outlined,
+              color: AppColors.primary,
+            ),
           ),
-          child: const Icon(
-            Icons.description_outlined,
-            color: AppColors.primary,
+          title: Text(
+            project.name,
+            style: Theme.of(context).textTheme.titleMedium,
           ),
+          subtitle: Text(
+            '${project.courseName ?? 'Certificate project'}  •  Updated ${_relativeTime(project.updatedAt)}',
+          ),
+          trailing: const AppStatusBadge(label: 'Draft'),
+          onTap: onTap,
         ),
-        title: Text(
-          project.name,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        subtitle: Text(
-          '${project.courseName ?? 'Certificate project'}  •  Updated ${_relativeTime(project.updatedAt)}',
-        ),
-        trailing: const AppStatusBadge(label: 'Draft'),
-        onTap: onTap,
       ),
     );
   }

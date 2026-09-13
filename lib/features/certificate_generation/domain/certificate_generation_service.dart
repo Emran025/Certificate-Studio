@@ -314,7 +314,7 @@ class CertificateGenerationService {
         : pw.MemoryImage(Uint8List.fromList(templateBytes));
     final pageWidth = canvasWidth / dpi * 72;
     final pageHeight = canvasHeight / dpi * 72;
-    final qr = _qrWidget(encodeVerificationQrPayload(record), 86);
+    final qr = _qrWidget(encodeVerificationQrPayload(record), 220);
     document.addPage(
       pw.Page(
         pageFormat: PdfPageFormat(pageWidth, pageHeight),
@@ -417,9 +417,9 @@ class CertificateGenerationService {
     _drawQr(
       canvas,
       encodeVerificationQrPayload(record),
-      x: canvas.width - 190,
-      y: canvas.height - 190,
-      size: 170,
+      x: canvas.width - 540,
+      y: canvas.height - 540,
+      size: 520,
     );
     final bytes = img.encodePng(canvas);
     return embedMarker ? [...bytes, ...utf8.encode(_embeddedMarker(record))] : bytes;
@@ -431,15 +431,17 @@ class CertificateGenerationService {
   pw.Widget _qrWidget(String payload, double size) {
     final matrix = Encoder.encode(payload, ErrorCorrectionLevel.m).matrix!;
     final count = matrix.width;
+    const quietModules = 4;
+    final module = size / (count + quietModules * 2);
+    final totalSize = module * (count + quietModules * 2);
     return pw.Container(
-      width: size,
-      height: size,
+      width: totalSize,
+      height: totalSize,
       color: PdfColors.white,
-      padding: const pw.EdgeInsets.all(6),
+      padding: pw.EdgeInsets.all(module * quietModules),
       child: pw.CustomPaint(
-        size: PdfPoint(size - 12, size - 12),
+        size: PdfPoint(module * count, module * count),
         painter: (canvas, size) {
-          final module = size.x / count;
           canvas.setFillColor(PdfColors.black);
           for (var x = 0; x < count; x++) {
             for (var y = 0; y < count; y++) {
@@ -456,15 +458,26 @@ class CertificateGenerationService {
 
   void _drawQr(img.Image canvas, String payload, {required int x, required int y, required int size}) {
     final matrix = Encoder.encode(payload, ErrorCorrectionLevel.m).matrix!;
-    final module = size / matrix.width;
-    img.fillRect(canvas, x1: x, y1: y, x2: x + size, y2: y + size, color: img.ColorRgb8(255, 255, 255));
+    const quietModules = 4;
+    final module = (size / (matrix.width + quietModules * 2)).floor().clamp(2, 20) as int;
+    final totalSize = (matrix.width + quietModules * 2) * module;
+    final originX = x.clamp(0, canvas.width - totalSize) as int;
+    final originY = y.clamp(0, canvas.height - totalSize) as int;
+    img.fillRect(
+      canvas,
+      x1: originX,
+      y1: originY,
+      x2: originX + totalSize - 1,
+      y2: originY + totalSize - 1,
+      color: img.ColorRgb8(255, 255, 255),
+    );
     for (var row = 0; row < matrix.height; row++) {
       for (var col = 0; col < matrix.width; col++) {
         if (matrix.get(col, row) == 1) {
-          final left = x + (col * module).floor();
-          final top = y + (row * module).floor();
-          final right = x + ((col + 1) * module).ceil() - 1;
-          final bottom = y + ((row + 1) * module).ceil() - 1;
+          final left = originX + (quietModules + col) * module;
+          final top = originY + (quietModules + row) * module;
+          final right = left + module - 1;
+          final bottom = top + module - 1;
           img.fillRect(canvas, x1: left, y1: top, x2: right, y2: bottom, color: img.ColorRgb8(0, 0, 0));
         }
       }

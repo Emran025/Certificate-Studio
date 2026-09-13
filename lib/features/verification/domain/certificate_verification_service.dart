@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
@@ -114,7 +115,7 @@ class CertificateVerificationService {
     try {
       final extension = (fileName?.split('.').last ?? '').toLowerCase();
       if (const {'png', 'jpg', 'jpeg'}.contains(extension)) {
-        final qrRecord = _extractQrRecord(bytes);
+        final qrRecord = await _extractQrRecord(bytes);
         if (qrRecord == null) {
           return _result(
             CertificateVerificationStatus.verificationDataMissing,
@@ -160,7 +161,11 @@ class CertificateVerificationService {
       if (expectedArtifactHash is! String || expectedArtifactHash.isEmpty) {
         // New QR-bearing artifacts deliberately do not place their own hash
         // inside the signed QR payload (that would be a circular hash).
-        return await _verifyRecord(record, _documentFromRecord(record), publicKey);
+        return await _verifyRecord(
+          record,
+          _documentFromRecord(record),
+          publicKey,
+        );
       }
       if (expectedArtifactHash !=
           await sha256Base64Url(extracted.artifactBytes)) {
@@ -170,7 +175,11 @@ class CertificateVerificationService {
           'The PDF or image bytes were modified after issuance.',
         );
       }
-      return await _verifyRecord(record, _documentFromRecord(record), publicKey);
+      return await _verifyRecord(
+        record,
+        _documentFromRecord(record),
+        publicKey,
+      );
     } on FormatException catch (error) {
       return _result(
         CertificateVerificationStatus.unsupported,
@@ -196,7 +205,11 @@ class CertificateVerificationService {
           'The QR payload does not contain a public key.',
         );
       }
-      return await _verifyRecord(record, _documentFromRecord(record), publicKey);
+      return await _verifyRecord(
+        record,
+        _documentFromRecord(record),
+        publicKey,
+      );
     } catch (_) {
       return const CertificateVerificationResult(
         status: CertificateVerificationStatus.unsupported,
@@ -234,29 +247,24 @@ class CertificateVerificationService {
     }
     final fields = record['fields'];
     if (fields is Map) {
-      return utf8.encode(
-        jsonEncode({
-          'project_id': record['project_id'],
-          'student_id': record['student_id'],
-          'fields': Map<String, dynamic>.from(fields),
-        }),
-      );
-    }
-    return utf8.encode(
-      jsonEncode({
+      return canonicalJsonBytes({
         'project_id': record['project_id'],
         'student_id': record['student_id'],
-        'fields': {
-          'student_class': record['student_class'],
-          'issue_date': record['issue_date'],
-          if (record['student_name'] != null)
-            'student_name': record['student_name'],
-          if (record['course'] != null) 'course': record['course'],
-          if (record['course_name'] != null)
-            'course_name': record['course_name'],
-        },
-      }),
-    );
+        'fields': Map<String, dynamic>.from(fields),
+      });
+    }
+    return canonicalJsonBytes({
+      'project_id': record['project_id'],
+      'student_id': record['student_id'],
+      'fields': {
+        'student_class': record['student_class'],
+        'issue_date': record['issue_date'],
+        if (record['student_name'] != null)
+          'student_name': record['student_name'],
+        if (record['course'] != null) 'course': record['course'],
+        if (record['course_name'] != null) 'course_name': record['course_name'],
+      },
+    });
   }
 
   CertificateVerificationResult _fromRecord(
@@ -348,14 +356,38 @@ class CertificateVerificationService {
     );
   }
 
-  Map<String, dynamic>? _extractQrRecord(List<int> bytes) {
+  Future<Map<String, dynamic>?> _extractQrRecord(List<int> bytes) =>
+      Isolate.run(() => _decodeQrRecord(bytes));
+
+  static Map<String, dynamic>? _decodeQrRecord(List<int> bytes) {
     try {
       final decoded = img.decodeImage(Uint8List.fromList(bytes));
       if (decoded == null) return null;
-      final rgba = decoded.convert(numChannels: 4).getBytes(order: img.ChannelOrder.abgr);
-      final source = RGBLuminanceSource(decoded.width, decoded.height, rgba.buffer.asInt32List());
-      final result = QRCodeReader().decode(BinaryBitmap(GlobalHistogramBinarizer(source)));
-      return decodeVerificationQrPayload(result.text);
+      final bgra = decoded
+          .convert(numChannels: 4)
+          .getBytes(order: img.ChannelOrder.bgra);
+      final source = RGBLuminanceSource(
+        decoded.width,
+        decoded.height,
+        bgra.buffer.asInt32List(),
+      );
+      final reader = QRCodeReader();
+      final hints = DecodeHints()
+        ..put(DecodeHintType.tryHarder)
+        ..put(DecodeHintType.possibleFormats, [BarcodeFormat.qrCode]);
+      try {
+        final result = reader.decode(
+          BinaryBitmap(GlobalHistogramBinarizer(source)),
+          hints: hints,
+        );
+        return decodeVerificationQrPayload(result.text);
+      } catch (_) {
+        final result = reader.decode(
+          BinaryBitmap(HybridBinarizer(source)),
+          hints: hints,
+        );
+        return decodeVerificationQrPayload(result.text);
+      }
     } catch (_) {
       return null;
     }

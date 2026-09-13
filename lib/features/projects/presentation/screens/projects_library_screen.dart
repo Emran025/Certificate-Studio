@@ -15,7 +15,14 @@ import 'create_project_screen.dart';
 import 'project_details_screen.dart';
 
 class ProjectsLibraryScreen extends StatefulWidget {
-  const ProjectsLibraryScreen({super.key, required this.database, required this.institutionId, required this.keyStorage, this.onOpenProject, this.onClose});
+  const ProjectsLibraryScreen({
+    super.key,
+    required this.database,
+    required this.institutionId,
+    required this.keyStorage,
+    this.onOpenProject,
+    this.onClose,
+  });
   final AppDatabase database;
   final String institutionId;
   final KeyStorage keyStorage;
@@ -34,14 +41,25 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
   void initState() {
     super.initState();
     _repository = ProjectRepositoryImpl(widget.database);
-    _createProject = CreateProject(_repository, ProjectKeyManager(widget.keyStorage));
+    _createProject = CreateProject(
+      _repository,
+      ProjectKeyManager(widget.keyStorage),
+    );
     _projects = _load();
   }
 
-  Future<List<Project>> _load() => _repository.getAll(institutionId: widget.institutionId);
+  Future<List<Project>> _load() =>
+      _repository.getAll(institutionId: widget.institutionId);
 
   Future<void> _create() async {
-    final project = await Navigator.of(context).push<Project>(MaterialPageRoute(builder: (_) => CreateProjectScreen(institutionId: widget.institutionId, createProject: _createProject)));
+    final project = await Navigator.of(context).push<Project>(
+      MaterialPageRoute(
+        builder: (_) => CreateProjectScreen(
+          institutionId: widget.institutionId,
+          createProject: _createProject,
+        ),
+      ),
+    );
     if (project != null && mounted) {
       final projects = _load();
       setState(() {
@@ -56,7 +74,15 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
       onOpenProject(project);
       return;
     }
-    await Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => ProjectDetailsScreen(project: project, database: widget.database, keyStorage: widget.keyStorage)));
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => ProjectDetailsScreen(
+          project: project,
+          database: widget.database,
+          keyStorage: widget.keyStorage,
+        ),
+      ),
+    );
     if (mounted) {
       final projects = _load();
       setState(() {
@@ -109,58 +135,37 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
       where: {'project_id': project.id},
     );
     final artifacts = CertificateArtifactStore();
-    for (final certificate in certificates) {
-      for (final key in ['file_path', 'image_path']) {
-        final reference = certificate[key] as String?;
-        if (reference != null && reference.isNotEmpty) {
-          await artifacts.delete(reference);
-        }
-      }
-      final verificationRows = await widget.database.query(
-        DatabaseTables.verificationRecords,
-        where: {'certificate_id': certificate['id']},
-      );
-      for (final verification in verificationRows) {
-        final verificationId = verification['id']?.toString();
-        if (verificationId != null) {
-          await widget.database.delete(
-            DatabaseTables.verificationRecords,
-            verificationId,
-          );
-        }
-      }
-      await widget.database.delete(
-        DatabaseTables.certificates,
-        certificate['id']! as String,
-      );
-    }
-    for (final table in [
-      DatabaseTables.generationItems,
+    await Future.wait([
+      for (final certificate in certificates)
+        for (final key in ['file_path', 'image_path'])
+          if ((certificate[key] as String?)?.isNotEmpty == true)
+            artifacts.delete(certificate[key]! as String),
+    ]);
+    await widget.database.deleteWhere(DatabaseTables.verificationRecords, {
+      'project_id': project.id,
+    });
+    await widget.database.deleteWhere(DatabaseTables.certificates, {
+      'project_id': project.id,
+    });
+    final jobs = await widget.database.query(
       DatabaseTables.generationJobs,
+      where: {'project_id': project.id},
+    );
+    for (final job in jobs) {
+      await widget.database.deleteWhere(DatabaseTables.generationItems, {
+        'job_id': job['id'],
+      });
+    }
+    await widget.database.deleteWhere(DatabaseTables.generationJobs, {
+      'project_id': project.id,
+    });
+    for (final table in [
       DatabaseTables.certificateFields,
       DatabaseTables.certificateLayouts,
       DatabaseTables.students,
       DatabaseTables.signatures,
     ]) {
-      final rows = await widget.database.query(
-        table,
-        where: table == DatabaseTables.generationItems
-            ? const {}
-            : {'project_id': project.id},
-      );
-      for (final row in rows) {
-        if (table == DatabaseTables.generationItems) {
-          final jobId = row['job_id']?.toString();
-          if (jobId == null) continue;
-          final jobs = await widget.database.query(
-            DatabaseTables.generationJobs,
-            where: {'id': jobId, 'project_id': project.id},
-          );
-          if (jobs.isEmpty) continue;
-        }
-        final id = (row['id'] ?? row['key'])?.toString();
-        if (id != null) await widget.database.delete(table, id);
-      }
+      await widget.database.deleteWhere(table, {'project_id': project.id});
     }
     await widget.database.delete(
       DatabaseTables.settings,
@@ -170,9 +175,8 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
     await widget.keyStorage.delete('project.${project.id}.key');
     if (mounted) {
       setState(() => _projects = _load());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${project.name} deleted')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('${project.name} deleted')));
     }
   }
 
@@ -180,24 +184,80 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: const Text('Projects'),
-      leading: widget.onClose == null ? null : IconButton(onPressed: widget.onClose, icon: const Icon(Icons.arrow_back)),
+      leading: widget.onClose == null
+          ? null
+          : IconButton(
+              onPressed: widget.onClose,
+              icon: const Icon(Icons.arrow_back),
+            ),
     ),
-    floatingActionButton: FloatingActionButton.extended(onPressed: _create, icon: const Icon(Icons.add), label: const Text('New project')),
+    floatingActionButton: FloatingActionButton.extended(
+      onPressed: _create,
+      icon: const Icon(Icons.add),
+      label: const Text('New project'),
+    ),
     body: FutureBuilder<List<Project>>(
       future: _projects,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) return const Center(child: CircularProgressIndicator());
-        if (snapshot.hasError) return Center(child: Text('Unable to load projects: ${snapshot.error}'));
+        if (snapshot.connectionState != ConnectionState.done)
+          return const Center(child: CircularProgressIndicator());
+        if (snapshot.hasError)
+          return Center(
+            child: Text('Unable to load projects: ${snapshot.error}'),
+          );
         final projects = snapshot.data ?? const <Project>[];
         return Padding(
           padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1000), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Project workspace', style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: AppSpacing.xs),
-            Text('${projects.length} persisted project${projects.length == 1 ? '' : 's'}', style: Theme.of(context).textTheme.bodyLarge),
-            const SizedBox(height: AppSpacing.lg),
-            Expanded(child: projects.isEmpty ? AppSurfaceCard(child: Column(mainAxisSize: MainAxisSize.min, children: [const Text('No projects have been created yet.'), const SizedBox(height: AppSpacing.md), FilledButton.icon(onPressed: _create, icon: const Icon(Icons.add), label: const Text('Create project'))])) : ListView.separated(itemCount: projects.length, separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm), itemBuilder: (_, index) => _ProjectTile(project: projects[index], onTap: () => _open(projects[index]), onGenerate: () => _generate(projects[index]), onDelete: () => _delete(projects[index])))),
-          ]))),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Project workspace',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    '${projects.length} persisted project${projects.length == 1 ? '' : 's'}',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Expanded(
+                    child: projects.isEmpty
+                        ? AppSurfaceCard(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'No projects have been created yet.',
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                FilledButton.icon(
+                                  onPressed: _create,
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Create project'),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.separated(
+                            itemCount: projects.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: AppSpacing.sm),
+                            itemBuilder: (_, index) => _ProjectTile(
+                              project: projects[index],
+                              onTap: () => _open(projects[index]),
+                              onGenerate: () => _generate(projects[index]),
+                              onDelete: () => _delete(projects[index]),
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     ),
@@ -205,11 +265,50 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
 }
 
 class _ProjectTile extends StatelessWidget {
-  const _ProjectTile({required this.project, required this.onTap, required this.onGenerate, required this.onDelete});
+  const _ProjectTile({
+    required this.project,
+    required this.onTap,
+    required this.onGenerate,
+    required this.onDelete,
+  });
   final Project project;
   final VoidCallback onTap;
   final VoidCallback onGenerate;
   final VoidCallback onDelete;
   @override
-  Widget build(BuildContext context) => AppSurfaceCard(child: ListTile(contentPadding: EdgeInsets.zero, onTap: onTap, leading: const CircleAvatar(child: Icon(Icons.folder_outlined)), title: Text(project.name), subtitle: Text([if (project.courseName?.isNotEmpty == true) project.courseName!, if (project.organizationName?.isNotEmpty == true) project.organizationName!, 'Created ${project.createdAt.day}/${project.createdAt.month}/${project.createdAt.year}'].join(' · ')), trailing: Row(mainAxisSize: MainAxisSize.min, children: [IconButton(tooltip: 'Generate and create verification records', onPressed: onGenerate, icon: const Icon(Icons.verified_outlined)), IconButton(tooltip: 'Delete project', onPressed: onDelete, icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error)), const Icon(Icons.chevron_right)])));
+  Widget build(BuildContext context) => AppSurfaceCard(
+    child: ListTile(
+      contentPadding: EdgeInsets.zero,
+      onTap: onTap,
+      leading: const CircleAvatar(child: Icon(Icons.folder_outlined)),
+      title: Text(project.name),
+      subtitle: Text(
+        [
+          if (project.courseName?.isNotEmpty == true) project.courseName!,
+          if (project.organizationName?.isNotEmpty == true)
+            project.organizationName!,
+          'Created ${project.createdAt.day}/${project.createdAt.month}/${project.createdAt.year}',
+        ].join(' · '),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: 'Generate and create verification records',
+            onPressed: onGenerate,
+            icon: const Icon(Icons.verified_outlined),
+          ),
+          IconButton(
+            tooltip: 'Delete project',
+            onPressed: onDelete,
+            icon: Icon(
+              Icons.delete_outline,
+              color: Theme.of(context).colorScheme.error,
+            ),
+          ),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
+    ),
+  );
 }

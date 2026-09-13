@@ -29,11 +29,19 @@ class CertificateArtifactRenderer {
     final canvasWidth = _number(template['width'], 1000);
     final canvasHeight = _number(template['height'], 700);
     final dpi = _number(template['dpi'], 96);
+    final sourceImage = templateBytes == null
+        ? null
+        : img.decodeImage(Uint8List.fromList(templateBytes));
     final background = templateBytes == null
         ? null
         : pw.MemoryImage(Uint8List.fromList(templateBytes));
-    final pageWidth = canvasWidth / dpi * 72;
-    final pageHeight = canvasHeight / dpi * 72;
+    // The designer stores the logical canvas size separately from the actual
+    // image dimensions. Use the image aspect ratio for the PDF page so the
+    // background and the positioned fields share the same visible surface.
+    final outputWidth = sourceImage?.width.toDouble() ?? canvasWidth;
+    final outputHeight = sourceImage?.height.toDouble() ?? canvasHeight;
+    final pageWidth = outputWidth / dpi * 72;
+    final pageHeight = outputHeight / dpi * 72;
     final qrField = fields.where(_isQrField).isEmpty
         ? null
         : fields.where(_isQrField).first;
@@ -45,14 +53,7 @@ class CertificateArtifactRenderer {
           children: [
             if (background != null)
               pw.Positioned.fill(
-                child: pw.Center(
-                  child: pw.Image(
-                    background,
-                    width: pageWidth,
-                    height: pageHeight,
-                    fit: pw.BoxFit.contain,
-                  ),
-                ),
+                child: pw.Image(background, fit: pw.BoxFit.fill),
               ),
             for (final field in fields)
               if (_fieldIsVisible(field) && !_isQrField(field))

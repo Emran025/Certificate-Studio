@@ -17,11 +17,13 @@ class ProjectDetailsScreen extends StatelessWidget {
     required this.project,
     required this.database,
     this.keyStorage,
+    this.onClose,
   });
 
   final Project project;
   final AppDatabase database;
   final KeyStorage? keyStorage;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +33,7 @@ class ProjectDetailsScreen extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Back to workspace',
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: onClose ?? () => Navigator.of(context).pop(),
             icon: const Icon(Icons.close),
           ),
         ],

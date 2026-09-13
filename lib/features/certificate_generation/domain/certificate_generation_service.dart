@@ -347,7 +347,7 @@ class CertificateGenerationService {
   Future<List<int>> _rasterizePdf(List<int> pdfBytes) async {
     final raster = await Printing.raster(
       Uint8List.fromList(pdfBytes),
-      dpi: 144,
+      dpi: 300,
     ).first;
     final pngBytes = await raster.toPng();
     return pngBytes;

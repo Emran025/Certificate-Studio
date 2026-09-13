@@ -41,7 +41,7 @@ class CertificateArtifactRenderer {
           children: [
             if (background != null)
               pw.Positioned.fill(
-                child: pw.Image(background, fit: pw.BoxFit.fill),
+                child: pw.Image(background, fit: pw.BoxFit.contain),
               ),
             for (final field in fields)
               if (_fieldIsVisible(field) && !_isQrField(field))
@@ -90,17 +90,51 @@ class CertificateArtifactRenderer {
     required List<int>? templateBytes,
     required Map<String, Object?> template,
   }) {
-    final fallbackWidth = _number(template['width'], 1600).round();
-    final fallbackHeight = _number(template['height'], 1100).round();
-    var canvas = templateBytes == null
-        ? img.Image(width: fallbackWidth, height: fallbackHeight)
-        : img.decodeImage(Uint8List.fromList(templateBytes)) ??
-              img.Image(width: fallbackWidth, height: fallbackHeight);
-    final designWidth = _number(template['width'], canvas.width.toDouble());
-    final designHeight = _number(template['height'], canvas.height.toDouble());
-    // Upscale the actual source dimensions by one factor. Using the template
-    // metadata here can stretch an image when its stored dimensions differ
-    // from the decoded source image.
+    final designWidth = _number(template['width'], 1600);
+    final designHeight = _number(template['height'], 1100);
+    final logicalWidth = designWidth.round();
+    final logicalHeight = designHeight.round();
+    var canvas = img.Image(width: logicalWidth, height: logicalHeight);
+    img.fill(canvas, color: img.ColorRgb8(250, 247, 240));
+    final source = templateBytes == null
+        ? null
+        : img.decodeImage(Uint8List.fromList(templateBytes));
+    if (source != null) {
+      // Match the designer's BoxFit.contain behavior. The background is
+      // centered inside the logical design canvas instead of being stretched
+      // to the source image's raw pixel dimensions.
+      final fitScale = math.min(
+        logicalWidth / source.width,
+        logicalHeight / source.height,
+      );
+      final fittedWidth = (source.width * fitScale).round();
+      final fittedHeight = (source.height * fitScale).round();
+      final fitted = img.copyResize(
+        source,
+        width: fittedWidth,
+        height: fittedHeight,
+        interpolation: img.Interpolation.cubic,
+      );
+      img.compositeImage(
+        canvas,
+        fitted,
+        dstX: ((logicalWidth - fittedWidth) / 2).round(),
+        dstY: ((logicalHeight - fittedHeight) / 2).round(),
+      );
+    }
+    if (templateBytes == null) {
+      img.drawRect(
+        canvas,
+        x1: 35,
+        y1: 35,
+        x2: canvas.width - 35,
+        y2: canvas.height - 35,
+        color: img.ColorRgb8(45, 93, 73),
+        thickness: 8,
+      );
+    }
+    // Render every element in the same logical coordinate space used by the
+    // designer, then upscale the complete result without changing geometry.
     const scale = 2;
     final targetWidth = canvas.width * scale;
     final targetHeight = canvas.height * scale;
@@ -112,32 +146,19 @@ class CertificateArtifactRenderer {
         interpolation: img.Interpolation.cubic,
       );
     }
-    if (templateBytes == null) {
-      img.fill(canvas, color: img.ColorRgb8(250, 247, 240));
-      img.drawRect(
-        canvas,
-        x1: 35,
-        y1: 35,
-        x2: canvas.width - 35,
-        y2: canvas.height - 35,
-        color: img.ColorRgb8(45, 93, 73),
-        thickness: 8,
-      );
-    }
+    final logicalScale = canvas.width / logicalWidth;
     for (final field in fields) {
       if (!_fieldIsVisible(field) || _isQrField(field)) continue;
       final position = _jsonMap(field['position_json']);
       final style = _jsonMap(field['style_json']);
       final text = _fieldText(values, field);
       if (text.isEmpty) continue;
-      final x = (_number(position['x'], 0) / designWidth * canvas.width)
-          .round();
-      final y = (_number(position['y'], 0) / designHeight * canvas.height)
-          .round();
+      final x = (_number(position['x'], 0) * logicalScale).round();
+      final y = (_number(position['y'], 0) * logicalScale).round();
       img.drawString(
         canvas,
         text,
-        font: _bitmapFont(_number(style['font_size'], 24) * canvas.width / designWidth),
+        font: _bitmapFont(_number(style['font_size'], 24) * logicalScale),
         x: x,
         y: y,
         color: _imageColor(style['color'] as String?),
@@ -156,21 +177,19 @@ class CertificateArtifactRenderer {
     final qrPosition = qrField == null
         ? <String, dynamic>{}
         : _jsonMap(qrField['position_json']);
-    final qrSize = _number(qrPosition['width'], _qrSize(canvas).toDouble())
+    final qrLogicalSize = _number(qrPosition['width'], 220);
+    final qrSize = (qrLogicalSize * logicalScale)
         .clamp(120, math.min(canvas.width, canvas.height))
         .round();
     final qrX = qrField == null
         ? canvas.width - qrSize - 32
-        : (_number(qrPosition['x'], 0) / designWidth * canvas.width).round();
+        : (_number(qrPosition['x'], 0) * logicalScale).round();
     final qrY = qrField == null
         ? canvas.height - qrSize - 32
-        : (_number(qrPosition['y'], 0) / designHeight * canvas.height).round();
+        : (_number(qrPosition['y'], 0) * logicalScale).round();
     _drawQr(canvas, encodeVerificationQrPayload(record), x: qrX, y: qrY, size: qrSize);
     return [...img.encodePng(canvas), ...utf8.encode(_embeddedMarker(record))];
   }
-
-  static int _qrSize(img.Image canvas) =>
-      (math.min(canvas.width, canvas.height) * .24).round().clamp(220, 520);
 
   static bool _isQrField(Map<String, Object?> field) =>
       _jsonMap(field['style_json'])['kind'] == 'qr';

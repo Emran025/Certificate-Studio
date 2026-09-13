@@ -878,11 +878,6 @@ class _NumberInputState extends State<_NumberInput> {
     }
   }
 
-  void _commit() {
-    final value = double.tryParse(_controller.text.trim());
-    if (value != null) widget.onChanged(value);
-  }
-
   @override
   void dispose() {
     _focusNode.removeListener(_handleFocusChange);

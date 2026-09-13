@@ -821,9 +821,10 @@ class _NumberInput extends StatefulWidget {
 
 class _NumberInputState extends State<_NumberInput> {
   late final TextEditingController _controller = TextEditingController(
-    text: widget.value.round().toString(),
+    text: _formatValue(widget.value),
   );
   late final FocusNode _focusNode = FocusNode();
+  double? _pendingValue;
 
   @override
   void initState() {
@@ -833,8 +834,30 @@ class _NumberInputState extends State<_NumberInput> {
 
   void _handleFocusChange() {
     if (!_focusNode.hasFocus) {
-      final value = double.tryParse(_controller.text.trim());
-      _controller.text = (value ?? widget.value).round().toString();
+      _commit();
+    }
+  }
+
+  static String _formatValue(double value) =>
+      value == value.roundToDouble() ? value.round().toString() : value.toString();
+
+  void _commit() {
+    final value = _pendingValue ?? double.tryParse(_controller.text.trim());
+    if (value == null) {
+      _controller.value = TextEditingValue(
+        text: _formatValue(widget.value),
+        selection: TextSelection.collapsed(offset: _formatValue(widget.value).length),
+      );
+      return;
+    }
+    _pendingValue = null;
+    widget.onChanged(value);
+    final text = _formatValue(value);
+    if (_controller.text != text) {
+      _controller.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
     }
   }
 
@@ -845,7 +868,11 @@ class _NumberInputState extends State<_NumberInput> {
     // controller text while the user is editing, otherwise deleting a value
     // or inserting a digit moves the caret and restores the previous value.
     if (oldWidget.value != widget.value && !_focusNode.hasFocus) {
-      _controller.text = widget.value.round().toString();
+      final text = _formatValue(widget.value);
+      _controller.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
     }
   }
 
@@ -870,10 +897,9 @@ class _NumberInputState extends State<_NumberInput> {
     keyboardType: const TextInputType.numberWithOptions(decimal: true),
     textInputAction: TextInputAction.done,
     onChanged: (text) {
-      final value = double.tryParse(text);
-      if (value != null) widget.onChanged(value);
+      _pendingValue = double.tryParse(text.trim());
     },
-    onSubmitted: (_) => _commit(),
+    onEditingComplete: _commit,
   );
 }
 

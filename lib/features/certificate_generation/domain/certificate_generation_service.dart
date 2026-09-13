@@ -40,7 +40,6 @@ class CertificateGenerationService {
   final AppDatabase database;
   final KeyStorage keyStorage;
   final CertificateArtifactStore artifactStore;
-  Future<pw.Font>? _arabicFont;
   Future<List<int>>? _arabicFontBytes;
 
   Future<CertificateGenerationResult> generate({

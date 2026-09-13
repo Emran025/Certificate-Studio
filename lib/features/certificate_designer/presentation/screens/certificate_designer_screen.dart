@@ -424,15 +424,18 @@ class _ElementsPanel extends StatelessWidget {
           child: ListView(
             children: [
               for (final field in fields)
-                ListTile(
-                  selected: field.id == selectedId,
-                  dense: true,
-                  leading: const Icon(Icons.text_fields, size: 18),
-                  title: Text(field.source),
-                  subtitle: Text(
-                    '${field.width.round()} × ${field.height.round()}',
+                Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    selected: field.id == selectedId,
+                    dense: true,
+                    leading: const Icon(Icons.text_fields, size: 18),
+                    title: Text(field.source),
+                    subtitle: Text(
+                      '${field.width.round()} × ${field.height.round()}',
+                    ),
+                    onTap: () => onSelect(field.id),
                   ),
-                  onTap: () => onSelect(field.id),
                 ),
             ],
           ),

@@ -62,7 +62,12 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     return result;
   }
 
-  void _refresh() => setState(() => _certificates = _loadCertificates());
+  void _refresh() {
+    final certificates = _loadCertificates();
+    setState(() {
+      _certificates = certificates;
+    });
+  }
 
   Future<void> _verify(_LibraryCertificate certificate) async {
     final result = await CertificateVerificationService(

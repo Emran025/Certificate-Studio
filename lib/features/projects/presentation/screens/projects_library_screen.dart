@@ -12,10 +12,12 @@ import 'create_project_screen.dart';
 import 'project_details_screen.dart';
 
 class ProjectsLibraryScreen extends StatefulWidget {
-  const ProjectsLibraryScreen({super.key, required this.database, required this.institutionId, required this.keyStorage});
+  const ProjectsLibraryScreen({super.key, required this.database, required this.institutionId, required this.keyStorage, this.onOpenProject, this.onClose});
   final AppDatabase database;
   final String institutionId;
   final KeyStorage keyStorage;
+  final ValueChanged<Project>? onOpenProject;
+  final VoidCallback? onClose;
   @override
   State<ProjectsLibraryScreen> createState() => _ProjectsLibraryScreenState();
 }
@@ -37,17 +39,35 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
 
   Future<void> _create() async {
     final project = await Navigator.of(context).push<Project>(MaterialPageRoute(builder: (_) => CreateProjectScreen(institutionId: widget.institutionId, createProject: _createProject)));
-    if (project != null && mounted) setState(() => _projects = _load());
+    if (project != null && mounted) {
+      final projects = _load();
+      setState(() {
+        _projects = projects;
+      });
+    }
   }
 
   Future<void> _open(Project project) async {
+    final onOpenProject = widget.onOpenProject;
+    if (onOpenProject != null) {
+      onOpenProject(project);
+      return;
+    }
     await Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => ProjectDetailsScreen(project: project, database: widget.database, keyStorage: widget.keyStorage)));
-    if (mounted) setState(() => _projects = _load());
+    if (mounted) {
+      final projects = _load();
+      setState(() {
+        _projects = projects;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Projects')),
+    appBar: AppBar(
+      title: const Text('Projects'),
+      leading: widget.onClose == null ? null : IconButton(onPressed: widget.onClose, icon: const Icon(Icons.arrow_back)),
+    ),
     floatingActionButton: FloatingActionButton.extended(onPressed: _create, icon: const Icon(Icons.add), label: const Text('New project')),
     body: FutureBuilder<List<Project>>(
       future: _projects,

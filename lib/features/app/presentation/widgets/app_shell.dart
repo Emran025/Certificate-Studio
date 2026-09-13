@@ -39,6 +39,8 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   ProjectRepositoryImpl? _projectRepository;
   CreateProject? _createProject;
   Future<List<Project>>? _projectsFuture;
+  Project? _activeProject;
+  bool _showProjects = false;
 
   @override
   void initState() {
@@ -82,17 +84,11 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   }
 
   Future<void> _openProject(Project project) async {
-    final database = widget.database;
-    if (database == null) return;
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => ProjectDetailsScreen(
-          project: project,
-          database: database,
-          keyStorage: widget.keyStorage,
-        ),
-      ),
-    );
+    if (!mounted) return;
+    setState(() {
+      _activeProject = project;
+      _showProjects = false;
+    });
   }
 
   Future<void> _openCertificateLibrary() async {
@@ -109,25 +105,18 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   }
 
   Future<void> _openProjects() async {
-    final database = widget.database;
-    final institution = widget.institution;
-    if (database == null || institution == null) return;
+    if (!mounted || widget.database == null || widget.institution == null) return;
+    setState(() {
+      _activeProject = null;
+      _showProjects = true;
+    });
+  }
 
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => ProjectsLibraryScreen(
-          database: database,
-          institutionId: institution.id,
-          keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
-        ),
-      ),
-    );
-    if (mounted) {
-      final future = _loadProjects();
-      setState(() {
-        _projectsFuture = future;
-      });
-    }
+  void _showHome() {
+    setState(() {
+      _activeProject = null;
+      _showProjects = false;
+    });
   }
 
   Future<void> _openTemplates() async {
@@ -175,14 +164,29 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
               onVerification: _openVerification,
             ),
             Expanded(
-              child: _WorkspaceContent(
-                database: widget.database,
-                institution: widget.institution,
-                projectsFuture: _projectsFuture,
-                onCreateProject: _openCreateProject,
-                onVerify: _openVerification,
-                onOpenProject: _openProject,
-              ),
+              child: _activeProject != null
+                  ? ProjectDetailsScreen(
+                      project: _activeProject!,
+                      database: widget.database!,
+                      keyStorage: widget.keyStorage,
+                      onClose: _showHome,
+                    )
+                  : _showProjects
+                      ? ProjectsLibraryScreen(
+                          database: widget.database!,
+                          institutionId: widget.institution!.id,
+                          keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
+                          onOpenProject: _openProject,
+                          onClose: _showHome,
+                        )
+                      : _WorkspaceContent(
+                          database: widget.database,
+                          institution: widget.institution,
+                          projectsFuture: _projectsFuture,
+                          onCreateProject: _openCreateProject,
+                          onVerify: _openVerification,
+                          onOpenProject: _openProject,
+                        ),
             ),
           ],
         ),

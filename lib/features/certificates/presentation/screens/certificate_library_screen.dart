@@ -196,9 +196,9 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     );
   }
 
-  void _showExportResult(String message) =>
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+  void _showExportResult(String message) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(message)));
 
   Future<String?> _chooseFileNameField(
     List<_LibraryCertificate> certificates,
@@ -625,7 +625,7 @@ class _CertificatePreviewScreen extends StatelessWidget {
           ),
         ),
         SizedBox(
-          width: 300,
+          width: 340,
           child: _CertificateDetails(
             certificate: certificate,
             database: database,
@@ -648,70 +648,144 @@ class _CertificateDetails extends StatelessWidget {
   final KeyStorage keyStorage;
   @override
   Widget build(BuildContext context) => Container(
-    color: AppColors.surface,
+    color: AppColors.background,
     padding: const EdgeInsets.all(AppSpacing.lg),
     child: ListView(
       children: [
-        Text(
-          'Certificate details',
-          style: Theme.of(context).textTheme.titleLarge,
+        AppSurfaceCard(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                ),
+                child: const Icon(
+                  Icons.workspace_premium_outlined,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Certificate details',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
-        _Detail(
-          label: 'Recipient',
-          value: certificate.recipient.isEmpty
-              ? 'Unavailable'
-              : certificate.recipient,
-        ),
-        _Detail(label: 'Status', value: certificate.status),
-        _Detail(label: 'Identifier', value: certificate.id),
-        _Detail(
-          label: 'PNG',
-          value: certificate.imageReference == null
-              ? 'Unavailable'
-              : 'Available',
-        ),
-        _Detail(
-          label: 'PDF',
-          value: certificate.pdfReference == null ? 'Unavailable' : 'Available',
+        AppSurfaceCard(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            children: [
+              _Detail(
+                icon: Icons.person_outline,
+                label: 'Recipient',
+                value: certificate.recipient.isEmpty
+                    ? 'Unavailable'
+                    : certificate.recipient,
+              ),
+              _Detail(
+                icon: Icons.verified_outlined,
+                label: 'Status',
+                value: certificate.status,
+              ),
+              _Detail(
+                icon: Icons.tag_outlined,
+                label: 'Identifier',
+                value: certificate.id,
+              ),
+              _Detail(
+                icon: Icons.image_outlined,
+                label: 'PNG',
+                value: certificate.imageReference == null
+                    ? 'Unavailable'
+                    : 'Available',
+              ),
+              _Detail(
+                icon: Icons.picture_as_pdf_outlined,
+                label: 'PDF',
+                value: certificate.pdfReference == null
+                    ? 'Unavailable'
+                    : 'Available',
+                showDivider: false,
+              ),
+            ],
+          ),
         ),
         const Divider(height: AppSpacing.xl),
-        Text('Security', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.sm),
-        _Detail(
-          label: 'Document hash',
-          value: certificate.row['document_hash']?.toString() ?? 'Unavailable',
-        ),
-        OutlinedButton.icon(
-          onPressed: () async {
-            final result = await CertificateVerificationService(
-              database,
-              keyStorage,
-            ).verify(certificate.id);
-            if (context.mounted) {
-              showDialog<void>(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: Text(
-                    result.isValid ? 'Valid signature' : 'Verification failed',
+        AppSurfaceCard(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.shield_outlined,
+                    color: AppColors.primary,
+                    size: 20,
                   ),
-                  content: Text(
-                    result.isValid
-                        ? 'The certificate is authentic.'
-                        : result.reason ?? 'Unable to verify.',
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    'Security',
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Close'),
-                    ),
-                  ],
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _Detail(
+                icon: Icons.fingerprint,
+                label: 'Document hash',
+                value:
+                    certificate.row['document_hash']?.toString() ??
+                    'Unavailable',
+                showDivider: false,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final result = await CertificateVerificationService(
+                      database,
+                      keyStorage,
+                    ).verify(certificate.id);
+                    if (context.mounted) {
+                      showDialog<void>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: Text(
+                            result.isValid
+                                ? 'Valid signature'
+                                : 'Verification failed',
+                          ),
+                          content: Text(
+                            result.isValid
+                                ? 'The certificate is authentic.'
+                                : result.reason ?? 'Unable to verify.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.verified_user_outlined),
+                  label: const Text('Verify certificate'),
                 ),
-              );
-            }
-          },
-          icon: const Icon(Icons.verified_user_outlined),
-          label: const Text('Verify certificate'),
+              ),
+            ],
+          ),
         ),
       ],
     ),
@@ -719,23 +793,52 @@ class _CertificateDetails extends StatelessWidget {
 }
 
 class _Detail extends StatelessWidget {
-  const _Detail({required this.label, required this.value});
+  const _Detail({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.showDivider = true,
+  });
+  final IconData icon;
   final String label;
   final String value;
+  final bool showDivider;
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: Theme.of(context).textTheme.labelMedium),
-        SelectableText(
-          value,
-          maxLines: 4,
-          style: Theme.of(context).textTheme.bodyMedium,
+  Widget build(BuildContext context) => Column(
+    children: [
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xxs),
+              child: Icon(icon, size: 18, color: AppColors.primary),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  SelectableText(
+                    value,
+                    maxLines: 4,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
-    ),
+      ),
+      if (showDivider) const Divider(height: 1),
+    ],
   );
 }
 
@@ -799,10 +902,18 @@ class _LibraryCertificate {
   String? valueFor(String field) {
     final exact = data[field];
     if (exact != null) return exact.toString();
-    final normalized = field.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '_');
+    final normalized = field.trim().toLowerCase().replaceAll(
+      RegExp(r'\s+'),
+      '_',
+    );
     for (final entry in data.entries) {
-      final key = entry.key.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '_');
-      if (key == normalized && entry.value != null) return entry.value.toString();
+      final key = entry.key.trim().toLowerCase().replaceAll(
+        RegExp(r'\s+'),
+        '_',
+      );
+      if (key == normalized && entry.value != null) {
+        return entry.value.toString();
+      }
     }
     return null;
   }

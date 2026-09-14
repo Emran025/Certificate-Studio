@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -232,6 +233,20 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     final field = _fields.firstWhere((item) => item.id == id);
     final dx = delta.dx / _zoom;
     final dy = delta.dy / _zoom;
+    if (field.qr) {
+      final horizontalDelta = fromLeft ? -dx : dx;
+      final verticalDelta = fromTop ? -dy : dy;
+      final sizeDelta = horizontalDelta.abs() >= verticalDelta.abs()
+          ? horizontalDelta
+          : verticalDelta;
+      final size = (field.width + sizeDelta)
+          .clamp(40, math.min(_canvasWidth - field.x, _canvasHeight - field.y))
+          .toDouble();
+      final x = fromLeft ? field.x + field.width - size : field.x;
+      final y = fromTop ? field.y + field.height - size : field.y;
+      _replaceField(field.copyWith(x: x, y: y, width: size, height: size));
+      return;
+    }
     var x = field.x;
     var y = field.y;
     var width = field.width;
@@ -685,22 +700,23 @@ class _PropertiesPanel extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: AppSpacing.md),
-          DropdownButtonFormField<String>(
-            initialValue: columns.contains(selected.source) ? selected.source : null,
-            decoration: const InputDecoration(labelText: 'Data source field'),
-            items: [
-              for (final column in columns)
-                DropdownMenuItem(value: column, child: Text(column)),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                onChanged(selected.copyWith(
-                  source: value,
-                  className: canonicalFieldClassId(value),
-                ));
-              }
-            },
-          ),
+          if (!selected.qr)
+            DropdownButtonFormField<String>(
+              initialValue: columns.contains(selected.source) ? selected.source : null,
+              decoration: const InputDecoration(labelText: 'Data source field'),
+              items: [
+                for (final column in columns)
+                  DropdownMenuItem(value: column, child: Text(column)),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  onChanged(selected.copyWith(
+                    source: value,
+                    className: canonicalFieldClassId(value),
+                  ));
+                }
+              },
+            ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Position and size',
@@ -735,8 +751,12 @@ class _PropertiesPanel extends StatelessWidget {
                   key: ValueKey('${selected.id}-width'),
                   label: 'Width',
                   value: selected.width,
-                  onChanged: (value) =>
-                      onChanged(selected.copyWith(width: value)),
+                  onChanged: (value) => onChanged(
+                    selected.copyWith(
+                      width: value,
+                      height: selected.qr ? value : selected.height,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -745,12 +765,17 @@ class _PropertiesPanel extends StatelessWidget {
                   key: ValueKey('${selected.id}-height'),
                   label: 'Height',
                   value: selected.height,
-                  onChanged: (value) =>
-                      onChanged(selected.copyWith(height: value)),
+                  onChanged: (value) => onChanged(
+                    selected.copyWith(
+                      width: selected.qr ? value : selected.width,
+                      height: value,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
+          if (!selected.qr) ...[
           const SizedBox(height: AppSpacing.sm),
           DropdownButtonFormField<String>(
             initialValue: selected.fontFamily,
@@ -831,6 +856,7 @@ class _PropertiesPanel extends StatelessWidget {
               }
             },
           ),
+          ],
           const SizedBox(height: AppSpacing.md),
           OutlinedButton.icon(
             onPressed: onDelete,

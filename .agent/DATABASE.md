@@ -130,9 +130,13 @@ The UI may convert timestamps to the local timezone.
 
 # 3. Database Technology
 
-The initial local relational database should use SQLite.
+The local relational database uses a file-backed SQLite database encrypted with
+SQLCipher. The SQLCipher driver, database path, key application, and
+platform-specific runtime details are isolated inside the core database
+adapter.
 
-The application must access SQLite through a repository/data-source abstraction.
+The application must access SQLCipher through a repository/data-source
+abstraction.
 
 The domain layer must not depend directly on SQLite APIs.
 
@@ -145,7 +149,7 @@ Repository Interface
   ↓
 Data Layer
   ↓
-SQLite Implementation
+  SQLCipher Implementation
 ```
 
 For platforms where traditional SQLite access is not appropriate, an alternative persistence implementation may be provided while preserving the same domain/repository contracts.

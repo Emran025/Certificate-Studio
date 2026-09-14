@@ -9,5 +9,5 @@ abstract final class AppEnvironment {
   static const defaultLocale = 'en';
   static const projectFileExtensions = ['cstudio', 'certproject'];
   static const maxRecentProjects = 5;
-  static const defaultExportFilePattern = '{student_name}_{class}.pdf';
+  static const defaultExportFilePattern = '{field_1}_{field_2}.pdf';
 }

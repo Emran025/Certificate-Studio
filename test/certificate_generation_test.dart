@@ -70,8 +70,8 @@ void main() {
     await database.insert(DatabaseTables.settings, {
       'key': 'mapping:project-mapped',
       'value_json': jsonEncode({
-        'اسم الطالب': 'student_name',
-        'الدورة': 'course_name',
+        'اسم المستلم': 'recipient',
+        'الدورة': 'course',
       }),
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     });
@@ -85,7 +85,7 @@ void main() {
     final certificate = (await database.query(DatabaseTables.certificates)).single;
     final document = jsonDecode(certificate['document_json']! as String) as Map;
     final fields = document['fields'] as Map;
-    expect(fields['student_name'], 'سارة');
-    expect(fields['course_name'], 'Flutter');
+    expect(fields['recipient'], 'سارة');
+    expect(fields['course'], 'Flutter');
   });
 }

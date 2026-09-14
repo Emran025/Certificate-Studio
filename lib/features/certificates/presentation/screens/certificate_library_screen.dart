@@ -113,13 +113,15 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     _LibraryCertificate certificate,
     String extension,
   ) async {
+    final field = await _chooseFileNameField([certificate]);
+    if (field == null) return;
     String? path;
     Object? error;
     try {
       path = await _exporter.exportSingle(
         certificate: certificate.row,
         extension: extension,
-        fileName: _fileName(certificate),
+        fileName: _fileName(certificate, field),
       );
     } catch (exception) {
       error = exception;
@@ -142,6 +144,8 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
         .where((item) => _selected.contains(item.id))
         .toList();
     if (chosen.isEmpty) return;
+    final field = await _chooseFileNameField(chosen);
+    if (field == null) return;
     String? path;
     Object? error;
     try {
@@ -149,7 +153,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
         certificates: [for (final item in chosen) item.row],
         extension: extension,
         fileName: 'certificates-${DateTime.now().millisecondsSinceEpoch}',
-        fileNameFor: (row) => _fileName(_LibraryCertificate(row, null)),
+        fileNameFor: (row) => _fileName(_LibraryCertificate(row, null), field),
       );
     } catch (exception) {
       error = exception;
@@ -168,6 +172,8 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     List<_LibraryCertificate> certificates,
     String extension,
   ) async {
+    final field = await _chooseFileNameField(certificates);
+    if (field == null) return;
     String? path;
     Object? error;
     try {
@@ -175,7 +181,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
         certificates: [for (final item in certificates) item.row],
         extension: extension,
         fileName: 'certificates-${DateTime.now().millisecondsSinceEpoch}',
-        fileNameFor: (row) => _fileName(_LibraryCertificate(row, null)),
+        fileNameFor: (row) => _fileName(_LibraryCertificate(row, null), field),
       );
     } catch (exception) {
       error = exception;
@@ -194,12 +200,59 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(message)));
 
-  String _fileName(_LibraryCertificate certificate) {
+  Future<String?> _chooseFileNameField(
+    List<_LibraryCertificate> certificates,
+  ) async {
+    final fields = <String>{};
+    for (final certificate in certificates) {
+      fields.addAll(certificate.data.keys);
+    }
+    if (fields.isEmpty) fields.add('certificate_id');
+    var selected = fields.first;
+    return showDialog<String>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Choose file name field'),
+          content: DropdownButtonFormField<String>(
+            value: selected,
+            decoration: const InputDecoration(
+              labelText: 'Field used for the exported file name',
+            ),
+            items: [
+              for (final field in fields)
+                DropdownMenuItem(value: field, child: Text(field)),
+            ],
+            onChanged: (value) {
+              if (value != null) setDialogState(() => selected = value);
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, selected),
+              child: const Text('Export'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _fileName(_LibraryCertificate certificate, [String? field]) {
     final id = certificate.id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
-    final recipient = certificate.recipient.replaceAll(
+    final selected = field == null || field == 'certificate_id'
+        ? id
+        : (certificate.valueFor(field) ?? '');
+    final value = selected.trim().isEmpty ? certificate.recipient : selected;
+    final recipient = value.replaceAll(
       RegExp(r'[^a-zA-Z0-9_-]'),
       '_',
     );
+    if (field == 'certificate_id') return id;
     return recipient.isEmpty ? id : '$recipient-$id';
   }
 
@@ -709,6 +762,32 @@ class _LibraryCertificate {
   String get status => row['status']?.toString() ?? 'unknown';
   String? get imageReference => row['image_path'] as String?;
   String? get pdfReference => row['file_path'] as String?;
+  Map<String, dynamic> get data {
+    final rawStudent = student?['data_json'];
+    if (rawStudent is String) {
+      final decoded = jsonDecode(rawStudent);
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    }
+    final rawDocument = row['document_json'];
+    if (rawDocument is String) {
+      final decoded = jsonDecode(rawDocument);
+      final fields = decoded is Map ? decoded['fields'] : null;
+      if (fields is Map) return Map<String, dynamic>.from(fields);
+    }
+    return {};
+  }
+
+  String? valueFor(String field) {
+    final exact = data[field];
+    if (exact != null) return exact.toString();
+    final normalized = field.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '_');
+    for (final entry in data.entries) {
+      final key = entry.key.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '_');
+      if (key == normalized && entry.value != null) return entry.value.toString();
+    }
+    return null;
+  }
+
   String get recipient {
     final raw = student?['data_json'];
     if (raw is! String) return '';

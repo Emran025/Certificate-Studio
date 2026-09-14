@@ -192,7 +192,10 @@ class CertificateGenerationService {
           templateBytes,
           template,
         );
-        final pngBytes = await _rasterizePdf(pdfBytes);
+        final pngBytes = CertificateArtifactRenderer.appendEmbeddedRecord(
+          await _rasterizePdf(pdfBytes),
+          signedRecord,
+        );
         final savedArtifacts = await Future.wait([
           artifactStore.save(
             certificateId: certificateId,

@@ -133,6 +133,7 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
     final certificates = await widget.database.query(
       DatabaseTables.certificates,
       where: {'project_id': project.id},
+      columns: ['file_path', 'image_path'],
     );
     final artifacts = CertificateArtifactStore();
     await Future.wait([
@@ -152,12 +153,13 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
     final jobs = await widget.database.query(
       DatabaseTables.generationJobs,
       where: {'project_id': project.id},
+      columns: ['id'],
     );
-    for (final job in jobs) {
-      await widget.database.deleteWhere(DatabaseTables.generationItems, {
-        'job_id': job['id'],
-      });
-    }
+    await widget.database.deleteWhereIn(
+      DatabaseTables.generationItems,
+      'job_id',
+      jobs.map((job) => job['id']),
+    );
     await widget.database.deleteWhere(DatabaseTables.generationJobs, {
       'project_id': project.id,
     });

@@ -29,12 +29,7 @@ class InstitutionRepositoryImpl implements InstitutionRepository {
       createdAt: institution.createdAt,
       updatedAt: DateTime.now().toUtc(),
     );
-    final existing = await _database.query(DatabaseTables.institutions, where: {'id': model.id});
-    if (existing.isEmpty) {
-      await _database.insert(DatabaseTables.institutions, model.toRow());
-    } else {
-      await _database.update(DatabaseTables.institutions, model.id, model.toRow());
-    }
+    await _database.upsert(DatabaseTables.institutions, model.toRow());
     return model;
   }
 

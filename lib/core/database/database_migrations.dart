@@ -47,6 +47,17 @@ abstract final class DatabaseMigrations {
         )''',
       ],
     ),
+    DatabaseMigration(
+      fromVersion: 2,
+      toVersion: 3,
+      statements: [
+        'CREATE INDEX IF NOT EXISTS idx_projects_template ON projects (template_id)',
+        'CREATE INDEX IF NOT EXISTS idx_certificate_fields_project ON certificate_fields (project_id)',
+        'CREATE INDEX IF NOT EXISTS idx_signatures_project ON signatures (project_id)',
+        'CREATE INDEX IF NOT EXISTS idx_generation_items_student ON generation_items (student_id)',
+        'CREATE INDEX IF NOT EXISTS idx_verification_records_project ON verification_records (project_id)',
+      ],
+    ),
   ];
 
   static List<String> statementsForUpgrade(int currentVersion) {
@@ -54,8 +65,8 @@ abstract final class DatabaseMigrations {
       throw ArgumentError.value(currentVersion, 'currentVersion', 'Unsupported database version.');
     }
 
-    // A fresh database uses the complete current schema. Incremental
-    // migrations are only for databases that already have version one.
+    // A fresh database uses the complete current schema. Existing databases
+    // are upgraded through each applicable versioned migration.
     if (currentVersion == 0) {
       return [...DatabaseSchema.createStatements, ...DatabaseSchema.indexes];
     }

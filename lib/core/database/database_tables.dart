@@ -31,7 +31,7 @@ abstract final class DatabaseTables {
 }
 
 abstract final class DatabaseSchema {
-  static const version = 2;
+  static const version = 3;
 
   static const createStatements = <String>[
     '''CREATE TABLE institutions (
@@ -186,10 +186,15 @@ abstract final class DatabaseSchema {
 
   static const indexes = <String>[
     'CREATE INDEX idx_projects_institution ON projects (institution_id)',
+    'CREATE INDEX idx_projects_template ON projects (template_id)',
     'CREATE INDEX idx_students_project ON students (project_id)',
+    'CREATE INDEX idx_certificate_fields_project ON certificate_fields (project_id)',
+    'CREATE INDEX idx_signatures_project ON signatures (project_id)',
     'CREATE INDEX idx_certificates_project ON certificates (project_id)',
     'CREATE INDEX idx_certificates_status ON certificates (status)',
     'CREATE INDEX idx_generation_jobs_project ON generation_jobs (project_id)',
     'CREATE INDEX idx_generation_items_job ON generation_items (job_id)',
+    'CREATE INDEX idx_generation_items_student ON generation_items (student_id)',
+    'CREATE INDEX idx_verification_records_project ON verification_records (project_id)',
   ];
 }

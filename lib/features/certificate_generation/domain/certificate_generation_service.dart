@@ -54,14 +54,17 @@ class CertificateGenerationService {
     final students = await database.query(
       DatabaseTables.students,
       where: {'project_id': projectId},
+      columns: ['id', 'class_name', 'data_json'],
     );
     final fields = await database.query(
       DatabaseTables.certificateFields,
       where: {'project_id': projectId},
+      columns: ['class_name', 'source'],
     );
     final projects = await database.query(
       DatabaseTables.projects,
       where: {'id': projectId},
+      columns: ['template_id'],
     );
     final project = projects.isEmpty
         ? const <String, Object?>{}
@@ -72,6 +75,7 @@ class CertificateGenerationService {
         : await database.query(
             DatabaseTables.templates,
             where: {'id': templateId},
+            columns: ['file_path', 'width', 'height', 'dpi', 'format'],
           );
     final template = templates.isEmpty
         ? const <String, Object?>{}
@@ -81,24 +85,11 @@ class CertificateGenerationService {
     final mappingRows = await database.query(
       DatabaseTables.settings,
       where: {'key': 'mapping:$projectId'},
+      columns: ['value_json'],
     );
     final mapping = _decodeMapping(
       mappingRows.isEmpty ? null : mappingRows.first['value_json'],
     );
-    final existingCertificates = {
-      for (final row in await database.query(
-        DatabaseTables.certificates,
-        where: {'project_id': projectId},
-      ))
-        row['id']!.toString(): row,
-    };
-    final existingVerifications = {
-      for (final row in await database.query(
-        DatabaseTables.verificationRecords,
-        where: {'project_id': projectId},
-      ))
-        row['certificate_id']!.toString(): row,
-    };
     final issueDate = DateTime.now().toUtc().toIso8601String().split('T').first;
     final jobId =
         'generation-$projectId-${DateTime.now().microsecondsSinceEpoch}';
@@ -132,20 +123,20 @@ class CertificateGenerationService {
     final errors = <String>[];
     var generated = 0;
     final keyPair = await _keyPair(projectId);
-    database.beginBatch();
-    try {
     for (var index = 0; index < students.length; index++) {
       await _yieldToUi();
       final student = students[index];
       final studentId = student['id']! as String;
       final itemId = '$jobId-item-$index';
+      final completed = index + 1;
+      try {
       await database.insert(DatabaseTables.generationItems, {
         'id': itemId,
         'job_id': jobId,
         'student_id': studentId,
         'status': 'running',
       });
-      try {
+        try {
         final data = _decodeData(student['data_json']);
         final values = <String, dynamic>{
           'student_class':
@@ -237,16 +228,10 @@ class CertificateGenerationService {
           'created_at': now,
           'updated_at': now,
         };
-        if (!existingCertificates.containsKey(certificateId)) {
-          await database.insert(DatabaseTables.certificates, certificateValues);
-        } else {
-          await database.update(
-            DatabaseTables.certificates,
-            certificateId,
-            certificateValues,
-          );
-        }
-        existingCertificates[certificateId] = certificateValues;
+        // Keep rendering and artifact I/O outside the SQLCipher transaction;
+        // only the related certificate records are committed atomically.
+        database.beginBatch();
+        await database.upsert(DatabaseTables.certificates, certificateValues);
         final verificationId = 'verification-$certificateId';
         final verificationValues = {
           'id': verificationId,
@@ -257,44 +242,37 @@ class CertificateGenerationService {
           'signature': signedRecord['signature'],
           'created_at': now,
         };
-        if (!existingVerifications.containsKey(certificateId)) {
-          await database.insert(
-            DatabaseTables.verificationRecords,
-            verificationValues,
-          );
-        } else {
-          await database.update(
-            DatabaseTables.verificationRecords,
-            verificationId,
-            verificationValues,
-          );
-        }
-        existingVerifications[certificateId] = verificationValues;
+        await database.upsert(
+          DatabaseTables.verificationRecords,
+          verificationValues,
+        );
         await database.update(DatabaseTables.generationItems, itemId, {
           'certificate_id': certificateId,
           'status': 'completed',
           'completed_at': now,
         });
         generated++;
-      } catch (error) {
-        final message = 'Row ${index + 1}: $error';
-        errors.add(message);
-        await database.update(DatabaseTables.generationItems, itemId, {
-          'status': 'failed',
-          'error_message': message,
-          'completed_at': DateTime.now().toUtc().toIso8601String(),
+        } catch (error) {
+          final message = 'Row ${index + 1}: $error';
+          errors.add(message);
+          // Roll back the row's atomic certificate writes before recording
+          // the failure outside the failed transaction.
+          await database.endBatch();
+          await database.update(DatabaseTables.generationItems, itemId, {
+            'status': 'failed',
+            'error_message': message,
+            'completed_at': DateTime.now().toUtc().toIso8601String(),
+          });
+        }
+        await database.update(DatabaseTables.generationJobs, jobId, {
+          'completed_count': completed,
+          'failed_count': completed - generated,
         });
+      } finally {
+        await database.endBatch();
       }
-      final completed = index + 1;
-      await database.update(DatabaseTables.generationJobs, jobId, {
-        'completed_count': completed,
-        'failed_count': completed - generated,
-      });
       onProgress?.call(completed, students.length);
       await _yieldToUi();
-    }
-    } finally {
-      await database.endBatch();
     }
     final status = generated == students.length
         ? 'completed'

@@ -44,12 +44,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
       createdAt: project.createdAt,
       updatedAt: DateTime.now().toUtc(),
     );
-    final existing = await _database.query(DatabaseTables.projects, where: {'id': model.id});
-    if (existing.isEmpty) {
-      await _database.insert(DatabaseTables.projects, model.toRow());
-    } else {
-      await _database.update(DatabaseTables.projects, model.id, model.toRow());
-    }
+    await _database.upsert(DatabaseTables.projects, model.toRow());
     return model;
   }
 

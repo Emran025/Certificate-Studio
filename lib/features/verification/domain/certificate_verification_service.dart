@@ -79,6 +79,7 @@ class CertificateVerificationService {
       final records = await database.query(
         DatabaseTables.verificationRecords,
         where: {'certificate_id': certificateId},
+        columns: ['payload_json'],
       );
       if (records.isEmpty) {
         return _result(
@@ -91,6 +92,7 @@ class CertificateVerificationService {
       final certificates = await database.query(
         DatabaseTables.certificates,
         where: {'id': certificateId},
+        columns: ['document_json'],
       );
       final document = certificates.isEmpty
           ? <int>[]
@@ -520,6 +522,7 @@ class CertificateVerificationService {
     final rows = await database.query(
       DatabaseTables.verificationRecords,
       where: {'certificate_id': certificateId},
+      columns: ['payload_json'],
     );
     if (rows.isEmpty) return qrRecord;
     final full = _decode(rows.first['payload_json']);

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -76,11 +77,15 @@ class PersistentAppDatabase implements AppDatabase {
   Future<List<Map<String, Object?>>> query(
     String table, {
     Map<String, Object?> where = const {},
+    List<String>? columns,
   }) async {
     _ensureReady(table);
     final clause = _whereClause(where);
+    final projection = columns == null || columns.isEmpty
+        ? '*'
+        : columns.map(_quoteIdentifier).join(', ');
     final rows = _database.select(
-      'SELECT * FROM ${_quoteIdentifier(table)}$clause',
+      'SELECT $projection FROM ${_quoteIdentifier(table)}$clause',
       where.values.map(_bindValue).toList(),
     );
     return [for (final row in rows) Map<String, Object?>.from(row)];
@@ -103,14 +108,42 @@ class PersistentAppDatabase implements AppDatabase {
   }
 
   @override
+  Future<Map<String, Object?>> upsert(
+    String table,
+    Map<String, Object?> values, {
+    String conflictColumn = 'id',
+  }) async {
+    _ensureReady(table);
+    if (values.isEmpty) throw ArgumentError.value(values, 'values');
+    if (!values.containsKey(conflictColumn)) {
+      throw ArgumentError('Missing conflict column \"$conflictColumn\".');
+    }
+    final columns = values.keys.map(_quoteIdentifier).join(', ');
+    final placeholders = List.filled(values.length, '?').join(', ');
+    final updates = values.keys
+        .where((key) => key != conflictColumn)
+        .map((key) => '${_quoteIdentifier(key)} = excluded.${_quoteIdentifier(key)}')
+        .join(', ');
+    final conflict = _quoteIdentifier(conflictColumn);
+    final suffix = updates.isEmpty ? 'DO NOTHING' : 'DO UPDATE SET $updates';
+    _run(() => _database.execute(
+          'INSERT INTO ${_quoteIdentifier(table)} ($columns) VALUES ($placeholders) '
+          'ON CONFLICT ($conflict) $suffix',
+          values.values.map(_bindValue).toList(),
+        ));
+    return Map<String, Object?>.from(values);
+  }
+
+  @override
   Future<void> update(String table, String id, Map<String, Object?> values) async {
     _ensureReady(table);
     if (values.isEmpty) return;
     final assignments = values.keys.map((key) => '${_quoteIdentifier(key)} = ?').join(', ');
     _run(() {
+      final primaryKey = _primaryKeyColumn(table);
       _database.execute(
-        'UPDATE ${_quoteIdentifier(table)} SET $assignments WHERE (id = ? OR key = ?)',
-        [...values.values.map(_bindValue), id, id],
+        'UPDATE ${_quoteIdentifier(table)} SET $assignments WHERE ${_quoteIdentifier(primaryKey)} = ?',
+        [...values.values.map(_bindValue), id],
       );
       if (_database.updatedRows == 0) {
         throw StateError('No record with id "$id" exists in $table.');
@@ -122,8 +155,8 @@ class PersistentAppDatabase implements AppDatabase {
   Future<void> delete(String table, String id) async {
     _ensureReady(table);
     _run(() => _database.execute(
-          'DELETE FROM ${_quoteIdentifier(table)} WHERE (id = ? OR key = ?)',
-          [id, id],
+          'DELETE FROM ${_quoteIdentifier(table)} WHERE ${_quoteIdentifier(_primaryKeyColumn(table))} = ?',
+          [id],
         ));
   }
 
@@ -135,6 +168,22 @@ class PersistentAppDatabase implements AppDatabase {
           'DELETE FROM ${_quoteIdentifier(table)}$clause',
           where.values.map(_bindValue).toList(),
         ));
+  }
+
+  @override
+  Future<void> deleteWhereIn(String table, String column, Iterable<Object?> values) async {
+    _ensureReady(table);
+    final selected = values.map(_bindValue).toList(growable: false);
+    if (selected.isEmpty) return;
+    for (var offset = 0; offset < selected.length; offset += 500) {
+      final chunk = selected.sublist(offset, math.min(offset + 500, selected.length));
+      final placeholders = List.filled(chunk.length, '?').join(', ');
+      _run(() => _database.execute(
+            'DELETE FROM ${_quoteIdentifier(table)} '
+            'WHERE ${_quoteIdentifier(column)} IN ($placeholders)',
+            chunk,
+          ));
+    }
   }
 
   @override
@@ -243,6 +292,9 @@ class PersistentAppDatabase implements AppDatabase {
   void _ensureOpen() {
     if (!_isOpen) throw StateError('Database is not open.');
   }
+
+  static String _primaryKeyColumn(String table) =>
+      table == DatabaseTables.settings ? 'key' : 'id';
 
   static String _whereClause(Map<String, Object?> where) => where.isEmpty
       ? ''

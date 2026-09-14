@@ -67,14 +67,7 @@ class DataImportRepositoryImpl implements DataImportRepository {
   Future<ImportedTable> saveForProject(String projectId, ImportedTable table) async {
     _database.beginBatch();
     try {
-    final existing = await _database.query(
-      DatabaseTables.students,
-      where: {'project_id': projectId},
-    );
-    for (final row in existing) {
-      final id = row['id'];
-      if (id is String) await _database.delete(DatabaseTables.students, id);
-    }
+    await _database.deleteWhere(DatabaseTables.students, {'project_id': projectId});
     for (var index = 0; index < table.rows.length; index++) {
       final values = table.rows[index];
       final classSource = values.entries
@@ -103,6 +96,7 @@ class DataImportRepositoryImpl implements DataImportRepository {
     final rows = await _database.query(
       DatabaseTables.students,
       where: {'project_id': projectId},
+      columns: ['data_json'],
     );
     final maps = <Map<String, String>>[];
     for (final row in rows) {

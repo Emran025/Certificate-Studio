@@ -178,36 +178,30 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
       _saveLabel = 'Saving...';
     });
     final now = DateTime.now().toUtc().toIso8601String();
-    for (final field in _fields) {
-      await widget.database.update(
-        DatabaseTables.certificateFields,
-        field.id,
-        field.toRow(widget.projectId, now),
-      );
-    }
-    final layouts = await widget.database.query(
-      DatabaseTables.certificateLayouts,
-      where: {'project_id': widget.projectId},
-    );
-    final layout = {
-      'project_id': widget.projectId,
-      'canvas_width': _canvasWidth,
-      'canvas_height': _canvasHeight,
-      'grid_enabled': 1,
-      'settings_json': jsonEncode({'updated_by': 'designer', 'zoom': _zoom}),
-      'updated_at': now,
-    };
-    if (layouts.isEmpty) {
-      await widget.database.insert(DatabaseTables.certificateLayouts, {
-        'id': 'layout-${widget.projectId}',
-        ...layout,
-      });
-    } else {
-      await widget.database.update(
+    widget.database.beginBatch();
+    try {
+      for (final field in _fields) {
+        await widget.database.update(
+          DatabaseTables.certificateFields,
+          field.id,
+          field.toRow(widget.projectId, now),
+        );
+      }
+      await widget.database.upsert(
         DatabaseTables.certificateLayouts,
-        layouts.first['id']! as String,
-        layout,
+        {
+          'id': 'layout-${widget.projectId}',
+          'project_id': widget.projectId,
+          'canvas_width': _canvasWidth,
+          'canvas_height': _canvasHeight,
+          'grid_enabled': 1,
+          'settings_json': jsonEncode({'updated_by': 'designer', 'zoom': _zoom}),
+          'updated_at': now,
+        },
+        conflictColumn: 'project_id',
       );
+    } finally {
+      await widget.database.endBatch();
     }
     if (!mounted) return;
     setState(() {

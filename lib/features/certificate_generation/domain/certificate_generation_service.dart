@@ -192,6 +192,7 @@ class CertificateGenerationService {
             'institution_id': institutionId,
             'project_id': projectId,
             'certificate_id': certificateId,
+            'student_id': studentId,
             'public_key': keyPair.publicRecord(),
             'fields': values,
           },

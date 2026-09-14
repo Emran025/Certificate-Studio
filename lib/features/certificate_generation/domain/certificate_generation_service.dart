@@ -78,10 +78,6 @@ class CertificateGenerationService {
         : templates.first;
     final templatePath = template['file_path'] as String? ?? '';
     final templateBytes = await _cachedTemplateBytes(templatePath);
-    final preparedBackground = CertificateArtifactRenderer.preparePdfBackground(
-      templateBytes,
-      template,
-    );
     final mappingRows = await database.query(
       DatabaseTables.settings,
       where: {'key': 'mapping:$projectId'},
@@ -209,7 +205,6 @@ class CertificateGenerationService {
           signedRecord,
           templateBytes,
           template,
-          preparedBackground,
         );
         final pngBytes = CertificateArtifactRenderer.appendEmbeddedRecord(
           await _rasterizePdf(pdfBytes),
@@ -328,13 +323,13 @@ class CertificateGenerationService {
     Map<String, dynamic> record,
     List<int>? templateBytes,
     Map<String, Object?> template,
-    PdfBackgroundAssets? preparedBackground,
   ) async {
     final fontBytes = await _loadArabicFontBytes();
     final fontBytesByFamily = await (_projectFontBytes ??= _loadProjectFontBytes(fontBytes));
     final worker = _pdfWorker ??= await _PdfRenderWorker.start(
       fontBytesByFamily: fontBytesByFamily,
-      preparedBackground: preparedBackground,
+      templateBytes: templateBytes,
+      template: template,
     );
     return worker.render({
       'values': values,
@@ -346,8 +341,8 @@ class CertificateGenerationService {
       'templateBytes': null,
       'template': template,
       'preparedBackgroundBytes': null,
-      'preparedImageWidth': preparedBackground?.width,
-      'preparedImageHeight': preparedBackground?.height,
+      'preparedImageWidth': null,
+      'preparedImageHeight': null,
     });
   }
 
@@ -463,7 +458,8 @@ class _PdfRenderWorker {
 
   static Future<_PdfRenderWorker> start({
     required Map<String, List<int>> fontBytesByFamily,
-    required PdfBackgroundAssets? preparedBackground,
+    required List<int>? templateBytes,
+    required Map<String, Object?> template,
   }) async {
     final handshake = ReceivePort();
     final responsePort = ReceivePort();
@@ -473,9 +469,8 @@ class _PdfRenderWorker {
         'reply': handshake.sendPort,
         'responses': responsePort.sendPort,
         'fonts': fontBytesByFamily,
-        'background': preparedBackground?.bytes,
-        'backgroundWidth': preparedBackground?.width,
-        'backgroundHeight': preparedBackground?.height,
+        'templateBytes': templateBytes,
+        'template': template,
       },
     );
     final sendPort = await handshake.first as SendPort;
@@ -513,11 +508,15 @@ void _pdfRenderWorkerEntry(Map<String, Object?> init) {
       (key, value) => MapEntry(key.toString(), List<int>.from(value as List)),
     ),
   );
-  final background = init['background'] == null
-      ? null
-      : List<int>.from(init['background'] as List);
-  final backgroundWidth = init['backgroundWidth'] as double?;
-  final backgroundHeight = init['backgroundHeight'] as double?;
+  final prepared = CertificateArtifactRenderer.preparePdfBackground(
+    init['templateBytes'] == null
+        ? null
+        : List<int>.from(init['templateBytes'] as List),
+    Map<String, Object?>.from(init['template'] as Map),
+  );
+  final background = prepared?.bytes;
+  final backgroundWidth = prepared?.width;
+  final backgroundHeight = prepared?.height;
   commands.listen((message) async {
     if (message is! List || message.length < 2) return;
     final id = message[0];

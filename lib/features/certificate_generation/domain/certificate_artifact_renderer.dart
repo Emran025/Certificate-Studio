@@ -288,8 +288,16 @@ class CertificateArtifactRenderer {
     if (source == null || source.width <= 0 || source.height <= 0) {
       return sourceBytes;
     }
-    final targetWidth = width * scale;
-    final targetHeight = height * scale;
+    // Avoid allocating very large intermediate bitmaps on Windows. The PDF
+    // image is still fitted to the original page dimensions, while the cap
+    // prevents a 4K/8K template from freezing the UI during generation.
+    const maxDimension = 6000;
+    final requestedScale = math.min(
+      scale.toDouble(),
+      maxDimension / math.max(source.width, source.height),
+    ).clamp(1.0, scale.toDouble());
+    final targetWidth = (width * requestedScale).round();
+    final targetHeight = (height * requestedScale).round();
     final fitScale = math.min(
       targetWidth / source.width,
       targetHeight / source.height,

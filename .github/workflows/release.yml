@@ -83,6 +83,7 @@ jobs:
         run: |
           mkdir -p CertificateStudio.AppDir/usr/bin
           cp -a build/linux/x64/release/bundle/. CertificateStudio.AppDir/usr/bin/
+          cp assets/images/certificate_studio_logo.png CertificateStudio.AppDir/certificate-studio.png
           cat > CertificateStudio.AppDir/certificate-studio.desktop <<'EOF'
           [Desktop Entry]
           Type=Application

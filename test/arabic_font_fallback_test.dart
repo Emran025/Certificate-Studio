@@ -11,5 +11,16 @@ void main() {
     expect(source, isNot(contains('ArabicReshaper.instance.reshape')));
     expect(source, contains('static String _pdfText(String value) => value;'));
     expect(source, contains('fontFallback: fonts.values.where'));
+
+    final designer = File(
+      'lib/features/certificate_designer/presentation/screens/certificate_designer_screen.dart',
+    ).readAsStringSync();
+    expect(designer, contains('FontLoader(family)'));
+    expect(designer, contains("row['font_bytes']"));
+
+    final schema = File(
+      'lib/core/database/database_tables.dart',
+    ).readAsStringSync();
+    expect(schema, contains('font_bytes BLOB'));
   });
 }

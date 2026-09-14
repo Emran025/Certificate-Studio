@@ -31,7 +31,7 @@ abstract final class DatabaseTables {
 }
 
 abstract final class DatabaseSchema {
-  static const version = 3;
+  static const version = 4;
 
   static const createStatements = <String>[
     '''CREATE TABLE institutions (
@@ -82,6 +82,7 @@ abstract final class DatabaseSchema {
       family TEXT NOT NULL,
       file_path TEXT NOT NULL,
       format TEXT NOT NULL,
+      font_bytes BLOB,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )''',

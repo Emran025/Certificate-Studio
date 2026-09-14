@@ -256,18 +256,24 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
   }
 
   String _fileName(_LibraryCertificate certificate, [String? field]) {
-    final id = certificate.id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
+    final id = _sanitizeFilePart(certificate.id);
     final selected = field == null || field == 'certificate_id'
         ? id
         : (certificate.valueFor(field) ?? '');
     final value = selected.trim().isEmpty ? certificate.recipient : selected;
-    final recipient = value.replaceAll(
-      RegExp(r'[^a-zA-Z0-9_-]'),
-      '_',
-    );
+    final recipient = _sanitizeFilePart(value);
     if (field == 'certificate_id') return id;
     return recipient.isEmpty ? id : '$recipient-$id';
   }
+
+  String _sanitizeFilePart(String value) => value
+      .trim()
+      .replaceAll(RegExp(r'\s+', unicode: true), '_')
+      // Preserve Arabic and every other Unicode letter/digit. Only characters
+      // unsafe for a portable filename are replaced.
+      .replaceAll(RegExp(r'[^\p{L}\p{N}_-]', unicode: true), '_')
+      .replaceAll(RegExp(r'_+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
 
   @override
   Widget build(BuildContext context) => Scaffold(

@@ -162,7 +162,7 @@ class CertificateVerificationService {
               'This certificate does not contain embedded verification data.',
         );
       }
-      return _verifyEmbedded(extracted, extension: extension);
+      return await _verifyEmbedded(extracted, extension: extension);
     } on FormatException catch (error) {
       return _result(
         CertificateVerificationStatus.unsupported,
@@ -179,7 +179,7 @@ class CertificateVerificationService {
 
   Future<CertificateVerificationResult> _verifyEmbedded(
     _ExtractedCertificate extracted,
-    {required String extension},
+    {required String extension}
   ) async {
     final record = extracted.record;
     final publicKey = _embeddedPublicKey(record);

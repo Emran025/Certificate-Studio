@@ -285,8 +285,11 @@ class CertificateVerificationService {
   List<int> _documentFromRecord(Map<String, dynamic> record) {
     final embedded = record['document_data'];
     if (embedded is String) {
-      return base64Url.decode(base64Url.normalize(embedded));
+      return base64UrlDecode(embedded);
     }
+    // Legacy v1 records did not include document_data. Keep this fallback for
+    // old certificates only; all newly issued certificates use the exact
+    // canonical bytes above and are independent of field names.
     final fields = record['fields'];
     if (fields is Map) {
       return canonicalJsonBytes({
@@ -317,16 +320,23 @@ class CertificateVerificationService {
     final fields = record['fields'] is Map
         ? Map<String, dynamic>.from(record['fields'] as Map)
         : record;
+    final displayValues = fields.values
+        .where((value) => value != null && value.toString().trim().isNotEmpty)
+        .map((value) => value.toString())
+        .toList();
     return _result(
       status,
       certificateId: record['certificate_id']?.toString(),
       recipient:
           fields['recipient']?.toString() ??
           fields['student_name']?.toString() ??
-          fields['name']?.toString(),
+          fields['name']?.toString() ??
+          (displayValues.isEmpty ? null : displayValues.first),
       studentClass: fields['student_class']?.toString(),
       institution: record['institution_id']?.toString(),
-      course: fields['course_name']?.toString() ?? fields['course']?.toString(),
+      course: fields['course_name']?.toString() ??
+          fields['course']?.toString() ??
+          (displayValues.length > 1 ? displayValues[1] : null),
       issueDate: fields['issue_date']?.toString(),
       hash: record['document_hash']?.toString(),
       algorithm: 'Ed25519',

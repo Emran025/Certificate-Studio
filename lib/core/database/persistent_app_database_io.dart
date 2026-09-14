@@ -100,10 +100,12 @@ class PersistentAppDatabase implements AppDatabase {
     if (values.isEmpty) throw ArgumentError.value(values, 'values');
     final columns = values.keys.map(_quoteIdentifier).join(', ');
     final placeholders = List.filled(values.length, '?').join(', ');
-    _run(() => _database.execute(
-          'INSERT INTO ${_quoteIdentifier(table)} ($columns) VALUES ($placeholders)',
-          values.values.map(_bindValue).toList(),
-        ));
+    _run(
+      () => _database.execute(
+        'INSERT INTO ${_quoteIdentifier(table)} ($columns) VALUES ($placeholders)',
+        values.values.map(_bindValue).toList(),
+      ),
+    );
     return Map<String, Object?>.from(values);
   }
 
@@ -122,23 +124,34 @@ class PersistentAppDatabase implements AppDatabase {
     final placeholders = List.filled(values.length, '?').join(', ');
     final updates = values.keys
         .where((key) => key != conflictColumn)
-        .map((key) => '${_quoteIdentifier(key)} = excluded.${_quoteIdentifier(key)}')
+        .map(
+          (key) =>
+              '${_quoteIdentifier(key)} = excluded.${_quoteIdentifier(key)}',
+        )
         .join(', ');
     final conflict = _quoteIdentifier(conflictColumn);
     final suffix = updates.isEmpty ? 'DO NOTHING' : 'DO UPDATE SET $updates';
-    _run(() => _database.execute(
-          'INSERT INTO ${_quoteIdentifier(table)} ($columns) VALUES ($placeholders) '
-          'ON CONFLICT ($conflict) $suffix',
-          values.values.map(_bindValue).toList(),
-        ));
+    _run(
+      () => _database.execute(
+        'INSERT INTO ${_quoteIdentifier(table)} ($columns) VALUES ($placeholders) '
+        'ON CONFLICT ($conflict) $suffix',
+        values.values.map(_bindValue).toList(),
+      ),
+    );
     return Map<String, Object?>.from(values);
   }
 
   @override
-  Future<void> update(String table, String id, Map<String, Object?> values) async {
+  Future<void> update(
+    String table,
+    String id,
+    Map<String, Object?> values,
+  ) async {
     _ensureReady(table);
     if (values.isEmpty) return;
-    final assignments = values.keys.map((key) => '${_quoteIdentifier(key)} = ?').join(', ');
+    final assignments = values.keys
+        .map((key) => '${_quoteIdentifier(key)} = ?')
+        .join(', ');
     _run(() {
       final primaryKey = _primaryKeyColumn(table);
       _database.execute(
@@ -154,35 +167,48 @@ class PersistentAppDatabase implements AppDatabase {
   @override
   Future<void> delete(String table, String id) async {
     _ensureReady(table);
-    _run(() => _database.execute(
-          'DELETE FROM ${_quoteIdentifier(table)} WHERE ${_quoteIdentifier(_primaryKeyColumn(table))} = ?',
-          [id],
-        ));
+    _run(
+      () => _database.execute(
+        'DELETE FROM ${_quoteIdentifier(table)} WHERE ${_quoteIdentifier(_primaryKeyColumn(table))} = ?',
+        [id],
+      ),
+    );
   }
 
   @override
   Future<void> deleteWhere(String table, Map<String, Object?> where) async {
     _ensureReady(table);
     final clause = _whereClause(where);
-    _run(() => _database.execute(
-          'DELETE FROM ${_quoteIdentifier(table)}$clause',
-          where.values.map(_bindValue).toList(),
-        ));
+    _run(
+      () => _database.execute(
+        'DELETE FROM ${_quoteIdentifier(table)}$clause',
+        where.values.map(_bindValue).toList(),
+      ),
+    );
   }
 
   @override
-  Future<void> deleteWhereIn(String table, String column, Iterable<Object?> values) async {
+  Future<void> deleteWhereIn(
+    String table,
+    String column,
+    Iterable<Object?> values,
+  ) async {
     _ensureReady(table);
     final selected = values.map(_bindValue).toList(growable: false);
     if (selected.isEmpty) return;
     for (var offset = 0; offset < selected.length; offset += 500) {
-      final chunk = selected.sublist(offset, math.min(offset + 500, selected.length));
+      final chunk = selected.sublist(
+        offset,
+        math.min(offset + 500, selected.length),
+      );
       final placeholders = List.filled(chunk.length, '?').join(', ');
-      _run(() => _database.execute(
-            'DELETE FROM ${_quoteIdentifier(table)} '
-            'WHERE ${_quoteIdentifier(column)} IN ($placeholders)',
-            chunk,
-          ));
+      _run(
+        () => _database.execute(
+          'DELETE FROM ${_quoteIdentifier(table)} '
+          'WHERE ${_quoteIdentifier(column)} IN ($placeholders)',
+          chunk,
+        ),
+      );
     }
   }
 
@@ -221,7 +247,9 @@ class PersistentAppDatabase implements AppDatabase {
     }
     _database.execute('BEGIN');
     try {
-      for (final statement in DatabaseMigrations.statementsForUpgrade(current)) {
+      for (final statement in DatabaseMigrations.statementsForUpgrade(
+        current,
+      )) {
         _database.execute(statement);
       }
       _database.execute('PRAGMA user_version = ${DatabaseSchema.version}');
@@ -272,8 +300,15 @@ class PersistentAppDatabase implements AppDatabase {
     try {
       final envelope = jsonDecode(raw);
       final decoded = envelope is Map && envelope['format'] == envelopeFormat
-          ? jsonDecode(utf8.decode(await decryptBytes(
-              Map<String, dynamic>.from(envelope), key, aad: utf8.encode(_legacyStorageKey))))
+          ? jsonDecode(
+              utf8.decode(
+                await decryptBytes(
+                  Map<String, dynamic>.from(envelope),
+                  key,
+                  aad: utf8.encode(_legacyStorageKey),
+                ),
+              ),
+            )
           : envelope;
       return decoded is Map ? Map<String, dynamic>.from(decoded) : null;
     } on Object {
@@ -303,20 +338,26 @@ class PersistentAppDatabase implements AppDatabase {
       ? ''
       : ' WHERE ${where.keys.map((key) => '${_quoteIdentifier(key)} = ?').join(' AND ')}';
 
-  static String _quoteIdentifier(String identifier) => '"${identifier.replaceAll('"', '""')}"';
+  static String _quoteIdentifier(String identifier) =>
+      '"${identifier.replaceAll('"', '""')}"';
 
-  static Object? _bindValue(Object? value) => value is bool ? (value ? 1 : 0) : value;
+  static Object? _bindValue(Object? value) =>
+      value is bool ? (value ? 1 : 0) : value;
 
   static void _assertSqlCipher(Database database) {
     // `PRAGMA cipher` identifies SQLite3MultipleCiphers, not SQLCipher.
     // SQLCipher reports its compiled version through `cipher_version`.
     if (database.select('PRAGMA cipher_version').isEmpty) {
-      throw StateError('SQLCipher is not available in the bundled SQLite library.');
+      throw StateError(
+        'SQLCipher is not available in the bundled SQLite library.',
+      );
     }
   }
 
   static void _setKey(Database database, List<int> key) {
-    final hex = key.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+    final hex = key
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
     database.execute("PRAGMA key = \"x'$hex'\"");
     database.select('SELECT count(*) FROM sqlite_master');
   }
@@ -335,7 +376,10 @@ class PersistentAppDatabase implements AppDatabase {
       }
     }
     final key = generateMasterKey();
-    await storage.write(_databaseKeyName, key.map((b) => b.toRadixString(16).padLeft(2, '0')).join());
+    await storage.write(
+      _databaseKeyName,
+      key.map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+    );
     return key;
   }
 }
@@ -348,7 +392,8 @@ class PersistentKeyStorage implements KeyStorage {
       const PersistentKeyStorage(FlutterSecureStorage());
 
   @override
-  Future<void> write(String key, String value) => _storage.write(key: key, value: value);
+  Future<void> write(String key, String value) =>
+      _storage.write(key: key, value: value);
   @override
   Future<String?> read(String key) => _storage.read(key: key);
   @override

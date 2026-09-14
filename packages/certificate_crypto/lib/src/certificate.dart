@@ -12,6 +12,9 @@ Future<Map<String, dynamic>> createVerificationRecord(Map<String, dynamic> field
   }
   record['format'] = certificateRecordFormat;
   record['document_hash'] = await sha256Base64Url(document);
+  // Keep the exact canonical document used for signing. Verification must
+  // never guess field names or reconstruct a document from business labels.
+  record['document_data'] = base64UrlEncodeNoPadding(document);
   record['signature'] = signatureBase64Url(await signBytes(canonicalJsonBytes(record), keyPair));
   return record;
 }

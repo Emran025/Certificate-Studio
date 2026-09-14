@@ -527,6 +527,16 @@ class CertificateVerificationService {
         full['signature'] != qrRecord['signature']) {
       throw const FormatException('QR payload does not match the local certificate record');
     }
+    final qrValues = qrRecord['_qr_first_values'];
+    final fullFields = full['fields'];
+    if (qrValues is List && fullFields is Map) {
+      final expected = fullFields.values.take(2).map((value) => '$value').toList();
+      if (qrValues.length != expected.length ||
+          !List.generate(expected.length, (index) => qrValues[index] == expected[index])
+              .every((matches) => matches)) {
+        throw const FormatException('QR field values do not match the certificate record');
+      }
+    }
     return full;
   }
 

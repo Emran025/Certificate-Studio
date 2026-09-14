@@ -73,7 +73,12 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     final projectTemplateId = projects.firstOrNull?['template_id'] as String?;
     final projectSettings = _decodeMap(projects.firstOrNull?['settings_json']);
     final projectFontId = projectSettings['font_id']?.toString();
-    final projectFonts = projectFontId == null ? const <Map<String, Object?>>[] : await widget.database.query(DatabaseTables.fonts, where: {'id': projectFontId});
+    final projectFonts = projectFontId == null
+        ? const <Map<String, Object?>>[]
+        : await widget.database.query(
+            DatabaseTables.fonts,
+            where: {'id': projectFontId},
+          );
     final fontRows = await widget.database.query(DatabaseTables.fonts);
     await _registerImportedFonts(fontRows);
     final templates = projectTemplateId == null
@@ -100,7 +105,8 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
       _columns = columns.toList()..sort();
       _previewData = preview;
       _template = templates.firstOrNull;
-      _projectFontFamily = projectFonts.firstOrNull?['family']?.toString() ?? 'Cairo';
+      _projectFontFamily =
+          projectFonts.firstOrNull?['family']?.toString() ?? 'Cairo';
       _fontFamilies = {
         'Cairo',
         'Arial',
@@ -118,9 +124,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     });
   }
 
-  Future<void> _registerImportedFonts(
-    List<Map<String, Object?>> rows,
-  ) async {
+  Future<void> _registerImportedFonts(List<Map<String, Object?>> rows) async {
     for (final row in rows) {
       final family = row['family']?.toString().trim();
       if (family == null ||
@@ -200,8 +204,10 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
       color: '#000000',
       qr: true,
     );
-    await widget.database.insert(DatabaseTables.certificateFields,
-        field.toRow(widget.projectId, DateTime.now().toUtc().toIso8601String()));
+    await widget.database.insert(
+      DatabaseTables.certificateFields,
+      field.toRow(widget.projectId, DateTime.now().toUtc().toIso8601String()),
+    );
     if (!mounted) return;
     _updateFields([..._fields, field]);
     setState(() => _selectedId = id);
@@ -222,19 +228,15 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
           field.toRow(widget.projectId, now),
         );
       }
-      await widget.database.upsert(
-        DatabaseTables.certificateLayouts,
-        {
-          'id': 'layout-${widget.projectId}',
-          'project_id': widget.projectId,
-          'canvas_width': _canvasWidth,
-          'canvas_height': _canvasHeight,
-          'grid_enabled': 1,
-          'settings_json': jsonEncode({'updated_by': 'designer', 'zoom': _zoom}),
-          'updated_at': now,
-        },
-        conflictColumn: 'project_id',
-      );
+      await widget.database.upsert(DatabaseTables.certificateLayouts, {
+        'id': 'layout-${widget.projectId}',
+        'project_id': widget.projectId,
+        'canvas_width': _canvasWidth,
+        'canvas_height': _canvasHeight,
+        'grid_enabled': 1,
+        'settings_json': jsonEncode({'updated_by': 'designer', 'zoom': _zoom}),
+        'updated_at': now,
+      }, conflictColumn: 'project_id');
     } finally {
       await widget.database.endBatch();
     }
@@ -441,7 +443,10 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     );
   }
 
-  Map<String, dynamic> _decodeMap(Object? raw) => raw is String && raw.isNotEmpty ? Map<String, dynamic>.from(jsonDecode(raw) as Map) : <String, dynamic>{};
+  Map<String, dynamic> _decodeMap(Object? raw) =>
+      raw is String && raw.isNotEmpty
+      ? Map<String, dynamic>.from(jsonDecode(raw) as Map)
+      : <String, dynamic>{};
   double _number(Object? value, double fallback) =>
       value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
 }
@@ -504,7 +509,10 @@ class _ElementsPanel extends StatelessWidget {
                   child: ListTile(
                     selected: field.id == selectedId,
                     dense: true,
-                    leading: Icon(field.qr ? Icons.qr_code_2 : Icons.text_fields, size: 18),
+                    leading: Icon(
+                      field.qr ? Icons.qr_code_2 : Icons.text_fields,
+                      size: 18,
+                    ),
                     title: Text(field.qr ? 'Verification QR' : field.source),
                     subtitle: Text(
                       '${field.width.round()} × ${field.height.round()}',
@@ -580,7 +588,9 @@ class _Canvas extends StatelessWidget {
               _CanvasField(
                 field: field,
                 selected: field.id == selectedId,
-                previewText: field.qr ? 'QR' : '${previewData[field.source] ?? field.source}',
+                previewText: field.qr
+                    ? 'QR'
+                    : '${previewData[field.source] ?? field.source}',
                 fontFamilies: fontFamilies,
                 onSelect: () => onSelect(field.id),
                 onMove: (delta) => onMove(field.id, delta),
@@ -662,8 +672,12 @@ class _CanvasField extends StatelessWidget {
                       ],
                       fontSize: field.fontSize,
                       color: _hex(field.color),
-                      fontWeight: field.bold ? FontWeight.bold : FontWeight.normal,
-                      fontStyle: field.italic ? FontStyle.italic : FontStyle.normal,
+                      fontWeight: field.bold
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      fontStyle: field.italic
+                          ? FontStyle.italic
+                          : FontStyle.normal,
                     ),
                   ),
           ),
@@ -753,7 +767,9 @@ class _PropertiesPanel extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           if (!selected.qr)
             DropdownButtonFormField<String>(
-              initialValue: columns.contains(selected.source) ? selected.source : null,
+              initialValue: columns.contains(selected.source)
+                  ? selected.source
+                  : null,
               decoration: const InputDecoration(labelText: 'Data source field'),
               items: [
                 for (final column in columns)
@@ -761,10 +777,12 @@ class _PropertiesPanel extends StatelessWidget {
               ],
               onChanged: (value) {
                 if (value != null) {
-                  onChanged(selected.copyWith(
-                    source: value,
-                    className: canonicalFieldClassId(value),
-                  ));
+                  onChanged(
+                    selected.copyWith(
+                      source: value,
+                      className: canonicalFieldClassId(value),
+                    ),
+                  );
                 }
               },
             ),
@@ -827,86 +845,91 @@ class _PropertiesPanel extends StatelessWidget {
             ],
           ),
           if (!selected.qr) ...[
-          const SizedBox(height: AppSpacing.sm),
-          DropdownButtonFormField<String>(
-            initialValue: selected.fontFamily,
-            decoration: const InputDecoration(labelText: 'Font family'),
-            isExpanded: true,
-            items: [
-              for (final family in fontFamilies)
-                DropdownMenuItem(value: family, child: Text(family)),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                onChanged(selected.copyWith(fontFamily: value));
-              }
-            },
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _NumberInput(
-            key: ValueKey('${selected.id}-font-size'),
-            label: 'Font size',
-            value: selected.fontSize,
-            onChanged: (value) =>
-                onChanged(selected.copyWith(fontSize: value.clamp(8, 180))),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          DropdownButtonFormField<String>(
-            initialValue: selected.alignment,
-            decoration: const InputDecoration(labelText: 'Text alignment'),
-            items: const [
-              DropdownMenuItem(value: 'left', child: Text('Left')),
-              DropdownMenuItem(value: 'center', child: Text('Center')),
-              DropdownMenuItem(value: 'right', child: Text('Right')),
-            ],
-            onChanged: (value) {
-              if (value != null) onChanged(selected.copyWith(alignment: value));
-            },
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          DropdownButtonFormField<String>(
-            initialValue: selected.direction,
-            decoration: const InputDecoration(labelText: 'Text direction'),
-            items: const [
-              DropdownMenuItem(value: 'ltr', child: Text('LTR')),
-              DropdownMenuItem(value: 'rtl', child: Text('RTL')),
-            ],
-            onChanged: (value) {
-              if (value != null) onChanged(selected.copyWith(direction: value));
-            },
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Material(
-            color: Colors.transparent,
-            child: SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Bold'),
-              value: selected.bold,
-              onChanged: (value) => onChanged(selected.copyWith(bold: value)),
+            const SizedBox(height: AppSpacing.sm),
+            DropdownButtonFormField<String>(
+              initialValue: selected.fontFamily,
+              decoration: const InputDecoration(labelText: 'Font family'),
+              isExpanded: true,
+              items: [
+                for (final family in fontFamilies)
+                  DropdownMenuItem(value: family, child: Text(family)),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  onChanged(selected.copyWith(fontFamily: value));
+                }
+              },
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Material(
-            color: Colors.transparent,
-            child: SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Italic'),
-              value: selected.italic,
-              onChanged: (value) => onChanged(selected.copyWith(italic: value)),
+            const SizedBox(height: AppSpacing.sm),
+            _NumberInput(
+              key: ValueKey('${selected.id}-font-size'),
+              label: 'Font size',
+              value: selected.fontSize,
+              onChanged: (value) =>
+                  onChanged(selected.copyWith(fontSize: value.clamp(8, 180))),
             ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          TextFormField(
-            initialValue: selected.color,
-            decoration: const InputDecoration(
-              labelText: 'Text color (#RRGGBB)',
+            const SizedBox(height: AppSpacing.sm),
+            DropdownButtonFormField<String>(
+              initialValue: selected.alignment,
+              decoration: const InputDecoration(labelText: 'Text alignment'),
+              items: const [
+                DropdownMenuItem(value: 'left', child: Text('Left')),
+                DropdownMenuItem(value: 'center', child: Text('Center')),
+                DropdownMenuItem(value: 'right', child: Text('Right')),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  onChanged(selected.copyWith(alignment: value));
+                }
+              },
             ),
-            onChanged: (value) {
-              if (RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value)) {
-                onChanged(selected.copyWith(color: value));
-              }
-            },
-          ),
+            const SizedBox(height: AppSpacing.sm),
+            DropdownButtonFormField<String>(
+              initialValue: selected.direction,
+              decoration: const InputDecoration(labelText: 'Text direction'),
+              items: const [
+                DropdownMenuItem(value: 'ltr', child: Text('LTR')),
+                DropdownMenuItem(value: 'rtl', child: Text('RTL')),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  onChanged(selected.copyWith(direction: value));
+                }
+              },
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Material(
+              color: Colors.transparent,
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Bold'),
+                value: selected.bold,
+                onChanged: (value) => onChanged(selected.copyWith(bold: value)),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Material(
+              color: Colors.transparent,
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Italic'),
+                value: selected.italic,
+                onChanged: (value) =>
+                    onChanged(selected.copyWith(italic: value)),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextFormField(
+              initialValue: selected.color,
+              decoration: const InputDecoration(
+                labelText: 'Text color (#RRGGBB)',
+              ),
+              onChanged: (value) {
+                if (RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value)) {
+                  onChanged(selected.copyWith(color: value));
+                }
+              },
+            ),
           ],
           const SizedBox(height: AppSpacing.md),
           OutlinedButton.icon(
@@ -953,15 +976,18 @@ class _NumberInputState extends State<_NumberInput> {
     }
   }
 
-  static String _formatValue(double value) =>
-      value == value.roundToDouble() ? value.round().toString() : value.toString();
+  static String _formatValue(double value) => value == value.roundToDouble()
+      ? value.round().toString()
+      : value.toString();
 
   void _commit() {
     final value = _pendingValue ?? double.tryParse(_controller.text.trim());
     if (value == null) {
       _controller.value = TextEditingValue(
         text: _formatValue(widget.value),
-        selection: TextSelection.collapsed(offset: _formatValue(widget.value).length),
+        selection: TextSelection.collapsed(
+          offset: _formatValue(widget.value).length,
+        ),
       );
       return;
     }
@@ -1119,7 +1145,7 @@ class _DesignerField {
       'width': width,
       'height': height,
     }),
-      'style_json': jsonEncode({
+    'style_json': jsonEncode({
       'kind': qr ? 'qr' : 'text',
       'font_size': fontSize,
       'color': color,

@@ -27,22 +27,36 @@ String encodeVerificationQrPayload(Map<String, dynamic> record) {
   final projectId = Uri.encodeComponent(record['project_id']?.toString() ?? '');
   final documentHash = Uri.encodeComponent(record['document_hash']?.toString() ?? '');
   final signature = Uri.encodeComponent(record['signature']?.toString() ?? '');
-  return '$qrScheme$projectId/$certificateId/$documentHash/$signature';
+  final fields = record['fields'];
+  final values = fields is Map ? fields.values.take(2).toList() : const <dynamic>[];
+  final firstValues = [
+    for (var index = 0; index < 2; index++)
+      Uri.encodeComponent(index < values.length ? '${values[index]}' : ''),
+  ];
+  return '$qrScheme$projectId/$certificateId/$documentHash/$signature/${firstValues.join('/')}';
 }
 
 Map<String, dynamic> decodeVerificationQrPayload(String payload) {
   if (payload.startsWith(qrScheme)) {
     final parts = payload.substring(qrScheme.length).split('/');
-    if (parts.length != 4 || parts.any((part) => part.isEmpty)) {
+    if ((parts.length != 4 && parts.length != 6) ||
+        parts.take(4).any((part) => part.isEmpty)) {
       throw const FormatException('malformed compact verification QR payload');
     }
-    return {
+    final record = <String, dynamic>{
       'format': certificateRecordFormat,
       'project_id': Uri.decodeComponent(parts[0]),
       'certificate_id': Uri.decodeComponent(parts[1]),
       'document_hash': Uri.decodeComponent(parts[2]),
       'signature': Uri.decodeComponent(parts[3]),
     };
+    if (parts.length == 6) {
+      record['_qr_first_values'] = [
+        Uri.decodeComponent(parts[4]),
+        Uri.decodeComponent(parts[5]),
+      ];
+    }
+    return record;
   }
   if (!payload.startsWith(legacyQrScheme)) {
     throw const FormatException('unsupported verification QR payload');

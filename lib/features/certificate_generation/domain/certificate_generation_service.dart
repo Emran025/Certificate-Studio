@@ -76,6 +76,10 @@ class CertificateGenerationService {
         : templates.first;
     final templatePath = template['file_path'] as String? ?? '';
     final templateBytes = await _cachedTemplateBytes(templatePath);
+    final preparedBackground = CertificateArtifactRenderer.preparePdfBackground(
+      templateBytes,
+      template,
+    );
     final mappingRows = await database.query(
       DatabaseTables.settings,
       where: {'key': 'mapping:$projectId'},
@@ -83,6 +87,21 @@ class CertificateGenerationService {
     final mapping = _decodeMapping(
       mappingRows.isEmpty ? null : mappingRows.first['value_json'],
     );
+    final existingCertificates = {
+      for (final row in await database.query(
+        DatabaseTables.certificates,
+        where: {'project_id': projectId},
+      ))
+        row['id']!.toString(): row,
+    };
+    final existingVerifications = {
+      for (final row in await database.query(
+        DatabaseTables.verificationRecords,
+        where: {'project_id': projectId},
+      ))
+        row['certificate_id']!.toString(): row,
+    };
+    final issueDate = DateTime.now().toUtc().toIso8601String().split('T').first;
     final jobId =
         'generation-$projectId-${DateTime.now().microsecondsSinceEpoch}';
     final startedAt = DateTime.now().toUtc().toIso8601String();
@@ -135,11 +154,7 @@ class CertificateGenerationService {
               _mappedValue(data, mapping, 'student_class') ??
               student['class_name'] ??
               '${index + 1}',
-          'issue_date': DateTime.now()
-              .toUtc()
-              .toIso8601String()
-              .split('T')
-              .first,
+          'issue_date': issueDate,
           ...data,
         };
         for (final entry in mapping.entries) {
@@ -191,6 +206,7 @@ class CertificateGenerationService {
           signedRecord,
           templateBytes,
           template,
+          preparedBackground,
         );
         final pngBytes = CertificateArtifactRenderer.appendEmbeddedRecord(
           await _rasterizePdf(pdfBytes),
@@ -223,11 +239,7 @@ class CertificateGenerationService {
           'created_at': now,
           'updated_at': now,
         };
-        final existing = await database.query(
-          DatabaseTables.certificates,
-          where: {'id': certificateId},
-        );
-        if (existing.isEmpty) {
+        if (!existingCertificates.containsKey(certificateId)) {
           await database.insert(DatabaseTables.certificates, certificateValues);
         } else {
           await database.update(
@@ -236,6 +248,7 @@ class CertificateGenerationService {
             certificateValues,
           );
         }
+        existingCertificates[certificateId] = certificateValues;
         final verificationId = 'verification-$certificateId';
         final verificationValues = {
           'id': verificationId,
@@ -246,11 +259,7 @@ class CertificateGenerationService {
           'signature': signedRecord['signature'],
           'created_at': now,
         };
-        final existingVerification = await database.query(
-          DatabaseTables.verificationRecords,
-          where: {'certificate_id': certificateId},
-        );
-        if (existingVerification.isEmpty) {
+        if (!existingVerifications.containsKey(certificateId)) {
           await database.insert(
             DatabaseTables.verificationRecords,
             verificationValues,
@@ -262,6 +271,7 @@ class CertificateGenerationService {
             verificationValues,
           );
         }
+        existingVerifications[certificateId] = verificationValues;
         await database.update(DatabaseTables.generationItems, itemId, {
           'certificate_id': certificateId,
           'status': 'completed',
@@ -315,6 +325,7 @@ class CertificateGenerationService {
     Map<String, dynamic> record,
     List<int>? templateBytes,
     Map<String, Object?> template,
+    PdfBackgroundAssets? preparedBackground,
   ) async {
     final fontBytes = await _loadArabicFontBytes();
     final fontBytesByFamily = await (_projectFontBytes ??= _loadProjectFontBytes(fontBytes));
@@ -327,6 +338,9 @@ class CertificateGenerationService {
         templateBytes: templateBytes,
         template: template,
         fontBytesByFamily: fontBytesByFamily,
+        preparedBackgroundBytes: preparedBackground?.bytes,
+        preparedImageWidth: preparedBackground?.width,
+        preparedImageHeight: preparedBackground?.height,
       ),
     );
   }

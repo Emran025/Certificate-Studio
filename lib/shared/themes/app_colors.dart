@@ -10,19 +10,19 @@ abstract final class AppColors {
   static const primaryLight = Color(0xFFE5F0E9);
   static const accent = Color(0xFFB77945);
 
-  static const background = Color(0xFFF7F3ED);
+  static const background = Color(0xFFF3EDE3);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceMuted = Color(0xFFF0EBE3);
-  static const surfaceSubtle = Color(0xFFFBF9F6);
+  static const surfaceMuted = Color(0xFFECE4D8);
+  static const surfaceSubtle = Color(0xFFF8F3EB);
 
   static const textPrimary = Color(0xFF24332D);
   static const textSecondary = Color(0xFF66736C);
   static const textTertiary = Color(0xFF8B968F);
   static const textOnPrimary = Color(0xFFFFFFFF);
 
-  static const border = Color(0xFFE2DDD4);
-  static const borderStrong = Color(0xFFCBC3B7);
-  static const divider = Color(0xFFECE7DF);
+  static const border = Color(0xFFDED4C7);
+  static const borderStrong = Color(0xFFC8BBAA);
+  static const divider = Color(0xFFE6DDD1);
 
   static const success = Color(0xFF2E7D5B);
   static const successSurface = Color(0xFFE8F4EC);
@@ -38,7 +38,7 @@ abstract final class AppColors {
 
 abstract final class AppGradients {
   static const page = LinearGradient(
-    colors: [Color(0xFFF7F3ED), Color(0xFFF1ECE3)],
+    colors: [Color(0xFFF5EFE6), Color(0xFFECE3D6)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

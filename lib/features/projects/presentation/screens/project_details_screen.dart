@@ -192,30 +192,84 @@ class ProjectDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 AppSurfaceCard(
+                  padding: EdgeInsets.zero,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Project information',
-                        style: Theme.of(context).textTheme.titleLarge,
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          AppSpacing.lg,
+                          AppSpacing.lg,
+                          AppSpacing.md,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(AppSpacing.xs),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLight,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.card,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.info_outline,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Text(
+                              'Project information',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: AppSpacing.md),
-                      _InfoRow(
-                        label: 'Course',
-                        value: project.courseName ?? 'Not set',
-                      ),
-                      _InfoRow(
-                        label: 'Organization',
-                        value: project.organizationName ?? 'Not set',
-                      ),
-                      _InfoRow(
-                        label: 'Type',
-                        value: (project.settings['project_type'] ?? 'course')
-                            .toString(),
-                      ),
-                      _InfoRow(
-                        label: 'Created',
-                        value: _formatDate(project.createdAt),
+                      const Divider(height: 1),
+                      Padding(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final itemWidth = constraints.maxWidth < 520
+                                ? constraints.maxWidth
+                                : (constraints.maxWidth - AppSpacing.md) / 2;
+                            return Wrap(
+                              spacing: AppSpacing.md,
+                              runSpacing: AppSpacing.md,
+                              children: [
+                                _InfoTile(
+                                  width: itemWidth,
+                                  icon: Icons.school_outlined,
+                                  label: 'Course',
+                                  value: project.courseName ?? 'Not set',
+                                ),
+                                _InfoTile(
+                                  width: itemWidth,
+                                  icon: Icons.business_outlined,
+                                  label: 'Organization',
+                                  value: project.organizationName ?? 'Not set',
+                                ),
+                                _InfoTile(
+                                  width: itemWidth,
+                                  icon: Icons.category_outlined,
+                                  label: 'Type',
+                                  value:
+                                      (project.settings['project_type'] ??
+                                              'course')
+                                          .toString(),
+                                ),
+                                _InfoTile(
+                                  width: itemWidth,
+                                  icon: Icons.calendar_today_outlined,
+                                  label: 'Created',
+                                  value: _formatDate(project.createdAt),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -315,26 +369,56 @@ class _ProjectActionData {
   final VoidCallback onPressed;
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
+class _InfoTile extends StatelessWidget {
+  const _InfoTile({
+    required this.width,
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final double width;
+  final IconData icon;
   final String label;
   final String value;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-    child: Row(
-      children: [
-        SizedBox(
-          width: 120,
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge
-                ?.copyWith(color: AppColors.textSecondary),
-          ),
+  Widget build(BuildContext context) => SizedBox(
+    width: width,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSubtle,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.primary, size: 20),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        Expanded(child: Text(value)),
-      ],
+      ),
     ),
   );
 }

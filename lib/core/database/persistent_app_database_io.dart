@@ -116,7 +116,7 @@ class PersistentAppDatabase implements AppDatabase {
     _ensureReady(table);
     if (values.isEmpty) throw ArgumentError.value(values, 'values');
     if (!values.containsKey(conflictColumn)) {
-      throw ArgumentError('Missing conflict column \"$conflictColumn\".');
+      throw ArgumentError('Missing conflict column "$conflictColumn".');
     }
     final columns = values.keys.map(_quoteIdentifier).join(', ');
     final placeholders = List.filled(values.length, '?').join(', ');

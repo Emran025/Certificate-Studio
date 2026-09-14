@@ -36,7 +36,9 @@ dependencies:
     path: packages/certificate_crypto
   cryptography: ^2.9.0
   flutter_secure_storage: ^9.2.4
+  path_provider: ^2.1.5
   shared_preferences: ^2.5.3
+  sqlite3: ^3.6.0
   image: ^4.3.0
   zxing2: ^0.2.4
   pdf: ^3.11.3
@@ -83,6 +85,13 @@ flutter:
           weight: 600
         - asset: assets/fonts/Cairo-Bold.ttf
           weight: 700
+
+# Bundle SQLCipher for Android, iOS, macOS, Linux, and Windows. The database
+# adapter fails closed at startup if the cipher-enabled library is unavailable.
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlcipher
 
   # To add assets to your application, add an assets section, like this:
   # assets:

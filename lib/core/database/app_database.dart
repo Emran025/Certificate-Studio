@@ -22,11 +22,10 @@ abstract interface class AppDatabase {
   Future<void> endBatch();
 }
 
-/// Deterministic local adapter used until a platform SQLCipher driver is wired.
+/// Deterministic in-memory adapter for tests and isolated callers.
 ///
-/// The application depends only on [AppDatabase], so Android/iOS/Desktop/Web
-/// implementations can use SQLCipher, IndexedDB, or WASM without changing the
-/// domain and repository layers.
+/// Production startup uses the SQLCipher-backed implementation while the
+/// application depends only on [AppDatabase].
 class InMemoryAppDatabase implements AppDatabase {
   InMemoryAppDatabase({int initialVersion = 0}) : _version = initialVersion;
 

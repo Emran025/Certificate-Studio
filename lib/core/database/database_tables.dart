@@ -12,6 +12,22 @@ abstract final class DatabaseTables {
   static const generationItems = 'generation_items';
   static const verificationRecords = 'verification_records';
   static const settings = 'settings';
+
+  static const all = <String>[
+    institutions,
+    projects,
+    templates,
+    fonts,
+    signatures,
+    students,
+    certificateFields,
+    certificateLayouts,
+    certificates,
+    generationJobs,
+    generationItems,
+    verificationRecords,
+    settings,
+  ];
 }
 
 abstract final class DatabaseSchema {

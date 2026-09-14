@@ -130,17 +130,26 @@ class CertificateVerificationService {
             reason: 'QR extraction failed and no embedded verification record was found in the image.',
           );
         }
-        final qrKey = _embeddedPublicKey(qrRecord);
+        final hydratedQrRecord = await _hydrateQrRecord(qrRecord);
+        final qrKey = _embeddedPublicKey(hydratedQrRecord);
         if (qrKey == null) {
+          final embedded = _extractRecord(bytes);
+          if (embedded != null) {
+            final embeddedResult = await _verifyEmbedded(
+              embedded,
+              extension: extension,
+            );
+            if (embeddedResult.isValid) return embeddedResult;
+          }
           return _fromRecord(
-            qrRecord,
+            hydratedQrRecord,
             CertificateVerificationStatus.verificationDataMissing,
             'QR extraction succeeded, but the QR payload has no public key.',
           );
         }
         final result = await _verifyRecord(
-          qrRecord,
-          _documentFromRecord(qrRecord),
+          hydratedQrRecord,
+          _documentFromRecord(hydratedQrRecord),
           qrKey,
         );
         // QR decoding can return a valid-looking payload from a resized or
@@ -221,8 +230,16 @@ class CertificateVerificationService {
 
   Future<CertificateVerificationResult> verifyQr(String payload) async {
     try {
-      final record = decodeVerificationQrPayload(payload.trim());
-      final publicKey = _embeddedPublicKey(record);
+      final record = await _hydrateQrRecord(
+        decodeVerificationQrPayload(payload.trim()),
+      );
+      var publicKey = _embeddedPublicKey(record);
+      if (publicKey == null && record['project_id'] is String) {
+        final stored = await keyStorage.read('project.${record['project_id']}.key');
+        if (stored != null) {
+          publicKey = (await CertificateKeyPair.fromSeed(_hexDecode(stored))).publicKey;
+        }
+      }
       if (publicKey == null) {
         return _fromRecord(
           record,
@@ -473,6 +490,27 @@ class CertificateVerificationService {
     return value is Map
         ? publicKeyFromRecord(Map<String, dynamic>.from(value))
         : null;
+  }
+
+  Future<Map<String, dynamic>> _hydrateQrRecord(
+    Map<String, dynamic> qrRecord,
+  ) async {
+    if (qrRecord['fields'] is Map && qrRecord['public_key'] is Map) {
+      return qrRecord;
+    }
+    final certificateId = qrRecord['certificate_id']?.toString();
+    if (certificateId == null || certificateId.isEmpty) return qrRecord;
+    final rows = await database.query(
+      DatabaseTables.verificationRecords,
+      where: {'certificate_id': certificateId},
+    );
+    if (rows.isEmpty) return qrRecord;
+    final full = _decode(rows.first['payload_json']);
+    if (full['document_hash'] != qrRecord['document_hash'] ||
+        full['signature'] != qrRecord['signature']) {
+      throw const FormatException('QR payload does not match the local certificate record');
+    }
+    return full;
   }
 
   Map<String, dynamic> _decode(Object? raw) =>

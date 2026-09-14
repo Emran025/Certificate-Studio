@@ -89,7 +89,7 @@ class CertificateArtifactRenderer {
               ));
     final background = enhancedBackground == null
         ? null
-        : pw.MemoryImage(Uint8List.fromList(enhancedBackground!));
+        : pw.MemoryImage(Uint8List.fromList(enhancedBackground));
     // The final PDF page follows the actual background image dimensions. The
     // designer fields are mapped from the image's contain rectangle inside
     // the logical design canvas into this page.

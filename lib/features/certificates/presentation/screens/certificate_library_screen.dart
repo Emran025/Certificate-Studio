@@ -228,7 +228,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
         builder: (context, setDialogState) => AlertDialog(
           title: const Text('Choose file name field'),
           content: DropdownButtonFormField<String>(
-            value: selected,
+            initialValue: selected,
             decoration: const InputDecoration(
               labelText: 'Field used for the exported file name',
             ),

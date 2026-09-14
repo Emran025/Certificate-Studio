@@ -178,7 +178,7 @@ class _DataImportScreenState extends State<DataImportScreen> {
                               maxLines: 10,
                               decoration: const InputDecoration(
                                 labelText: 'Paste table data',
-                                hintText: 'Student Name\tCourse\tGrade\nAhmed Ali\tFlutter\t95',
+                                hintText: 'Field 1\tField 2\tField 3\nValue 1\tValue 2\tValue 3',
                                 alignLabelWithHint: true,
                               ),
                             ),

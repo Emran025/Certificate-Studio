@@ -62,6 +62,17 @@ class CertificateVerificationService {
   CertificateVerificationService(this.database, this.keyStorage);
   final AppDatabase database;
   final KeyStorage keyStorage;
+  static const _verificationMetadataKeys = {
+    'format',
+    'institution_id',
+    'project_id',
+    'certificate_id',
+    'student_id',
+    'public_key',
+    'document_hash',
+    'document_data',
+    'signature',
+  };
 
   Future<CertificateVerificationResult> verify(String certificateId) async {
     try {
@@ -298,17 +309,14 @@ class CertificateVerificationService {
         'fields': Map<String, dynamic>.from(fields),
       });
     }
+    final dynamicFields = <String, dynamic>{
+      for (final entry in record.entries)
+        if (!_verificationMetadataKeys.contains(entry.key)) entry.key: entry.value,
+    };
     return canonicalJsonBytes({
       'project_id': record['project_id'],
       'student_id': record['student_id'],
-      'fields': {
-        'student_class': record['student_class'],
-        'issue_date': record['issue_date'],
-        if (record['student_name'] != null)
-          'student_name': record['student_name'],
-        if (record['course'] != null) 'course': record['course'],
-        if (record['course_name'] != null) 'course_name': record['course_name'],
-      },
+      'fields': dynamicFields,
     });
   }
 
@@ -329,7 +337,6 @@ class CertificateVerificationService {
       certificateId: record['certificate_id']?.toString(),
       recipient:
           fields['recipient']?.toString() ??
-          fields['student_name']?.toString() ??
           fields['name']?.toString() ??
           (displayValues.isEmpty ? null : displayValues.first),
       studentClass: fields['student_class']?.toString(),
@@ -525,7 +532,7 @@ class CertificateVerificationService {
 
   Map<String, dynamic> _decode(Object? raw) =>
       raw is String ? Map<String, dynamic>.from(jsonDecode(raw) as Map) : {};
-  List<int> _hexDecode(String value) => [
+  String? _hexDecode(String value) => [
     for (var i = 0; i < value.length; i += 2)
       int.parse(value.substring(i, i + 2), radix: 16),
   ];

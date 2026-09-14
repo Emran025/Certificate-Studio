@@ -59,7 +59,12 @@ class CertificateGenerationService {
     final fields = await database.query(
       DatabaseTables.certificateFields,
       where: {'project_id': projectId},
-      columns: ['class_name', 'source'],
+      columns: [
+        'class_name',
+        'source',
+        'position_json',
+        'style_json',
+      ],
     );
     final projects = await database.query(
       DatabaseTables.projects,

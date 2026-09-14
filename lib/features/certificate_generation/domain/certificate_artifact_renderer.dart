@@ -10,6 +10,14 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:zxing2/qrcode.dart';
 
 class CertificateArtifactRenderer {
+  /// Appends the same portable verification record used by the PDF artifact
+  /// to a PNG byte stream. PNG decoders ignore trailing bytes, while the
+  /// verifier can recover the signed record when QR raster decoding fails.
+  static List<int> appendEmbeddedRecord(
+    List<int> artifactBytes,
+    Map<String, dynamic> record,
+  ) => [...artifactBytes, ...utf8.encode(_embeddedMarker(record))];
+
   static Future<List<int>> renderPdf({
     required Map<String, dynamic> values,
     required List<Map<String, Object?>> fields,

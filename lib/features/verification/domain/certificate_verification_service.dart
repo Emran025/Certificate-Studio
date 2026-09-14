@@ -143,6 +143,19 @@ class CertificateVerificationService {
           _documentFromRecord(qrRecord),
           qrKey,
         );
+        // QR decoding can return a valid-looking payload from a resized or
+        // recompressed image. The PNG's embedded record is authoritative for
+        // generated images, so retry it before reporting a false failure.
+        if (!result.isValid) {
+          final embedded = _extractRecord(bytes);
+          if (embedded != null) {
+            final embeddedResult = await _verifyEmbedded(
+              embedded,
+              extension: extension,
+            );
+            if (embeddedResult.isValid) return embeddedResult;
+          }
+        }
         return _copyWithQrExtracted(result);
       }
       final extracted = _extractRecord(bytes);

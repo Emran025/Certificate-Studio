@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:arabic_reshaper/arabic_reshaper.dart';
 import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:image/image.dart' as img;
 import 'package:pdf/pdf.dart';
@@ -560,8 +559,11 @@ class CertificateArtifactRenderer {
   static bool _containsArabic(String value) =>
       RegExp(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]').hasMatch(value);
 
-  static String _pdfText(String value) =>
-      _containsArabic(value) ? ArabicReshaper.instance.reshape(value) : value;
+  /// Keep the original Unicode string. The pdf package and the selected
+  /// font handle shaping; pre-shaping into Arabic Presentation Forms can
+  /// produce code points (for example U+FEF1) that Cairo does not contain.
+  /// Keeping the source text also mirrors Word-style graceful fallback.
+  static String _pdfText(String value) => value;
 
   static PdfColor _pdfColor(String? value) {
     final raw = value?.replaceFirst('#', '');

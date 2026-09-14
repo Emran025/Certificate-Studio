@@ -18,16 +18,27 @@ class PersistentAppDatabase implements AppDatabase {
   @override
   Future<void> close() async {}
   @override
-  Future<List<Map<String, Object?>>> query(String table, {Map<String, Object?> where = const {}}) =>
-      _unsupported();
+  Future<List<Map<String, Object?>>> query(
+    String table, {
+    Map<String, Object?> where = const {},
+    List<String>? columns,
+  }) => _unsupported();
   @override
   Future<Map<String, Object?>> insert(String table, Map<String, Object?> values) => _unsupported();
+  @override
+  Future<Map<String, Object?>> upsert(
+    String table,
+    Map<String, Object?> values, {
+    String conflictColumn = 'id',
+  }) => _unsupported();
   @override
   Future<void> update(String table, String id, Map<String, Object?> values) => _unsupported();
   @override
   Future<void> delete(String table, String id) => _unsupported();
   @override
   Future<void> deleteWhere(String table, Map<String, Object?> where) => _unsupported();
+  @override
+  Future<void> deleteWhereIn(String table, String column, Iterable<Object?> values) => _unsupported();
   @override
   void beginBatch() => throw UnsupportedError('SQLCipher persistence is not available on Flutter Web.');
   @override

@@ -276,9 +276,12 @@ class PersistentAppDatabase implements AppDatabase {
               Map<String, dynamic>.from(envelope), key, aad: utf8.encode(_legacyStorageKey)))
           : envelope;
       return decoded is Map ? Map<String, dynamic>.from(decoded) : null;
-    } on Object catch (error) {
-      // Leave the preference untouched so a later release can retry safely.
-      throw StateError('Unable to migrate the legacy local database: $error');
+    } on Object {
+      // The legacy preference may have been encrypted with a key that is no
+      // longer available (for example, after secure-storage reset). Do not
+      // block startup of the new SQLCipher database or delete the blob: a
+      // later run may still have access to the original key.
+      return null;
     }
   }
 

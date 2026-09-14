@@ -204,11 +204,24 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     List<_LibraryCertificate> certificates,
   ) async {
     final fields = <String>{};
+    const technicalFields = {
+      'signature',
+      'public_key',
+      'document_hash',
+      'institution_id',
+      'project_id',
+      'certificate_id',
+    };
     for (final certificate in certificates) {
-      fields.addAll(certificate.data.keys);
+      fields.addAll(
+        certificate.data.keys.where(
+          (field) => !technicalFields.contains(field.trim().toLowerCase()),
+        ),
+      );
     }
     if (fields.isEmpty) fields.add('certificate_id');
-    var selected = fields.first;
+    final sortedFields = fields.toList()..sort();
+    var selected = sortedFields.first;
     return showDialog<String>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -220,7 +233,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
               labelText: 'Field used for the exported file name',
             ),
             items: [
-              for (final field in fields)
+              for (final field in sortedFields)
                 DropdownMenuItem(value: field, child: Text(field)),
             ],
             onChanged: (value) {

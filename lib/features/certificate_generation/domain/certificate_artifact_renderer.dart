@@ -9,6 +9,18 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:zxing2/qrcode.dart';
 
+class PdfBackgroundAssets {
+  const PdfBackgroundAssets({
+    required this.bytes,
+    required this.width,
+    required this.height,
+  });
+
+  final List<int> bytes;
+  final double width;
+  final double height;
+}
+
 class CertificateArtifactRenderer {
   /// Appends the same portable verification record used by the PDF artifact
   /// to a PNG byte stream. PNG decoders ignore trailing bytes, while the
@@ -18,6 +30,28 @@ class CertificateArtifactRenderer {
     Map<String, dynamic> record,
   ) => [...artifactBytes, ...utf8.encode(_embeddedMarker(record))];
 
+  /// Prepares the immutable background once per generation job. Rendering a
+  /// certificate must remain pixel-compatible, but decoding and enhancing the
+  /// same template for every student is unnecessary work.
+  static PdfBackgroundAssets? preparePdfBackground(
+    List<int>? templateBytes,
+    Map<String, Object?> template,
+  ) {
+    if (templateBytes == null) return null;
+    final source = img.decodeImage(Uint8List.fromList(templateBytes));
+    if (source == null) return null;
+    return PdfBackgroundAssets(
+      bytes: _enhanceBackground(
+        templateBytes,
+        width: source.width,
+        height: source.height,
+        scale: 3,
+      ),
+      width: source.width.toDouble(),
+      height: source.height.toDouble(),
+    );
+  }
+
   static Future<List<int>> renderPdf({
     required Map<String, dynamic> values,
     required List<Map<String, Object?>> fields,
@@ -26,6 +60,9 @@ class CertificateArtifactRenderer {
     required List<int>? templateBytes,
     required Map<String, Object?> template,
     required Map<String, List<int>> fontBytesByFamily,
+    List<int>? preparedBackgroundBytes,
+    double? preparedImageWidth,
+    double? preparedImageHeight,
   }) async {
     final document = pw.Document(title: 'Certificate');
     final fonts = <String, pw.Font>{
@@ -38,25 +75,26 @@ class CertificateArtifactRenderer {
     final canvasWidth = _number(template['width'], 1000);
     final canvasHeight = _number(template['height'], 700);
     final dpi = _number(template['dpi'], 96);
-    final sourceImage = templateBytes == null
+    final sourceImage = templateBytes == null || preparedImageWidth != null
         ? null
         : img.decodeImage(Uint8List.fromList(templateBytes));
-    final enhancedBackground = templateBytes == null
-        ? null
-        : _enhanceBackground(
-            templateBytes,
-            width: sourceImage?.width ?? canvasWidth.round(),
-            height: sourceImage?.height ?? canvasHeight.round(),
-            scale: 3,
-          );
-    final background = templateBytes == null
+    final enhancedBackground = preparedBackgroundBytes ??
+        (templateBytes == null
+            ? null
+            : _enhanceBackground(
+                templateBytes,
+                width: sourceImage?.width ?? canvasWidth.round(),
+                height: sourceImage?.height ?? canvasHeight.round(),
+                scale: 3,
+              ));
+    final background = enhancedBackground == null
         ? null
         : pw.MemoryImage(Uint8List.fromList(enhancedBackground!));
     // The final PDF page follows the actual background image dimensions. The
     // designer fields are mapped from the image's contain rectangle inside
     // the logical design canvas into this page.
-    final imageWidth = sourceImage?.width.toDouble() ?? canvasWidth;
-    final imageHeight = sourceImage?.height.toDouble() ?? canvasHeight;
+    final imageWidth = preparedImageWidth ?? sourceImage?.width.toDouble() ?? canvasWidth;
+    final imageHeight = preparedImageHeight ?? sourceImage?.height.toDouble() ?? canvasHeight;
     final containScale = math.min(
       canvasWidth / imageWidth,
       canvasHeight / imageHeight,

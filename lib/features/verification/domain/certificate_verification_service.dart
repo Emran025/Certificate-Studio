@@ -542,7 +542,7 @@ class CertificateVerificationService {
 
   Map<String, dynamic> _decode(Object? raw) =>
       raw is String ? Map<String, dynamic>.from(jsonDecode(raw) as Map) : {};
-  String? _hexDecode(String value) => [
+  List<int> _hexDecode(String value) => [
     for (var i = 0; i < value.length; i += 2)
       int.parse(value.substring(i, i + 2), radix: 16),
   ];

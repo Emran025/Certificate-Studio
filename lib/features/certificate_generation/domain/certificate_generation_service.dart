@@ -448,11 +448,9 @@ class CertificateGenerationService {
 }
 
 class _PdfRenderWorker {
-  _PdfRenderWorker._(this._isolate, this._sendPort, this._receivePort);
+  _PdfRenderWorker._(this._sendPort);
 
-  final Isolate _isolate;
   final SendPort _sendPort;
-  final ReceivePort _receivePort;
   int _nextId = 0;
   final Map<int, Completer<List<int>>> _pending = {};
 
@@ -463,7 +461,7 @@ class _PdfRenderWorker {
   }) async {
     final handshake = ReceivePort();
     final responsePort = ReceivePort();
-    final isolate = await Isolate.spawn(
+    await Isolate.spawn(
       _pdfRenderWorkerEntry,
       <String, Object?>{
         'reply': handshake.sendPort,
@@ -474,7 +472,7 @@ class _PdfRenderWorker {
       },
     );
     final sendPort = await handshake.first as SendPort;
-    final worker = _PdfRenderWorker._(isolate, sendPort, responsePort);
+    final worker = _PdfRenderWorker._(sendPort);
     responsePort.listen(worker._handleResponse);
     return worker;
   }

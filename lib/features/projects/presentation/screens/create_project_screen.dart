@@ -85,110 +85,162 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 680),
             child: AppSurfaceCard(
-              padding: const EdgeInsets.all(AppSpacing.xxl),
+              padding: EdgeInsets.zero,
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Project information',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'Set up the context for this certificate-issuing project. You can configure templates and data next.',
-                      style: Theme.of(context).textTheme.bodyMedium
-                          ?.copyWith(color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    TextFormField(
-                      controller: _nameController,
-                      autofocus: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Project name *',
-                        hintText: 'e.g. Flutter Advanced Course 2026',
-                      ),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? 'Project name is required.'
-                          : null,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextFormField(
-                      controller: _organizationController,
-                      decoration: const InputDecoration(
-                        labelText: 'Organization',
-                        hintText: 'Academy or institution name',
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextFormField(
-                      controller: _courseController,
-                      decoration: const InputDecoration(
-                        labelText: 'Course or program',
-                        hintText: 'e.g. Flutter Advanced',
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextFormField(
-                      controller: _descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
-                        hintText: 'Optional project notes',
-                      ),
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      'Certificate type',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Wrap(
-                      spacing: AppSpacing.xs,
-                      runSpacing: AppSpacing.xs,
-                      children: [
-                        for (final type in const {
-                          'course': 'Course',
-                          'training': 'Training',
-                          'achievement': 'Achievement',
-                          'participation': 'Participation',
-                          'custom': 'Custom',
-                        }.entries)
-                          ChoiceChip(
-                            label: Text(type.value),
-                            selected: _projectType == type.key,
-                            onSelected: (_) =>
-                                setState(() => _projectType = type.key),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppSpacing.xxl),
+                      color: AppColors.primaryLight,
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(AppSpacing.sm),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(AppRadius.card),
+                            ),
+                            child: const Icon(
+                              Icons.workspace_premium_outlined,
+                              color: AppColors.textOnPrimary,
+                              size: 24,
+                            ),
                           ),
-                      ],
-                    ),
-                    if (_errorMessage != null) ...[
-                      const SizedBox(height: AppSpacing.md),
-                      Text(
-                        _errorMessage!,
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: AppColors.error),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Project information',
+                                  style: Theme.of(context).textTheme.headlineMedium,
+                                ),
+                                const SizedBox(height: AppSpacing.xs),
+                                Text(
+                                  'Set up the context for this certificate-issuing project. You can configure templates and data next.',
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                    const SizedBox(height: AppSpacing.xl),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        AppSecondaryButton(
-                          label: 'Cancel',
-                          onPressed: _isSaving
-                              ? null
-                              : () => Navigator.of(context).pop(),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        AppPrimaryButton(
-                          label: _isSaving ? 'Creating...' : 'Continue',
-                          icon: _isSaving ? null : Icons.arrow_forward,
-                          onPressed: _isSaving ? null : _create,
-                        ),
-                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xxl),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextFormField(
+                            controller: _nameController,
+                            autofocus: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Project name *',
+                              hintText: 'e.g. Flutter Advanced Course 2026',
+                            ),
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                ? 'Project name is required.'
+                                : null,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          TextFormField(
+                            controller: _organizationController,
+                            decoration: const InputDecoration(
+                              labelText: 'Organization',
+                              hintText: 'Academy or institution name',
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          TextFormField(
+                            controller: _courseController,
+                            decoration: const InputDecoration(
+                              labelText: 'Course or program',
+                              hintText: 'e.g. Flutter Advanced',
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          TextFormField(
+                            controller: _descriptionController,
+                            decoration: const InputDecoration(
+                              labelText: 'Description',
+                              hintText: 'Optional project notes',
+                            ),
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          Text(
+                            'Certificate type',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceSubtle,
+                              borderRadius: BorderRadius.circular(AppRadius.card),
+                              border: Border.all(color: AppColors.divider),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppSpacing.xs),
+                              child: Wrap(
+                                spacing: AppSpacing.xs,
+                                runSpacing: AppSpacing.xs,
+                                children: [
+                                  for (final type in const {
+                                    'course': 'Course',
+                                    'training': 'Training',
+                                    'achievement': 'Achievement',
+                                    'participation': 'Participation',
+                                    'custom': 'Custom',
+                                  }.entries)
+                                    ChoiceChip(
+                                      avatar: Icon(
+                                        _projectType == type.key
+                                            ? Icons.check_circle
+                                            : Icons.circle_outlined,
+                                        size: 16,
+                                      ),
+                                      label: Text(type.value),
+                                      selected: _projectType == type.key,
+                                      onSelected: (_) =>
+                                          setState(() => _projectType = type.key),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (_errorMessage != null) ...[
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              _errorMessage!,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: AppColors.error),
+                            ),
+                          ],
+                          const SizedBox(height: AppSpacing.xl),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              AppSecondaryButton(
+                                label: 'Cancel',
+                                onPressed: _isSaving
+                                    ? null
+                                    : () => Navigator.of(context).pop(),
+                              ),
+                              const SizedBox(width: AppSpacing.md),
+                              AppPrimaryButton(
+                                label: _isSaving ? 'Creating...' : 'Continue',
+                                icon: _isSaving ? null : Icons.arrow_forward,
+                                onPressed: _isSaving ? null : _create,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

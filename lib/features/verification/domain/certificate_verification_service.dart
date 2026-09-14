@@ -373,7 +373,6 @@ class CertificateVerificationService {
         grayscale,
         img.adjustColor(grayscale, contrast: 1.35),
         img.invert(grayscale),
-        img.sharpen(grayscale, amount: 1.5),
         img.copyResize(grayscale, width: decoded.width * 2),
         img.copyRotate(grayscale, angle: 90),
         img.copyRotate(grayscale, angle: 180),

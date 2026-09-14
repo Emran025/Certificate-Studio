@@ -23,9 +23,12 @@ jobs:
       - name: Check formatting
         shell: bash
         run: |
-          changed=$(git diff --name-only HEAD^ HEAD -- 'lib/**/*.dart' 'test/**/*.dart')
-          if [ -n "$changed" ]; then
-            dart format --output=none --set-exit-if-changed $changed
+          changed=()
+          while IFS= read -r path; do
+            changed+=("$path")
+          done < <(git diff-tree --no-commit-id --name-only --diff-filter=ACMRTUXB -r --root HEAD -- 'lib/**/*.dart' 'test/**/*.dart')
+          if [ "${#changed[@]}" -gt 0 ]; then
+            dart format --output=none --set-exit-if-changed "${changed[@]}"
           else
             echo "No Dart files changed in this commit."
           fi

@@ -58,6 +58,13 @@ abstract final class DatabaseMigrations {
         'CREATE INDEX IF NOT EXISTS idx_verification_records_project ON verification_records (project_id)',
       ],
     ),
+    DatabaseMigration(
+      fromVersion: 3,
+      toVersion: 4,
+      statements: [
+        'ALTER TABLE fonts ADD COLUMN font_bytes BLOB',
+      ],
+    ),
   ];
 
   static List<String> statementsForUpgrade(int currentVersion) {

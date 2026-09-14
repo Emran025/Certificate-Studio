@@ -35,14 +35,14 @@ class _FontsLibraryScreenState extends State<FontsLibraryScreen> {
   }
 
   Future<void> _import() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['ttf', 'otf', 'woff', 'woff2'], withData: false);
+    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['ttf', 'otf'], withData: true);
     final file = result?.files.single;
-    final path = file?.path;
-    if (file == null || path == null || path.isEmpty) return;
+    final bytes = file?.bytes;
+    if (file == null || bytes == null || bytes.isEmpty) return;
     final now = DateTime.now().toUtc().toIso8601String();
     final name = file.name.replaceFirst(RegExp(r'\.[^.]+$'), '');
     final format = file.extension?.toLowerCase() ?? 'ttf';
-    await widget.database.insert(DatabaseTables.fonts, {'id': 'font-${DateTime.now().microsecondsSinceEpoch}', 'name': name, 'family': name, 'file_path': path, 'format': format, 'created_at': now, 'updated_at': now});
+    await widget.database.insert(DatabaseTables.fonts, {'id': 'font-${DateTime.now().microsecondsSinceEpoch}', 'name': name, 'family': name, 'file_path': file.path ?? file.name, 'format': format, 'font_bytes': bytes, 'created_at': now, 'updated_at': now});
     await _load();
   }
 

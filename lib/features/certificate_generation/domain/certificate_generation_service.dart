@@ -340,7 +340,10 @@ class CertificateGenerationService {
       if (family == null || family.isEmpty || path == null || path.isEmpty) {
         continue;
       }
-      final bytes = await readTemplateBytes(path);
+      final storedBytes = row['font_bytes'];
+      final bytes = storedBytes is List
+          ? List<int>.from(storedBytes)
+          : await readTemplateBytes(path);
       if (bytes != null && bytes.isNotEmpty) result[family] = bytes;
     }
     return result;

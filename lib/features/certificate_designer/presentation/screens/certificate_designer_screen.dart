@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
+import '../../../certificate_generation/domain/template_bytes.dart';
 import '../../../../features/templates/presentation/template_file_support.dart';
 import '../../../../shared/themes/app_colors.dart';
 import '../../../../shared/themes/app_spacing.dart';
@@ -36,6 +39,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
   bool _loading = true;
   bool _saving = false;
   String _saveLabel = 'Not saved';
+  final Set<String> _loadedFontFamilies = {};
   String _projectFontFamily = 'Cairo';
   List<String> _fontFamilies = const ['Cairo', 'Arial', 'sans-serif'];
   double _zoom = 0.85;
@@ -72,6 +76,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     final projectFontId = projectSettings['font_id']?.toString();
     final projectFonts = projectFontId == null ? const <Map<String, Object?>>[] : await widget.database.query(DatabaseTables.fonts, where: {'id': projectFontId});
     final fontRows = await widget.database.query(DatabaseTables.fonts);
+    await _registerImportedFonts(fontRows);
     final templates = projectTemplateId == null
         ? <Map<String, Object?>>[]
         : await widget.database.query(
@@ -112,6 +117,36 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
         ..add(List<_DesignerField>.from(_fields));
       _loading = false;
     });
+  }
+
+  Future<void> _registerImportedFonts(
+    List<Map<String, Object?>> rows,
+  ) async {
+    for (final row in rows) {
+      final family = row['family']?.toString().trim();
+      if (family == null ||
+          family.isEmpty ||
+          _loadedFontFamilies.contains(family)) {
+        continue;
+      }
+      final storedBytes = row['font_bytes'];
+      final path = row['file_path']?.toString().trim() ?? '';
+      final bytes = storedBytes is List
+          ? List<int>.from(storedBytes)
+          : await readTemplateBytes(path);
+      if (bytes == null || bytes.isEmpty) continue;
+      try {
+        final loader = FontLoader(family)
+          ..addFont(
+            Future.value(ByteData.sublistView(Uint8List.fromList(bytes))),
+          );
+        await loader.load();
+        _loadedFontFamilies.add(family);
+      } on Object {
+        // Keep the font selectable for PDF fallback even when Flutter cannot
+        // load its format; one invalid font must not block the designer.
+      }
+    }
   }
 
   Future<void> _addField() async {
@@ -385,6 +420,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
                       canvasWidth: _canvasWidth,
                       canvasHeight: _canvasHeight,
                       zoom: _zoom,
+                      fontFamilies: _fontFamilies,
                       onSelect: (id) => setState(() => _selectedId = id),
                       onMove: _moveField,
                       onResize: _resizeField,
@@ -494,6 +530,7 @@ class _Canvas extends StatelessWidget {
     required this.canvasWidth,
     required this.canvasHeight,
     required this.zoom,
+    required this.fontFamilies,
     required this.onSelect,
     required this.onMove,
     required this.onResize,
@@ -505,6 +542,7 @@ class _Canvas extends StatelessWidget {
   final double canvasWidth;
   final double canvasHeight;
   final double zoom;
+  final List<String> fontFamilies;
   final ValueChanged<String> onSelect;
   final void Function(String, Offset) onMove;
   final void Function(
@@ -544,6 +582,7 @@ class _Canvas extends StatelessWidget {
                 field: field,
                 selected: field.id == selectedId,
                 previewText: field.qr ? 'QR' : '${previewData[field.source] ?? field.source}',
+                fontFamilies: fontFamilies,
                 onSelect: () => onSelect(field.id),
                 onMove: (delta) => onMove(field.id, delta),
                 onResize: (delta, fromLeft, fromTop) => onResize(
@@ -565,6 +604,7 @@ class _CanvasField extends StatelessWidget {
     required this.field,
     required this.selected,
     required this.previewText,
+    required this.fontFamilies,
     required this.onSelect,
     required this.onMove,
     required this.onResize,
@@ -572,6 +612,7 @@ class _CanvasField extends StatelessWidget {
   final _DesignerField field;
   final bool selected;
   final String previewText;
+  final List<String> fontFamilies;
   final VoidCallback onSelect;
   final ValueChanged<Offset> onMove;
   final void Function(Offset, bool, bool) onResize;
@@ -612,8 +653,10 @@ class _CanvasField extends StatelessWidget {
                       // Keep the chosen family first, then let Flutter use a
                       // platform Arabic font for missing glyphs. This does not
                       // alter layout constraints or the user's font choice.
-                      fontFamilyFallback: const [
-                        'Cairo',
+                      fontFamilyFallback: [
+                        ...fontFamilies.where(
+                          (family) => family != field.fontFamily,
+                        ),
                         'Noto Naskh Arabic',
                         'Noto Sans Arabic',
                         'Arial',

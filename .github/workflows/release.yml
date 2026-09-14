@@ -80,10 +80,40 @@ jobs:
       - name: Package Linux
         if: matrix.target == 'linux'
         run: tar -czf certificate-studio-linux-${{ github.ref_name }}.tar.gz -C build/linux/x64/release bundle
-      - name: Package Windows
+      - name: Install Windows installer tool
         if: matrix.target == 'windows'
         shell: pwsh
-        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath certificate-studio-windows-${{ github.ref_name }}.zip
+        run: choco install innosetup --no-progress -y
+      - name: Package Windows installer
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          $iss = @"
+          [Setup]
+          AppId={{A6C1C3D8-7D1B-4AC6-9CB7-4D1F7F0A1E01}}
+          AppName=Certificate Studio
+          AppVersion=${{ github.ref_name }}
+          DefaultDirName={autopf}\Certificate Studio
+          DefaultGroupName=Certificate Studio
+          OutputDir=.
+          OutputBaseFilename=certificate-studio-windows-${{ github.ref_name }}-setup
+          Compression=lzma
+          SolidCompression=yes
+          ArchitecturesInstallIn64BitMode=x64
+          UninstallDisplayName=Certificate Studio
+
+          [Files]
+          Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
+
+          [Icons]
+          Name: "{autoprograms}\Certificate Studio"; Filename: "{app}\certificate_studio.exe"
+          Name: "{autodesktop}\Certificate Studio"; Filename: "{app}\certificate_studio.exe"
+
+          [Run]
+          Filename: "{app}\certificate_studio.exe"; Description: "Launch Certificate Studio"; Flags: nowait postinstall skipifsilent
+          "@
+          Set-Content -Path certificate-studio.iss -Value $iss -Encoding ASCII
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" certificate-studio.iss
       - name: Package macOS
         if: matrix.target == 'macos'
         run: ditto -c -k --sequesterRsrc --keepParent build/macos/Build/Products/Release/certificate_studio.app certificate-studio-macos-${{ github.ref_name }}.zip
@@ -92,7 +122,7 @@ jobs:
           name: certificate-studio-${{ matrix.platform }}
           path: |
             *.tar.gz
-            *.zip
+            *.exe
 
   publish:
     needs: build

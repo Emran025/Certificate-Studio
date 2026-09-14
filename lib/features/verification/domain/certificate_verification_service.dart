@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:image/image.dart' as img;
+import 'package:printing/printing.dart';
 import 'package:zxing2/qrcode.dart';
 
 import '../../../core/database/app_database.dart';
@@ -117,9 +118,16 @@ class CertificateVerificationService {
       if (const {'png', 'jpg', 'jpeg'}.contains(extension)) {
         final qrRecord = await _extractQrRecord(bytes);
         if (qrRecord == null) {
+          // Generated images also carry the signed record after the image
+          // stream. Prefer it when a QR reader cannot decode a heavily
+          // compressed, resized, or screen-captured image.
+          final embedded = _extractRecord(bytes);
+          if (embedded != null) {
+            return await _verifyEmbedded(embedded, extension: extension);
+          }
           return _result(
             CertificateVerificationStatus.verificationDataMissing,
-            reason: 'QR extraction failed: no readable QR code was found in the image.',
+            reason: 'QR extraction failed and no embedded verification record was found in the image.',
           );
         }
         final qrKey = _embeddedPublicKey(qrRecord);
@@ -139,47 +147,22 @@ class CertificateVerificationService {
       }
       final extracted = _extractRecord(bytes);
       if (extracted == null) {
+        final qrRecord = await _extractQrFromPdf(bytes);
+        if (qrRecord != null) {
+          final result = await _verifyRecord(
+            qrRecord,
+            _documentFromRecord(qrRecord),
+            _embeddedPublicKey(qrRecord)!,
+          );
+          return _copyWithQrExtracted(result);
+        }
         return const CertificateVerificationResult(
           status: CertificateVerificationStatus.verificationDataMissing,
           reason:
               'This certificate does not contain embedded verification data.',
         );
       }
-      final record = extracted.record;
-      final publicKey = _embeddedPublicKey(record);
-      if (publicKey == null) {
-        return _fromRecord(
-          record,
-          CertificateVerificationStatus.verificationDataMissing,
-          'The certificate public-key data is missing or unsupported.',
-        );
-      }
-      final hashes = record['artifact_hashes'];
-      final expectedArtifactHash = hashes is Map
-          ? hashes[extension]
-          : record['artifact_hash'];
-      if (expectedArtifactHash is! String || expectedArtifactHash.isEmpty) {
-        // New QR-bearing artifacts deliberately do not place their own hash
-        // inside the signed QR payload (that would be a circular hash).
-        return await _verifyRecord(
-          record,
-          _documentFromRecord(record),
-          publicKey,
-        );
-      }
-      if (expectedArtifactHash !=
-          await sha256Base64Url(extracted.artifactBytes)) {
-        return _fromRecord(
-          record,
-          CertificateVerificationStatus.integrityCompromised,
-          'The PDF or image bytes were modified after issuance.',
-        );
-      }
-      return await _verifyRecord(
-        record,
-        _documentFromRecord(record),
-        publicKey,
-      );
+      return _verifyEmbedded(extracted, extension: extension);
     } on FormatException catch (error) {
       return _result(
         CertificateVerificationStatus.unsupported,
@@ -192,6 +175,35 @@ class CertificateVerificationService {
         reason: 'Verification failed: $error',
       );
     }
+  }
+
+  Future<CertificateVerificationResult> _verifyEmbedded(
+    _ExtractedCertificate extracted,
+    {required String extension},
+  ) async {
+    final record = extracted.record;
+    final publicKey = _embeddedPublicKey(record);
+    if (publicKey == null) {
+      return _fromRecord(
+        record,
+        CertificateVerificationStatus.verificationDataMissing,
+        'The certificate public-key data is missing or unsupported.',
+      );
+    }
+    final hashes = record['artifact_hashes'];
+    final expectedArtifactHash = hashes is Map
+        ? hashes[extension]
+        : record['artifact_hash'];
+    if (expectedArtifactHash is String &&
+        expectedArtifactHash.isNotEmpty &&
+        expectedArtifactHash != await sha256Base64Url(extracted.artifactBytes)) {
+      return _fromRecord(
+        record,
+        CertificateVerificationStatus.integrityCompromised,
+        'The PDF or image bytes were modified after issuance.',
+      );
+    }
+    return await _verifyRecord(record, _documentFromRecord(record), publicKey);
   }
 
   Future<CertificateVerificationResult> verifyQr(String payload) async {
@@ -358,6 +370,19 @@ class CertificateVerificationService {
 
   Future<Map<String, dynamic>?> _extractQrRecord(List<int> bytes) =>
       Isolate.run(() => _decodeQrRecord(bytes));
+
+  Future<Map<String, dynamic>?> _extractQrFromPdf(List<int> bytes) async {
+    try {
+      await for (final page in Printing.raster(Uint8List.fromList(bytes), dpi: 300)) {
+        final png = await page.toPng();
+        final record = await _extractQrRecord(png);
+        if (record != null) return record;
+      }
+    } catch (_) {
+      // The embedded record path remains the authoritative PDF fallback.
+    }
+    return null;
+  }
 
   static Map<String, dynamic>? _decodeQrRecord(List<int> bytes) {
     try {

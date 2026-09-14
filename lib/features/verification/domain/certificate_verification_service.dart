@@ -367,14 +367,42 @@ class CertificateVerificationService {
       final hints = DecodeHints()
         ..put(DecodeHintType.tryHarder)
         ..put(DecodeHintType.possibleFormats, [BarcodeFormat.qrCode]);
+      final grayscale = img.grayscale(decoded);
       final variants = <img.Image>[
         decoded,
-        img.grayscale(decoded),
-        img.copyResize(decoded, width: decoded.width * 2),
-        img.copyRotate(decoded, angle: 90),
-        img.copyRotate(decoded, angle: 180),
-        img.copyRotate(decoded, angle: 270),
+        grayscale,
+        img.adjustColor(grayscale, contrast: 1.35),
+        img.invert(grayscale),
+        img.sharpen(grayscale, amount: 1.5),
+        img.copyResize(grayscale, width: decoded.width * 2),
+        img.copyRotate(grayscale, angle: 90),
+        img.copyRotate(grayscale, angle: 180),
+        img.copyRotate(grayscale, angle: 270),
       ];
+      // A certificate QR is often small relative to the page. Decode
+      // overlapping tiles as well as the full page so text and background
+      // detail cannot prevent the detector from finding its finder patterns.
+      final tileWidth = (decoded.width * .55).round().clamp(96, decoded.width).toInt();
+      final tileHeight = (decoded.height * .55).round().clamp(96, decoded.height).toInt();
+      final xStep = ((decoded.width - tileWidth) / 2).round().clamp(1, decoded.width).toInt();
+      final yStep = ((decoded.height - tileHeight) / 2).round().clamp(1, decoded.height).toInt();
+      for (var y = 0; y < decoded.height; y += yStep) {
+        for (var x = 0; x < decoded.width; x += xStep) {
+          final left = x.clamp(0, decoded.width - tileWidth).toInt();
+          final top = y.clamp(0, decoded.height - tileHeight).toInt();
+          variants.add(img.copyCrop(
+            grayscale,
+            x: left,
+            y: top,
+            width: tileWidth,
+            height: tileHeight,
+          ));
+          if (x + tileWidth >= decoded.width && y + tileHeight >= decoded.height) {
+            break;
+          }
+        }
+        if (y + tileHeight >= decoded.height) break;
+      }
       for (final variant in variants) {
         final bgra = variant.convert(numChannels: 4).getBytes(order: img.ChannelOrder.bgra);
         final source = RGBLuminanceSource(

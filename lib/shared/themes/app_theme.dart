@@ -5,18 +5,19 @@ import 'app_spacing.dart';
 
 abstract final class AppTheme {
   static ThemeData get light {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      brightness: Brightness.light,
-    ).copyWith(
-      primary: AppColors.primary,
-      onPrimary: AppColors.textOnPrimary,
-      secondary: AppColors.accent,
-      surface: AppColors.surface,
-      onSurface: AppColors.textPrimary,
-      error: AppColors.error,
-      onError: AppColors.textOnPrimary,
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: AppColors.primary,
+          onPrimary: AppColors.textOnPrimary,
+          secondary: AppColors.accent,
+          surface: AppColors.surface,
+          onSurface: AppColors.textPrimary,
+          error: AppColors.error,
+          onError: AppColors.textOnPrimary,
+        );
 
     final textTheme = _textTheme();
 
@@ -59,8 +60,24 @@ abstract final class AppTheme {
         focusedBorder: _inputBorder(AppColors.primary, width: 1.5),
         errorBorder: _inputBorder(AppColors.error),
         focusedErrorBorder: _inputBorder(AppColors.error, width: 1.5),
-        labelStyle: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-        hintStyle: textTheme.bodyMedium?.copyWith(color: AppColors.textTertiary),
+        labelStyle: textTheme.bodyMedium?.copyWith(
+          color: AppColors.textSecondary,
+        ),
+        hintStyle: textTheme.bodyMedium?.copyWith(
+          color: AppColors.textTertiary,
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(0, 44),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.textOnPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+          ),
+          textStyle: textTheme.labelLarge?.copyWith(inherit: true),
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -70,9 +87,9 @@ abstract final class AppTheme {
           foregroundColor: AppColors.textOnPrimary,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.input),
+            borderRadius: BorderRadius.circular(AppRadius.card),
           ),
-          textStyle: textTheme.labelLarge,
+          textStyle: textTheme.labelLarge?.copyWith(inherit: true),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -82,16 +99,16 @@ abstract final class AppTheme {
           foregroundColor: AppColors.primary,
           side: const BorderSide(color: AppColors.primary),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.input),
+            borderRadius: BorderRadius.circular(AppRadius.card),
           ),
-          textStyle: textTheme.labelLarge,
+          textStyle: textTheme.labelLarge?.copyWith(inherit: true),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
           minimumSize: const Size(0, 44),
-          textStyle: textTheme.labelLarge,
+          textStyle: textTheme.labelLarge?.copyWith(inherit: true),
         ),
       ),
       dividerTheme: const DividerThemeData(
@@ -111,18 +128,66 @@ abstract final class AppTheme {
 
   static TextTheme _textTheme() {
     return const TextTheme(
-      displayLarge: TextStyle(fontSize: 32, height: 1.2, fontWeight: FontWeight.w700),
-      displayMedium: TextStyle(fontSize: 28, height: 1.2, fontWeight: FontWeight.w700),
-      headlineLarge: TextStyle(fontSize: 24, height: 1.25, fontWeight: FontWeight.w700),
-      headlineMedium: TextStyle(fontSize: 20, height: 1.3, fontWeight: FontWeight.w600),
-      titleLarge: TextStyle(fontSize: 18, height: 1.35, fontWeight: FontWeight.w600),
-      titleMedium: TextStyle(fontSize: 16, height: 1.4, fontWeight: FontWeight.w600),
-      bodyLarge: TextStyle(fontSize: 16, height: 1.5, fontWeight: FontWeight.w400),
-      bodyMedium: TextStyle(fontSize: 14, height: 1.45, fontWeight: FontWeight.w400),
-      bodySmall: TextStyle(fontSize: 12, height: 1.4, fontWeight: FontWeight.w400),
-      labelLarge: TextStyle(fontSize: 14, height: 1.3, fontWeight: FontWeight.w600),
-      labelMedium: TextStyle(fontSize: 12, height: 1.3, fontWeight: FontWeight.w600),
-      labelSmall: TextStyle(fontSize: 11, height: 1.3, fontWeight: FontWeight.w600),
+      displayLarge: TextStyle(
+        fontSize: 32,
+        height: 1.2,
+        fontWeight: FontWeight.w700,
+      ),
+      displayMedium: TextStyle(
+        fontSize: 28,
+        height: 1.2,
+        fontWeight: FontWeight.w700,
+      ),
+      headlineLarge: TextStyle(
+        fontSize: 24,
+        height: 1.25,
+        fontWeight: FontWeight.w700,
+      ),
+      headlineMedium: TextStyle(
+        fontSize: 20,
+        height: 1.3,
+        fontWeight: FontWeight.w600,
+      ),
+      titleLarge: TextStyle(
+        fontSize: 18,
+        height: 1.35,
+        fontWeight: FontWeight.w600,
+      ),
+      titleMedium: TextStyle(
+        fontSize: 16,
+        height: 1.4,
+        fontWeight: FontWeight.w600,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 16,
+        height: 1.5,
+        fontWeight: FontWeight.w400,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 14,
+        height: 1.45,
+        fontWeight: FontWeight.w400,
+      ),
+      bodySmall: TextStyle(
+        fontSize: 12,
+        height: 1.4,
+        fontWeight: FontWeight.w400,
+      ),
+      labelLarge: TextStyle(
+        fontSize: 14,
+        height: 1.3,
+        fontWeight: FontWeight.w600,
+      ),
+      labelMedium: TextStyle(
+        fontSize: 12,
+        height: 1.3,
+        fontWeight: FontWeight.w600,
+      ),
+      labelSmall: TextStyle(
+        fontSize: 11,
+        height: 1.3,
+        fontWeight: FontWeight.w600,
+      ),
     ).apply(
       bodyColor: AppColors.textPrimary,
       displayColor: AppColors.textPrimary,

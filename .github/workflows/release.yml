@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            os: ubuntu-latest
+            target: linux
+          - platform: windows
+            os: windows-latest
+            target: windows
+          - platform: macos
+            os: macos-latest
+            target: macos
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.5
+          cache: true
+      - run: flutter pub get
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze
+      - run: flutter test
+
+      - if: matrix.target == 'linux'
+        name: Install Linux desktop dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+      - if: matrix.target != 'linux'
+        name: Install Flutter desktop prerequisites (non-Linux)
+        shell: bash
+        run: echo "No extra prerequisites needed for ${{ matrix.target }}"
+
+      - run: flutter config --enable-${{ matrix.target }}-desktop
+      - run: flutter build ${{ matrix.target }} --release
+
+      - name: Package Linux
+        if: matrix.target == 'linux'
+        run: tar -czf certificate-studio-linux-${{ github.ref_name }}.tar.gz -C build/linux/x64/release bundle
+      - name: Package Windows
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath certificate-studio-windows-${{ github.ref_name }}.zip
+      - name: Package macOS
+        if: matrix.target == 'macos'
+        run: ditto -c -k --sequesterRsrc --keepParent build/macos/Build/Products/Release/certificate_studio.app certificate-studio-macos-${{ github.ref_name }}.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: certificate-studio-${{ matrix.platform }}
+          path: |
+            *.tar.gz
+            *.zip
+
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/*

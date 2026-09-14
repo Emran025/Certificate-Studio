@@ -609,6 +609,15 @@ class _CanvasField extends StatelessWidget {
                     textDirection: field.textDirection,
                     style: TextStyle(
                       fontFamily: field.fontFamily,
+                      // Keep the chosen family first, then let Flutter use a
+                      // platform Arabic font for missing glyphs. This does not
+                      // alter layout constraints or the user's font choice.
+                      fontFamilyFallback: const [
+                        'Cairo',
+                        'Noto Naskh Arabic',
+                        'Noto Sans Arabic',
+                        'Arial',
+                      ],
                       fontSize: field.fontSize,
                       color: _hex(field.color),
                       fontWeight: field.bold ? FontWeight.bold : FontWeight.normal,

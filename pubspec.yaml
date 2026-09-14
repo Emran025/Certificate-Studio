@@ -31,7 +31,6 @@ dependencies:
   flutter:
     sdk: flutter
   archive: ^3.6.1
-  arabic_reshaper: ^0.0.1
   certificate_crypto:
     path: packages/certificate_crypto
   cryptography: ^2.9.0

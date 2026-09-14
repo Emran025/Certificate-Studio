@@ -305,7 +305,9 @@ class PersistentAppDatabase implements AppDatabase {
   static Object? _bindValue(Object? value) => value is bool ? (value ? 1 : 0) : value;
 
   static void _assertSqlCipher(Database database) {
-    if (database.select('PRAGMA cipher').isEmpty) {
+    // `PRAGMA cipher` identifies SQLite3MultipleCiphers, not SQLCipher.
+    // SQLCipher reports its compiled version through `cipher_version`.
+    if (database.select('PRAGMA cipher_version').isEmpty) {
       throw StateError('SQLCipher is not available in the bundled SQLite library.');
     }
   }

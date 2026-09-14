@@ -273,7 +273,7 @@ class PersistentAppDatabase implements AppDatabase {
       final envelope = jsonDecode(raw);
       final decoded = envelope is Map && envelope['format'] == envelopeFormat
           ? jsonDecode(utf8.decode(await decryptBytes(
-              Map<String, dynamic>.from(envelope), key, aad: utf8.encode(_legacyStorageKey)))
+              Map<String, dynamic>.from(envelope), key, aad: utf8.encode(_legacyStorageKey))))
           : envelope;
       return decoded is Map ? Map<String, dynamic>.from(decoded) : null;
     } on Object {

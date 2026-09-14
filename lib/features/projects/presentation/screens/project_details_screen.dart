@@ -7,6 +7,7 @@ import '../../../certificate_designer/presentation/screens/certificate_designer_
 import '../../../certificate_generation/presentation/screens/certificate_generation_screen.dart';
 import '../../../templates/presentation/screens/template_picker_screen.dart';
 import '../../../fonts/presentation/screens/fonts_library_screen.dart';
+import '../../../../shared/themes/app_colors.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
 import '../../domain/entities/project.dart';
@@ -46,87 +47,147 @@ class ProjectDetailsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  project.name,
-                  style: Theme.of(context).textTheme.headlineLarge,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  project.description?.isNotEmpty == true
-                      ? project.description!
-                      : 'Configure this project, then design and generate certificates.',
-                  style: Theme.of(context).textTheme.bodyLarge,
+                AppSurfaceCard(
+                  padding: EdgeInsets.zero,
+                  child: Container(
+                    padding: const EdgeInsets.all(AppSpacing.xl),
+                    decoration: const BoxDecoration(
+                      gradient: AppGradients.page,
+                      border: Border(
+                        bottom: BorderSide(color: AppColors.primary, width: 3),
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(AppRadius.card),
+                          ),
+                          child: const Icon(
+                            Icons.workspace_premium_outlined,
+                            color: AppColors.textOnPrimary,
+                            size: 30,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                project.name,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineLarge,
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                project.description?.isNotEmpty == true
+                                    ? project.description!
+                                    : 'Configure this project, then design and generate certificates.',
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(color: AppColors.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
+                AppSectionHeader(
+                  title: 'Project workspace',
+                  action: AppStatusBadge(
+                    label: (project.settings['project_type'] ?? 'course')
+                        .toString()
+                        .toUpperCase(),
+                    color: AppColors.primary,
+                    backgroundColor: AppColors.primaryLight,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
                 Wrap(
                   spacing: AppSpacing.md,
                   runSpacing: AppSpacing.md,
                   children: [
-                    _ProjectAction(
-                      icon: Icons.image_outlined,
-                      title: 'Template',
-                      description: 'Choose the certificate background.',
-                      onPressed: () => Navigator.of(context).push<void>(
-                        MaterialPageRoute(
-                          builder: (_) => TemplatePickerScreen(
-                            database: database,
-                            projectId: project.id,
+                    for (final action in [
+                      _ProjectActionData(
+                        icon: Icons.image_outlined,
+                        title: 'Template',
+                        description: 'Choose the certificate background.',
+                        onPressed: () => Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => TemplatePickerScreen(
+                              database: database,
+                              projectId: project.id,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    _ProjectAction(
-                      icon: Icons.table_chart_outlined,
-                      title: 'Student data',
-                      description: 'Import or paste recipient data.',
-                      onPressed: () => Navigator.of(context).push<void>(
-                        MaterialPageRoute(
-                          builder: (_) => DataImportScreen(
-                            database: database,
-                            projectId: project.id,
+                      _ProjectActionData(
+                        icon: Icons.table_chart_outlined,
+                        title: 'Student data',
+                        description: 'Import or paste recipient data.',
+                        onPressed: () => Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => DataImportScreen(
+                              database: database,
+                              projectId: project.id,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    _ProjectAction(
-                      icon: Icons.text_fields_outlined,
-                      title: 'Fonts',
-                      description: 'Choose the font available to this project.',
-                      onPressed: () => Navigator.of(context).push<void>(
-                        MaterialPageRoute(builder: (_) => FontsLibraryScreen(database: database, projectId: project.id)),
-                      ),
-                    ),
-                    _ProjectAction(
-                      icon: Icons.design_services_outlined,
-                      title: 'Design',
-                      description: 'Place fields on the certificate canvas.',
-                      onPressed: () => Navigator.of(context).push<void>(
-                        MaterialPageRoute(
-                          builder: (_) => CertificateDesignerScreen(
-                            database: database,
-                            projectId: project.id,
-                            projectName: project.name,
+                      _ProjectActionData(
+                        icon: Icons.text_fields_outlined,
+                        title: 'Fonts',
+                        description:
+                            'Choose the font available to this project.',
+                        onPressed: () => Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => FontsLibraryScreen(
+                              database: database,
+                              projectId: project.id,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    _ProjectAction(
-                      icon: Icons.play_circle_outline,
-                      title: 'Generate',
-                      description:
-                          'Create certificates after setup is complete.',
-                      onPressed: () => Navigator.of(context).push<void>(
-                        MaterialPageRoute(
-                          builder: (_) => CertificateGenerationScreen(
-                            database: database,
-                            keyStorage: keyStorage ?? InMemoryKeyStorage(),
-                            projectId: project.id,
-                            projectName: project.name,
-                            institutionId: project.institutionId,
+                      _ProjectActionData(
+                        icon: Icons.design_services_outlined,
+                        title: 'Design',
+                        description: 'Place fields on the certificate canvas.',
+                        onPressed: () => Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => CertificateDesignerScreen(
+                              database: database,
+                              projectId: project.id,
+                              projectName: project.name,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                      _ProjectActionData(
+                        icon: Icons.play_circle_outline,
+                        title: 'Generate',
+                        description:
+                            'Create certificates after setup is complete.',
+                        onPressed: () => Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => CertificateGenerationScreen(
+                              database: database,
+                              keyStorage: keyStorage ?? InMemoryKeyStorage(),
+                              projectId: project.id,
+                              projectName: project.name,
+                              institutionId: project.institutionId,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ])
+                      _ProjectAction(data: action),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xl),
@@ -183,48 +244,75 @@ class ProjectDetailsScreen extends StatelessWidget {
 }
 
 class _ProjectAction extends StatelessWidget {
-  const _ProjectAction({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.onPressed,
-  });
-  final IconData icon;
-  final String title;
-  final String description;
-  final VoidCallback onPressed;
+  const _ProjectAction({required this.data});
+  final _ProjectActionData data;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 410,
-    child: Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Row(
-            children: [
-              Icon(icon, size: 28),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: AppSpacing.xxs),
-                    Text(description),
-                  ],
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => SizedBox(
+      width: constraints.maxWidth >= 600 ? 410 : constraints.maxWidth,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        elevation: 1,
+        shadowColor: AppColors.shadow,
+        child: InkWell(
+          onTap: data.onPressed,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                  ),
+                  child: Icon(data.icon, color: AppColors.primary, size: 26),
                 ),
-              ),
-              const Icon(Icons.chevron_right),
-            ],
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        data.title,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.xxs),
+                      Text(
+                        data.description,
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 15,
+                  color: AppColors.textTertiary,
+                ),
+              ],
+            ),
           ),
         ),
       ),
     ),
   );
+}
+
+class _ProjectActionData {
+  const _ProjectActionData({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback onPressed;
 }
 
 class _InfoRow extends StatelessWidget {
@@ -234,12 +322,16 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
     child: Row(
       children: [
         SizedBox(
           width: 120,
-          child: Text(label, style: Theme.of(context).textTheme.labelLarge),
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.labelLarge
+                ?.copyWith(color: AppColors.textSecondary),
+          ),
         ),
         Expanded(child: Text(value)),
       ],

@@ -87,7 +87,8 @@ class CertificateArtifactRenderer {
     final sourceImage = templateBytes == null || preparedImageWidth != null
         ? null
         : img.decodeImage(Uint8List.fromList(templateBytes));
-    final enhancedBackground = preparedBackgroundBytes ??
+    final enhancedBackground =
+        preparedBackgroundBytes ??
         (templateBytes == null
             ? null
             : _enhanceBackground(
@@ -102,8 +103,10 @@ class CertificateArtifactRenderer {
     // The final PDF page follows the actual background image dimensions. The
     // designer fields are mapped from the image's contain rectangle inside
     // the logical design canvas into this page.
-    final imageWidth = preparedImageWidth ?? sourceImage?.width.toDouble() ?? canvasWidth;
-    final imageHeight = preparedImageHeight ?? sourceImage?.height.toDouble() ?? canvasHeight;
+    final imageWidth =
+        preparedImageWidth ?? sourceImage?.width.toDouble() ?? canvasWidth;
+    final imageHeight =
+        preparedImageHeight ?? sourceImage?.height.toDouble() ?? canvasHeight;
     final containScale = math.min(
       canvasWidth / imageWidth,
       canvasHeight / imageHeight,
@@ -280,7 +283,13 @@ class CertificateArtifactRenderer {
     final qrY = qrField == null
         ? canvas.height - qrSize - 32
         : (_number(qrPosition['y'], 0) * logicalScale).round();
-    _drawQr(canvas, encodeVerificationQrPayload(record), x: qrX, y: qrY, size: qrSize);
+    _drawQr(
+      canvas,
+      encodeVerificationQrPayload(record),
+      x: qrX,
+      y: qrY,
+      size: qrSize,
+    );
     return [...img.encodePng(canvas), ...utf8.encode(_embeddedMarker(record))];
   }
 
@@ -301,10 +310,12 @@ class CertificateArtifactRenderer {
     // image is still fitted to the original page dimensions, while the cap
     // prevents a 4K/8K template from freezing the UI during generation.
     const maxDimension = 6000;
-    final requestedScale = math.min(
-      scale.toDouble(),
-      maxDimension / math.max(source.width, source.height),
-    ).clamp(1.0, scale.toDouble());
+    final requestedScale = math
+        .min(
+          scale.toDouble(),
+          maxDimension / math.max(source.width, source.height),
+        )
+        .clamp(1.0, scale.toDouble());
     final targetWidth = (width * requestedScale).round();
     final targetHeight = (height * requestedScale).round();
     final fitScale = math.min(
@@ -344,7 +355,11 @@ class CertificateArtifactRenderer {
     double containOffsetY,
   ) {
     if (field == null) {
-      return pw.Positioned(right: 12, bottom: 12, child: _qrWidget(payload, 120));
+      return pw.Positioned(
+        right: 12,
+        bottom: 12,
+        child: _qrWidget(payload, 120),
+      );
     }
     final position = _jsonMap(field['position_json']);
     final designX = _number(position['x'], 0);
@@ -365,9 +380,7 @@ class CertificateArtifactRenderer {
       child: pw.SizedBox(
         width: width,
         height: height,
-        child: pw.Center(
-          child: _qrWidget(payload, math.min(width, height)),
-        ),
+        child: pw.Center(child: _qrWidget(payload, math.min(width, height))),
       ),
     );
   }
@@ -509,7 +522,11 @@ class CertificateArtifactRenderer {
         defaultFont,
         ...fonts.values.where((item) => item != font && item != defaultFont),
       ],
-      fontSize: _number(style['font_size'], 24) / containScale * pageWidth / imageWidth,
+      fontSize:
+          _number(style['font_size'], 24) /
+          containScale *
+          pageWidth /
+          imageWidth,
     );
     return pw.Positioned(
       left: x,

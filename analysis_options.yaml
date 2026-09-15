@@ -19,6 +19,9 @@ analyzer:
     - macos/**
     - linux/**
     - packages/certificate_crypto/test/**
+    # The local pdf package is a vendored third-party fork with its own
+    # upstream lint baseline; analyze the application code separately.
+    - packages/pdf/**
 
 linter:
   # The lint rules applied to this project can be customized in the

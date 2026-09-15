@@ -52,6 +52,12 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+# printing declares pdf as a hosted dependency. Override that transitive
+# source so both packages use the local Arabic-shaping fork above.
+dependency_overrides:
+  pdf:
+    path: packages/pdf
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

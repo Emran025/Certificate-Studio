@@ -40,7 +40,10 @@ dependencies:
   sqlite3: ^3.5.2
   image: ^4.3.0
   zxing2: ^0.2.4
-  pdf: ^3.11.3
+  # Keep OpenType shaping enabled in local and release builds without relying
+  # on an external dart-define flag.
+  pdf:
+    path: packages/pdf
   printing: ^5.14.3
   excel: ^4.0.6
   file_picker: ^8.1.7

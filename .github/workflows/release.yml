@@ -62,7 +62,8 @@ jobs:
             echo "No Dart files changed in this commit."
           fi
       - run: flutter analyze
-      - run: flutter test
+      # Keep the same Unicode/OpenType shaping path used by the released app.
+      - run: flutter test --dart-define=use_arabic=true
 
       - if: matrix.target == 'linux'
         name: Install Linux desktop dependencies
@@ -75,7 +76,7 @@ jobs:
         run: echo "No extra prerequisites needed for ${{ matrix.target }}"
 
       - run: flutter config --enable-${{ matrix.target }}-desktop
-      - run: flutter build ${{ matrix.target }} --release
+      - run: flutter build ${{ matrix.target }} --release --dart-define=use_arabic=true
 
       - name: Package Linux
         if: matrix.target == 'linux'

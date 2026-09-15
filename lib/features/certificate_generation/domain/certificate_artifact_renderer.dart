@@ -64,12 +64,22 @@ class CertificateArtifactRenderer {
     double? preparedImageHeight,
   }) async {
     final document = pw.Document(title: 'Certificate');
-    final fonts = <String, pw.Font>{
-      for (final entry in fontBytesByFamily.entries)
-        entry.key: pw.Font.ttf(
+    // A corrupt/unsupported imported font must never abort certificate
+    // generation. Keep the bundled Cairo font as the guaranteed base font and
+    // ignore only the invalid family, preserving every existing layout value.
+    final fonts = <String, pw.Font>{};
+    for (final entry in fontBytesByFamily.entries) {
+      try {
+        fonts[entry.key] = pw.Font.ttf(
           ByteData.sublistView(Uint8List.fromList(entry.value)),
-        ),
-    };
+        );
+      } on Object {
+        // The requested family will safely resolve to Cairo below.
+      }
+    }
+    if (fonts.isEmpty) {
+      throw StateError('No usable certificate font is available');
+    }
     final defaultFont = fonts['Cairo'] ?? fonts.values.first;
     final canvasWidth = _number(template['width'], 1000);
     final canvasHeight = _number(template['height'], 700);
@@ -454,7 +464,10 @@ class CertificateArtifactRenderer {
   ) {
     final position = _jsonMap(field['position_json']);
     final style = _jsonMap(field['style_json']);
-    final font = fonts[style['font_family']?.toString()] ?? defaultFont;
+    final requestedFamily = style['font_family']?.toString().trim();
+    final font = requestedFamily == null || requestedFamily.isEmpty
+        ? defaultFont
+        : fonts[requestedFamily] ?? defaultFont;
     final text = _fieldText(values, field);
     final designX = _number(position['x'], 0);
     final designY = _number(position['y'], 0);
@@ -478,15 +491,24 @@ class CertificateArtifactRenderer {
       'right' => pw.Alignment.centerRight,
       _ => pw.Alignment.centerLeft,
     };
+    // Keep an explicit designer direction authoritative. When it is left at
+    // the default, detect common RTL scripts (not Arabic only) so multilingual
+    // fields are laid out naturally without changing their saved geometry.
     final direction = style['direction'] == 'rtl'
         ? pw.TextDirection.rtl
-        : _containsArabic(text)
+        : _containsRtl(text)
         ? pw.TextDirection.rtl
         : pw.TextDirection.ltr;
     final textStyle = pw.TextStyle(
       color: _pdfColor(style['color'] as String?),
       font: font,
-      fontFallback: fonts.values.where((item) => item != font).toList(),
+      // Cairo is the first fallback by contract. Other imported families are
+      // still available for scripts Cairo does not cover (CJK, Indic, emoji,
+      // and other Unicode blocks).
+      fontFallback: [
+        defaultFont,
+        ...fonts.values.where((item) => item != font && item != defaultFont),
+      ],
       fontSize: _number(style['font_size'], 24) / containScale * pageWidth / imageWidth,
     );
     return pw.Positioned(
@@ -556,8 +578,9 @@ class CertificateArtifactRenderer {
   static double _number(Object? value, double fallback) =>
       value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
 
-  static bool _containsArabic(String value) =>
-      RegExp(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]').hasMatch(value);
+  static bool _containsRtl(String value) => RegExp(
+    r'[\u0590-\u05FF\u0600-\u06FF\u0700-\u074F\u0750-\u077F\u0780-\u07BF\u07C0-\u07FF\u0800-\u083F\u0840-\u085F\u08A0-\u08FF\uFB1D-\uFB4F\uFB50-\uFDFF\uFE70-\uFEFF]',
+  ).hasMatch(value);
 
   /// Keep the original Unicode string. The pdf package and the selected
   /// font handle shaping; pre-shaping into Arabic Presentation Forms can

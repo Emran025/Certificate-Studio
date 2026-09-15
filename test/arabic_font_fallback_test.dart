@@ -6,9 +6,12 @@ void main() {
   test(
     'Arabic PDF rendering keeps source Unicode instead of presentation forms',
     () {
-      final source = File(
+      String readSource(String path) =>
+          File(path).readAsStringSync().replaceAll('\r\n', '\n');
+
+      final source = readSource(
         'lib/features/certificate_generation/domain/certificate_artifact_renderer.dart',
-      ).readAsStringSync();
+      );
 
       expect(source, isNot(contains('ArabicReshaper.instance.reshape')));
       expect(
@@ -22,22 +25,20 @@ void main() {
       expect(source, contains("fonts['Cairo'] ?? fonts.values.first"));
       expect(source, contains('defaultFont,\n        ...fonts.values'));
 
-      final pdfOptions = File('packages/pdf/lib/src/pdf/options.dart')
-          .readAsStringSync();
+      final pdfOptions = readSource('packages/pdf/lib/src/pdf/options.dart');
       expect(pdfOptions, contains('defaultValue: true'));
       expect(
-        File('pubspec.yaml').readAsStringSync(),
+        readSource('pubspec.yaml'),
         contains('path: packages/pdf'),
       );
 
-      final designer = File(
+      final designer = readSource(
         'lib/features/certificate_designer/presentation/screens/certificate_designer_screen.dart',
-      ).readAsStringSync();
+      );
       expect(designer, contains('FontLoader(family)'));
       expect(designer, contains("row['font_bytes']"));
 
-      final schema = File('lib/core/database/database_tables.dart')
-          .readAsStringSync();
+      final schema = readSource('lib/core/database/database_tables.dart');
       expect(schema, contains('font_bytes BLOB'));
     },
   );

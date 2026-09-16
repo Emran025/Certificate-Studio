@@ -33,6 +33,9 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local release/tag reset helper (kept for local use only)
+/local_release_reset.ps1
+
 # Symbolication related
 app.*.symbols
 

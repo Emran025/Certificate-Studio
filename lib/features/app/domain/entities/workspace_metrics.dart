@@ -5,10 +5,7 @@ class WorkspaceMetrics {
     required this.certificates,
   });
 
-  const WorkspaceMetrics.empty()
-    : templates = 0,
-      fonts = 0,
-      certificates = 0;
+  const WorkspaceMetrics.empty() : templates = 0, fonts = 0, certificates = 0;
 
   final int templates;
   final int fonts;

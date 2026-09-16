@@ -140,96 +140,106 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
       listener: (context, state) {
         if (state.deletedProjectName != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.l10n.text('${state.deletedProjectName} deleted'))),
+            SnackBar(
+              content: Text(
+                context.l10n.text('${state.deletedProjectName} deleted'),
+              ),
+            ),
           );
         }
       },
       child: Scaffold(
-    appBar: AppBar(
-      title: Text(context.l10n.text('Projects')),
-      leading: widget.onClose == null
-          ? null
-          : IconButton(
-              onPressed: widget.onClose,
-              icon: const Icon(Icons.arrow_back),
-            ),
-    ),
-    floatingActionButton: FloatingActionButton.extended(
-      onPressed: _create,
-      icon: const Icon(Icons.add),
-      label: Text(context.l10n.text('New project')),
-    ),
-    body: BlocBuilder<ProjectsLibraryBloc, ProjectsLibraryState>(
-      builder: (context, state) {
-        if (state.status == ProjectsLibraryStatus.loading ||
-            state.status == ProjectsLibraryStatus.deleting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (state.status == ProjectsLibraryStatus.failure) {
-          return Center(
-            child: Text(
-              context.l10n.text('Unable to load projects: ${state.errorMessage}'),
-            ),
-          );
-        }
-        final projects = state.projects;
-        return Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1000),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.l10n.text('Project workspace'),
-                    style: Theme.of(context).textTheme.headlineMedium,
+        appBar: AppBar(
+          title: Text(context.l10n.text('Projects')),
+          leading: widget.onClose == null
+              ? null
+              : IconButton(
+                  onPressed: widget.onClose,
+                  icon: const Icon(Icons.arrow_back),
+                ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _create,
+          icon: const Icon(Icons.add),
+          label: Text(context.l10n.text('New project')),
+        ),
+        body: BlocBuilder<ProjectsLibraryBloc, ProjectsLibraryState>(
+          builder: (context, state) {
+            if (state.status == ProjectsLibraryStatus.loading ||
+                state.status == ProjectsLibraryStatus.deleting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.status == ProjectsLibraryStatus.failure) {
+              return Center(
+                child: Text(
+                  context.l10n.text(
+                    'Unable to load projects: ${state.errorMessage}',
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    context.l10n.text('persistedProjects', {'count': '${projects.length}'}),
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Expanded(
-                    child: projects.isEmpty
-                        ? AppSurfaceCard(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  context.l10n.text('No projects have been created yet.'),
+                ),
+              );
+            }
+            final projects = state.projects;
+            return Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1000),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.l10n.text('Project workspace'),
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        context.l10n.text('persistedProjects', {
+                          'count': '${projects.length}',
+                        }),
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      Expanded(
+                        child: projects.isEmpty
+                            ? AppSurfaceCard(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      context.l10n.text(
+                                        'No projects have been created yet.',
+                                      ),
+                                    ),
+                                    const SizedBox(height: AppSpacing.md),
+                                    FilledButton.icon(
+                                      onPressed: _create,
+                                      icon: const Icon(Icons.add),
+                                      label: Text(
+                                        context.l10n.text('Create project'),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: AppSpacing.md),
-                                FilledButton.icon(
-                                  onPressed: _create,
-                                  icon: const Icon(Icons.add),
-                                  label: Text(
-                                    context.l10n.text('Create project'),
-                                  ),
+                              )
+                            : ListView.separated(
+                                itemCount: projects.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: AppSpacing.sm),
+                                itemBuilder: (_, index) => _ProjectTile(
+                                  project: projects[index],
+                                  onTap: () => _open(projects[index]),
+                                  onGenerate: () => _generate(projects[index]),
+                                  onDelete: () => _delete(projects[index]),
                                 ),
-                              ],
-                            ),
-                          )
-                        : ListView.separated(
-                            itemCount: projects.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(height: AppSpacing.sm),
-                            itemBuilder: (_, index) => _ProjectTile(
-                              project: projects[index],
-                              onTap: () => _open(projects[index]),
-                              onGenerate: () => _generate(projects[index]),
-                              onDelete: () => _delete(projects[index]),
-                            ),
-                          ),
+                              ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-        );
-      },
-    ),
+            );
+          },
+        ),
       ),
     ),
   );
@@ -260,7 +270,10 @@ class _ProjectTile extends StatelessWidget {
             if (project.courseName?.isNotEmpty == true) project.courseName!,
             if (project.organizationName?.isNotEmpty == true)
               project.organizationName!,
-            context.l10n.text('createdDate', {'date': '${project.createdAt.day}/${project.createdAt.month}/${project.createdAt.year}'}),
+            context.l10n.text('createdDate', {
+              'date':
+                  '${project.createdAt.day}/${project.createdAt.month}/${project.createdAt.year}',
+            }),
           ].join(' · '),
         ),
         trailing: Row(

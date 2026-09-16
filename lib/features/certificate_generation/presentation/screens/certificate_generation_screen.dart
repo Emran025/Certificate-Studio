@@ -116,7 +116,9 @@ class _CertificateGenerationScreenState
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                context.l10n.text('Create signed PDF and high-resolution PNG certificates with offline verification records.'),
+                context.l10n.text(
+                  'Create signed PDF and high-resolution PNG certificates with offline verification records.',
+                ),
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: AppSpacing.xl),
@@ -164,8 +166,14 @@ class _CertificateGenerationScreenState
                             label: context.l10n.text('Generated'),
                             value: '${result.generated}',
                           ),
-                          _Metric(label: context.l10n.text('Failed'), value: '${result.failed}'),
-                          _Metric(label: context.l10n.text('Total'), value: '${result.total}'),
+                          _Metric(
+                            label: context.l10n.text('Failed'),
+                            value: '${result.failed}',
+                          ),
+                          _Metric(
+                            label: context.l10n.text('Total'),
+                            value: '${result.total}',
+                          ),
                         ],
                       ),
                       const SizedBox(height: AppSpacing.sm),
@@ -183,7 +191,9 @@ class _CertificateGenerationScreenState
                                     database: widget.database,
                                     keyStorage: widget.keyStorage,
                                     projectId: widget.projectId,
-                                    title: context.l10n.text('Generated certificates'),
+                                    title: context.l10n.text(
+                                      'Generated certificates',
+                                    ),
                                   ),
                                 ),
                               ),
@@ -215,8 +225,12 @@ class _CertificateGenerationScreenState
                     Expanded(
                       child: Text(
                         _certificates.isEmpty
-                            ? context.l10n.text('No certificates generated yet. Import recipient data, design the layout, then generate.')
-                            : context.l10n.text('${_certificates.length} generated certificates available in the library.'),
+                            ? context.l10n.text(
+                                'No certificates generated yet. Import recipient data, design the layout, then generate.',
+                              )
+                            : context.l10n.text(
+                                '${_certificates.length} generated certificates available in the library.',
+                              ),
                       ),
                     ),
                     OutlinedButton(
@@ -228,7 +242,9 @@ class _CertificateGenerationScreenState
                                   database: widget.database,
                                   keyStorage: widget.keyStorage,
                                   projectId: widget.projectId,
-                                  title: context.l10n.text('Generated certificates'),
+                                  title: context.l10n.text(
+                                    'Generated certificates',
+                                  ),
                                 ),
                               ),
                             ),

@@ -14,14 +14,19 @@ class ProjectRepositoryImpl implements ProjectRepository {
   Future<List<Project>> getAll({String? institutionId}) async {
     final rows = await _database.query(
       DatabaseTables.projects,
-      where: institutionId == null ? const {} : {'institution_id': institutionId},
+      where: institutionId == null
+          ? const {}
+          : {'institution_id': institutionId},
     );
     return rows.map(ProjectModel.fromRow).toList(growable: false);
   }
 
   @override
   Future<Project?> getById(String id) async {
-    final rows = await _database.query(DatabaseTables.projects, where: {'id': id});
+    final rows = await _database.query(
+      DatabaseTables.projects,
+      where: {'id': id},
+    );
     return rows.isEmpty ? null : ProjectModel.fromRow(rows.first);
   }
 
@@ -50,7 +55,8 @@ class ProjectRepositoryImpl implements ProjectRepository {
   }
 
   @override
-  Future<void> delete(String id) => _database.delete(DatabaseTables.projects, id);
+  Future<void> delete(String id) =>
+      _database.delete(DatabaseTables.projects, id);
 
   @override
   Future<void> deleteCascade(String id) async {
@@ -68,8 +74,12 @@ class ProjectRepositoryImpl implements ProjectRepository {
     ]);
     _database.beginBatch();
     try {
-      await _database.deleteWhere(DatabaseTables.verificationRecords, {'project_id': id});
-      await _database.deleteWhere(DatabaseTables.certificates, {'project_id': id});
+      await _database.deleteWhere(DatabaseTables.verificationRecords, {
+        'project_id': id,
+      });
+      await _database.deleteWhere(DatabaseTables.certificates, {
+        'project_id': id,
+      });
       final jobs = await _database.query(
         DatabaseTables.generationJobs,
         where: {'project_id': id},
@@ -80,7 +90,9 @@ class ProjectRepositoryImpl implements ProjectRepository {
         'job_id',
         jobs.map((job) => job['id']),
       );
-      await _database.deleteWhere(DatabaseTables.generationJobs, {'project_id': id});
+      await _database.deleteWhere(DatabaseTables.generationJobs, {
+        'project_id': id,
+      });
       for (final table in [
         DatabaseTables.certificateFields,
         DatabaseTables.certificateLayouts,

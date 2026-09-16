@@ -19,7 +19,9 @@ class CertificateRepositoryImpl implements CertificateRepository {
         DatabaseTables.students,
         where: {'id': row['student_id']},
       );
-      records.add(CertificateRecord(row, students.isEmpty ? null : students.first));
+      records.add(
+        CertificateRecord(row, students.isEmpty ? null : students.first),
+      );
     }
     return records;
   }

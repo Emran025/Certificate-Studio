@@ -46,20 +46,23 @@ class TemplateRepositoryImpl implements TemplateRepository {
       });
 
   @override
-  Future<bool> isUsedByProject(String templateId) async => (await _database
-          .query(DatabaseTables.projects, where: {'template_id': templateId}))
-      .isNotEmpty;
+  Future<bool> isUsedByProject(String templateId) async =>
+      (await _database.query(
+        DatabaseTables.projects,
+        where: {'template_id': templateId},
+      )).isNotEmpty;
 
   @override
-  Future<void> delete(String id) => _database.delete(DatabaseTables.templates, id);
+  Future<void> delete(String id) =>
+      _database.delete(DatabaseTables.templates, id);
 
   TemplateAsset _fromRow(Map<String, Object?> row) => TemplateAsset(
-        id: row['id']! as String,
-        name: row['name']! as String,
-        filePath: row['file_path']! as String,
-        width: row['width']! as int,
-        height: row['height']! as int,
-        dpi: (row['dpi']! as num).toDouble(),
-        format: row['format']! as String,
-      );
+    id: row['id']! as String,
+    name: row['name']! as String,
+    filePath: row['file_path']! as String,
+    width: row['width']! as int,
+    height: row['height']! as int,
+    dpi: (row['dpi']! as num).toDouble(),
+    format: row['format']! as String,
+  );
 }

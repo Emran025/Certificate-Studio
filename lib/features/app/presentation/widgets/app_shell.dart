@@ -551,9 +551,9 @@ class _WorkspaceContent extends StatelessWidget {
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   context.l10n.text('Failed to load workspace metrics.'),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.error,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: AppColors.error),
                 ),
               ],
             ],

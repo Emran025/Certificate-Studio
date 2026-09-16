@@ -223,7 +223,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                                             : Icons.circle_outlined,
                                         size: 16,
                                       ),
-                                      label: Text(context.l10n.text(type.value)),
+                                      label: Text(
+                                        context.l10n.text(type.value),
+                                      ),
                                       selected: _projectType == type.key,
                                       onSelected: (_) => setState(
                                         () => _projectType = type.key,

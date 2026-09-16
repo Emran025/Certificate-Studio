@@ -88,7 +88,9 @@ class ProjectDetailsScreen extends StatelessWidget {
                               Text(
                                 project.description?.isNotEmpty == true
                                     ? project.description!
-                                    : context.l10n.text('Configure this project, then design and generate certificates.'),
+                                    : context.l10n.text(
+                                        'Configure this project, then design and generate certificates.',
+                                      ),
                                 style: Theme.of(context).textTheme.bodyLarge
                                     ?.copyWith(color: AppColors.textSecondary),
                               ),
@@ -244,13 +246,17 @@ class ProjectDetailsScreen extends StatelessWidget {
                                   width: itemWidth,
                                   icon: Icons.school_outlined,
                                   label: 'Course',
-                                  value: project.courseName ?? context.l10n.text('Not set'),
+                                  value:
+                                      project.courseName ??
+                                      context.l10n.text('Not set'),
                                 ),
                                 _InfoTile(
                                   width: itemWidth,
                                   icon: Icons.business_outlined,
                                   label: 'Organization',
-                                  value: project.organizationName ?? context.l10n.text('Not set'),
+                                  value:
+                                      project.organizationName ??
+                                      context.l10n.text('Not set'),
                                 ),
                                 _InfoTile(
                                   width: itemWidth,

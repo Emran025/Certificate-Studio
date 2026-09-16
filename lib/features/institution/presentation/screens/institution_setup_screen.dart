@@ -118,8 +118,9 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                       context.l10n.text(
                         'This information is used to identify your certificates and verification records.',
                       ),
-                      style: Theme.of(context).textTheme.bodyMedium
-                          ?.copyWith(color: AppColors.textSecondary),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     TextFormField(
@@ -188,8 +189,9 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                       const SizedBox(height: AppSpacing.md),
                       Text(
                         context.l10n.text(_errorMessage!),
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: AppColors.error),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: AppColors.error),
                       ),
                     ],
                     const SizedBox(height: AppSpacing.xl),

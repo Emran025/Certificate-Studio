@@ -102,7 +102,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                             padding: const EdgeInsets.all(AppSpacing.sm),
                             decoration: BoxDecoration(
                               color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(AppRadius.card),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.card,
+                              ),
                             ),
                             child: const Icon(
                               Icons.workspace_premium_outlined,
@@ -117,13 +119,17 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                               children: [
                                 Text(
                                   'Project information',
-                                  style: Theme.of(context).textTheme.headlineMedium,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineMedium,
                                 ),
                                 const SizedBox(height: AppSpacing.xs),
                                 Text(
                                   'Set up the context for this certificate-issuing project. You can configure templates and data next.',
                                   style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(color: AppColors.textSecondary),
+                                      ?.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
                                 ),
                               ],
                             ),
@@ -141,7 +147,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                             autofocus: true,
                             decoration: InputDecoration(
                               labelText: context.l10n.text('Project name *'),
-                              hintText: context.l10n.text('e.g. Flutter Advanced Course 2026'),
+                              hintText: context.l10n.text(
+                                'e.g. Flutter Advanced Course 2026',
+                              ),
                             ),
                             validator: (value) =>
                                 value == null || value.trim().isEmpty
@@ -153,7 +161,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                             controller: _organizationController,
                             decoration: InputDecoration(
                               labelText: context.l10n.text('Organization'),
-                              hintText: context.l10n.text('Academy or institution name'),
+                              hintText: context.l10n.text(
+                                'Academy or institution name',
+                              ),
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
@@ -161,7 +171,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                             controller: _courseController,
                             decoration: InputDecoration(
                               labelText: context.l10n.text('Course or program'),
-                              hintText: context.l10n.text('e.g. Flutter Advanced'),
+                              hintText: context.l10n.text(
+                                'e.g. Flutter Advanced',
+                              ),
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
@@ -169,7 +181,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                             controller: _descriptionController,
                             decoration: InputDecoration(
                               labelText: context.l10n.text('Description'),
-                              hintText: context.l10n.text('Optional project notes'),
+                              hintText: context.l10n.text(
+                                'Optional project notes',
+                              ),
                             ),
                             maxLines: 3,
                           ),
@@ -182,7 +196,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           DecoratedBox(
                             decoration: BoxDecoration(
                               color: AppColors.surfaceSubtle,
-                              borderRadius: BorderRadius.circular(AppRadius.card),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.card,
+                              ),
                               border: Border.all(color: AppColors.divider),
                             ),
                             child: Padding(
@@ -207,8 +223,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                                       ),
                                       label: Text(type.value),
                                       selected: _projectType == type.key,
-                                      onSelected: (_) =>
-                                          setState(() => _projectType = type.key),
+                                      onSelected: (_) => setState(
+                                        () => _projectType = type.key,
+                                      ),
                                     ),
                                 ],
                               ),

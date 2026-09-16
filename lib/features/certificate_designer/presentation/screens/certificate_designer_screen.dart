@@ -477,7 +477,10 @@ class _ElementsPanel extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(context.l10n.text('Elements'), style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          context.l10n.text('Elements'),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: AppSpacing.sm),
         SizedBox(
           width: double.infinity,
@@ -497,10 +500,17 @@ class _ElementsPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
-        Text(context.l10n.text('Layers'), style: Theme.of(context).textTheme.labelLarge),
+        Text(
+          context.l10n.text('Layers'),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
         const SizedBox(height: AppSpacing.xs),
         if (fields.isEmpty)
-          Text(context.l10n.text('Add a field from imported data to start designing.')),
+          Text(
+            context.l10n.text(
+              'Add a field from imported data to start designing.',
+            ),
+          ),
         Expanded(
           child: ListView(
             children: [
@@ -580,8 +590,10 @@ class _Canvas extends StatelessWidget {
                   ? templateCanvasPreview(templatePath)
                   : Container(
                       color: Colors.white,
-                      child: const Center(
-                        child: Text(context.l10n.text('Template image unavailable')),
+                      child: Center(
+                        child: Text(
+                          context.l10n.text('Template image unavailable'),
+                        ),
                       ),
                     ),
             ),
@@ -749,8 +761,10 @@ class _PropertiesPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final selected = field;
     if (selected == null) {
-      return const Center(
-        child: Text(context.l10n.text('Select a field to edit its properties.')),
+      return Center(
+        child: Text(
+          context.l10n.text('Select a field to edit its properties.'),
+        ),
       );
     }
     return Container(
@@ -771,7 +785,9 @@ class _PropertiesPanel extends StatelessWidget {
               initialValue: columns.contains(selected.source)
                   ? selected.source
                   : null,
-              decoration: InputDecoration(labelText: context.l10n.text('Data source field')),
+              decoration: InputDecoration(
+                labelText: context.l10n.text('Data source field'),
+              ),
               items: [
                 for (final column in columns)
                   DropdownMenuItem(value: column, child: Text(column)),
@@ -849,7 +865,9 @@ class _PropertiesPanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             DropdownButtonFormField<String>(
               initialValue: selected.fontFamily,
-              decoration: InputDecoration(labelText: context.l10n.text('Font family')),
+              decoration: InputDecoration(
+                labelText: context.l10n.text('Font family'),
+              ),
               isExpanded: true,
               items: [
                 for (final family in fontFamilies)
@@ -872,11 +890,22 @@ class _PropertiesPanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             DropdownButtonFormField<String>(
               initialValue: selected.alignment,
-              decoration: InputDecoration(labelText: context.l10n.text('Text alignment')),
-              items: const [
-                DropdownMenuItem(value: 'left', child: Text(context.l10n.text('Left'))),
-                DropdownMenuItem(value: 'center', child: Text(context.l10n.text('Center'))),
-                DropdownMenuItem(value: 'right', child: Text(context.l10n.text('Right'))),
+              decoration: InputDecoration(
+                labelText: context.l10n.text('Text alignment'),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'left',
+                  child: Text(context.l10n.text('Left')),
+                ),
+                DropdownMenuItem(
+                  value: 'center',
+                  child: Text(context.l10n.text('Center')),
+                ),
+                DropdownMenuItem(
+                  value: 'right',
+                  child: Text(context.l10n.text('Right')),
+                ),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -887,10 +916,18 @@ class _PropertiesPanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             DropdownButtonFormField<String>(
               initialValue: selected.direction,
-              decoration: InputDecoration(labelText: context.l10n.text('Text direction')),
-              items: const [
-                DropdownMenuItem(value: 'ltr', child: Text(context.l10n.text('LTR'))),
-                DropdownMenuItem(value: 'rtl', child: Text(context.l10n.text('RTL'))),
+              decoration: InputDecoration(
+                labelText: context.l10n.text('Text direction'),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'ltr',
+                  child: Text(context.l10n.text('LTR')),
+                ),
+                DropdownMenuItem(
+                  value: 'rtl',
+                  child: Text(context.l10n.text('RTL')),
+                ),
               ],
               onChanged: (value) {
                 if (value != null) {

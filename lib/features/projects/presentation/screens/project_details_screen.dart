@@ -80,9 +80,9 @@ class ProjectDetailsScreen extends StatelessWidget {
                             children: [
                               Text(
                                 project.name,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineLarge,
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineLarge,
                               ),
                               const SizedBox(height: AppSpacing.xs),
                               Text(
@@ -336,8 +336,9 @@ class _ProjectAction extends StatelessWidget {
                       const SizedBox(height: AppSpacing.xxs),
                       Text(
                         context.l10n.text(data.description),
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: AppColors.textSecondary),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -404,8 +405,9 @@ class _InfoTile extends StatelessWidget {
                 children: [
                   Text(
                     context.l10n.text(label),
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: AppColors.textSecondary),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(

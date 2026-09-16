@@ -111,8 +111,10 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(context.l10n.text('Delete ${project.name}?')),
-        content: const Text(
-          'This permanently removes the project, recipient data, design, generated certificates, verification records, and project key.',
+        content: Text(
+          context.l10n.text(
+            'This permanently removes the project, recipient data, design, generated certificates, verification records, and project key.',
+          ),
         ),
         actions: [
           TextButton(
@@ -145,46 +147,47 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
     ]);
     widget.database.beginBatch();
     try {
-    await widget.database.deleteWhere(DatabaseTables.verificationRecords, {
-      'project_id': project.id,
-    });
-    await widget.database.deleteWhere(DatabaseTables.certificates, {
-      'project_id': project.id,
-    });
-    final jobs = await widget.database.query(
-      DatabaseTables.generationJobs,
-      where: {'project_id': project.id},
-      columns: ['id'],
-    );
-    await widget.database.deleteWhereIn(
-      DatabaseTables.generationItems,
-      'job_id',
-      jobs.map((job) => job['id']),
-    );
-    await widget.database.deleteWhere(DatabaseTables.generationJobs, {
-      'project_id': project.id,
-    });
-    for (final table in [
-      DatabaseTables.certificateFields,
-      DatabaseTables.certificateLayouts,
-      DatabaseTables.students,
-      DatabaseTables.signatures,
-    ]) {
-      await widget.database.deleteWhere(table, {'project_id': project.id});
-    }
-    await widget.database.delete(
-      DatabaseTables.settings,
-      'mapping:${project.id}',
-    );
-    await widget.database.delete(DatabaseTables.projects, project.id);
+      await widget.database.deleteWhere(DatabaseTables.verificationRecords, {
+        'project_id': project.id,
+      });
+      await widget.database.deleteWhere(DatabaseTables.certificates, {
+        'project_id': project.id,
+      });
+      final jobs = await widget.database.query(
+        DatabaseTables.generationJobs,
+        where: {'project_id': project.id},
+        columns: ['id'],
+      );
+      await widget.database.deleteWhereIn(
+        DatabaseTables.generationItems,
+        'job_id',
+        jobs.map((job) => job['id']),
+      );
+      await widget.database.deleteWhere(DatabaseTables.generationJobs, {
+        'project_id': project.id,
+      });
+      for (final table in [
+        DatabaseTables.certificateFields,
+        DatabaseTables.certificateLayouts,
+        DatabaseTables.students,
+        DatabaseTables.signatures,
+      ]) {
+        await widget.database.deleteWhere(table, {'project_id': project.id});
+      }
+      await widget.database.delete(
+        DatabaseTables.settings,
+        'mapping:${project.id}',
+      );
+      await widget.database.delete(DatabaseTables.projects, project.id);
     } finally {
       await widget.database.endBatch();
     }
     await widget.keyStorage.delete('project.${project.id}.key');
     if (mounted) {
       setState(() => _projects = _load());
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(context.l10n.text('${project.name} deleted'))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.text('${project.name} deleted'))),
+      );
     }
   }
 
@@ -212,7 +215,9 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
         }
         if (snapshot.hasError) {
           return Center(
-            child: Text(context.l10n.text('Unable to load projects: ${snapshot.error}')),
+            child: Text(
+              context.l10n.text('Unable to load projects: ${snapshot.error}'),
+            ),
           );
         }
         final projects = snapshot.data ?? const <Project>[];
@@ -247,7 +252,9 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
                                 FilledButton.icon(
                                   onPressed: _create,
                                   icon: const Icon(Icons.add),
-                                  label: Text(context.l10n.text('Create project')),
+                                  label: Text(
+                                    context.l10n.text('Create project'),
+                                  ),
                                 ),
                               ],
                             ),
@@ -290,38 +297,40 @@ class _ProjectTile extends StatelessWidget {
     child: Material(
       color: Colors.transparent,
       child: ListTile(
-      contentPadding: EdgeInsets.zero,
-      onTap: onTap,
-      leading: const CircleAvatar(child: Icon(Icons.folder_outlined)),
-      title: Text(project.name),
-      subtitle: Text(
-        [
-          if (project.courseName?.isNotEmpty == true) project.courseName!,
-          if (project.organizationName?.isNotEmpty == true)
-            project.organizationName!,
-          'Created ${project.createdAt.day}/${project.createdAt.month}/${project.createdAt.year}',
-        ].join(' · '),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            tooltip: context.l10n.text('Generate and create verification records'),
-            onPressed: onGenerate,
-            icon: const Icon(Icons.verified_outlined),
-          ),
-          IconButton(
-            tooltip: context.l10n.text('Delete project'),
-            onPressed: onDelete,
-            icon: Icon(
-              Icons.delete_outline,
-              color: Theme.of(context).colorScheme.error,
+        contentPadding: EdgeInsets.zero,
+        onTap: onTap,
+        leading: const CircleAvatar(child: Icon(Icons.folder_outlined)),
+        title: Text(project.name),
+        subtitle: Text(
+          [
+            if (project.courseName?.isNotEmpty == true) project.courseName!,
+            if (project.organizationName?.isNotEmpty == true)
+              project.organizationName!,
+            'Created ${project.createdAt.day}/${project.createdAt.month}/${project.createdAt.year}',
+          ].join(' · '),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: context.l10n.text(
+                'Generate and create verification records',
+              ),
+              onPressed: onGenerate,
+              icon: const Icon(Icons.verified_outlined),
             ),
-          ),
-          const Icon(Icons.chevron_right),
-        ],
+            IconButton(
+              tooltip: context.l10n.text('Delete project'),
+              onPressed: onDelete,
+              icon: Icon(
+                Icons.delete_outline,
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
       ),
-    ),
     ),
   );
 }

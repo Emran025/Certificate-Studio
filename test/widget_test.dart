@@ -17,7 +17,7 @@ void main() {
     await tester.pumpWidget(CertificateStudioApp(database: database));
     await tester.pumpAndSettle();
 
-    expect(find.text('Set up your institution'), findsOneWidget);
+    expect(find.text('إعداد المؤسسة'), findsOneWidget);
   });
 
   testWidgets('uses the light beige and green application theme', (tester) async {

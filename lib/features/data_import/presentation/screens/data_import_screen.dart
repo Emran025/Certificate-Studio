@@ -179,7 +179,7 @@ class _DataImportScreenState extends State<DataImportScreen> {
                               maxLines: 10,
                               decoration: InputDecoration(
                                 labelText: context.l10n.text('Paste table data'),
-                                hintText: 'Field 1\tField 2\tField 3\nValue 1\tValue 2\tValue 3',
+                                hintText: context.l10n.text('tableDataExample'),
                                 alignLabelWithHint: true,
                               ),
                             ),
@@ -212,7 +212,7 @@ class _DataImportScreenState extends State<DataImportScreen> {
                             if (_error != null) ...[
                               const SizedBox(height: AppSpacing.md),
                               Text(
-                                _error!,
+                                context.l10n.text(_error!),
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(color: AppColors.error),
                               ),

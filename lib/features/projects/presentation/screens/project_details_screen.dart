@@ -330,12 +330,12 @@ class _ProjectAction extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        data.title,
+                        context.l10n.text(data.title),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: AppSpacing.xxs),
                       Text(
-                        data.description,
+                        context.l10n.text(data.description),
                         style: Theme.of(context).textTheme.bodySmall
                             ?.copyWith(color: AppColors.textSecondary),
                       ),
@@ -403,7 +403,7 @@ class _InfoTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    label,
+                    context.l10n.text(label),
                     style: Theme.of(context).textTheme.bodySmall
                         ?.copyWith(color: AppColors.textSecondary),
                   ),

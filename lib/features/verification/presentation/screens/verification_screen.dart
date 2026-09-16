@@ -123,13 +123,13 @@ class _ResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = result.isValid ? Colors.green : Theme.of(context).colorScheme.error;
     final title = switch (result.status) {
-      CertificateVerificationStatus.valid => 'Valid certificate',
-      CertificateVerificationStatus.integrityCompromised => 'Integrity compromised',
-      CertificateVerificationStatus.invalidSignature => 'Invalid signature',
-      CertificateVerificationStatus.unknownCertificate => 'Unknown certificate',
-      CertificateVerificationStatus.verificationDataMissing => 'Verification data missing',
-      CertificateVerificationStatus.unsupported => 'Unsupported or malformed certificate',
-      CertificateVerificationStatus.failed => 'Verification failed',
+      CertificateVerificationStatus.valid => context.l10n.text('Valid certificate'),
+      CertificateVerificationStatus.integrityCompromised => context.l10n.text('Integrity compromised'),
+      CertificateVerificationStatus.invalidSignature => context.l10n.text('Invalid signature'),
+      CertificateVerificationStatus.unknownCertificate => context.l10n.text('Unknown certificate'),
+      CertificateVerificationStatus.verificationDataMissing => context.l10n.text('Verification data missing'),
+      CertificateVerificationStatus.unsupported => context.l10n.text('Unsupported or malformed certificate'),
+      CertificateVerificationStatus.failed => context.l10n.text('Verification failed'),
     };
     return AppSurfaceCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Icon(result.isValid ? Icons.verified : Icons.gpp_bad_outlined, color: color, size: 32), const SizedBox(width: AppSpacing.md), Expanded(child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color)))]), const SizedBox(height: AppSpacing.md), if (result.qrExtracted) ...[_Info(label: 'QR extraction', value: 'Success — QR payload was extracted from the image')] else if (result.reason?.contains('QR extraction failed') ?? false) _Info(label: 'QR extraction', value: 'Failed — no readable QR code was found'), if (result.isValid) ...[_Info(label: 'Certificate ID', value: result.certificateId), _Info(label: 'Recipient', value: result.recipient), _Info(label: 'Institution', value: result.institution), _Info(label: 'Course / project', value: result.course), _Info(label: 'Issue date', value: result.issueDate), _Info(label: 'Integrity', value: 'Hash matches embedded certificate data'), _Info(label: 'Digital signature', value: 'Valid Ed25519 signature')] else Text(result.reason ?? 'The certificate could not be verified.', style: TextStyle(color: color))]));
   }
@@ -140,5 +140,5 @@ class _Info extends StatelessWidget {
   final String label;
   final String? value;
   @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(bottom: AppSpacing.xs), child: Row(children: [SizedBox(width: 150, child: Text(label, style: Theme.of(context).textTheme.labelLarge)), Expanded(child: Text(value ?? 'Not provided'))]));
+  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(bottom: AppSpacing.xs), child: Row(children: [SizedBox(width: 150, child: Text(context.l10n.text(label), style: Theme.of(context).textTheme.labelLarge)), Expanded(child: Text(context.l10n.text(value ?? 'Not provided')))]));
 }

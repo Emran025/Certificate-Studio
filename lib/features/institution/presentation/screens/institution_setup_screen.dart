@@ -183,7 +183,7 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                     if (_errorMessage != null) ...[
                       const SizedBox(height: AppSpacing.md),
                       Text(
-                        _errorMessage!,
+                        context.l10n.text(_errorMessage!),
                         style: Theme.of(context).textTheme.bodySmall
                             ?.copyWith(color: AppColors.error),
                       ),
@@ -210,7 +210,7 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
   }
 
   String? _required(String? value) => value == null || value.trim().isEmpty
-      ? 'Institution name is required.'
+      ? context.l10n.text('Institution name is required.')
       : null;
 
   String? _optional(String value) => value.trim().isEmpty ? null : value.trim();

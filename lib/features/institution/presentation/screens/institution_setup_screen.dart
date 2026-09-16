@@ -1,3 +1,4 @@
+import '../../../../config/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/security/keys/institution_key_manager.dart';
@@ -121,9 +122,9 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                     const SizedBox(height: AppSpacing.xl),
                     TextFormField(
                       controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Institution name *',
-                        hintText: 'e.g. Al-Noor Academy',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.text('Institution name *'),
+                        hintText: context.l10n.text('e.g. Al-Noor Academy'),
                       ),
                       validator: _required,
                     ),
@@ -131,25 +132,25 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                     TextFormField(
                       controller: _nameArController,
                       textDirection: TextDirection.rtl,
-                      decoration: const InputDecoration(
-                        labelText: 'Arabic name',
-                        hintText: 'اسم المؤسسة',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.text('Arabic name'),
+                        hintText: context.l10n.text('اسم المؤسسة'),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
                       controller: _nameEnController,
-                      decoration: const InputDecoration(
-                        labelText: 'English name',
-                        hintText: 'Institution name',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.text('English name'),
+                        hintText: context.l10n.text('Institution name'),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
                       controller: _contactController,
-                      decoration: const InputDecoration(
-                        labelText: 'Contact information',
-                        hintText: 'Email, phone, or website',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.text('Contact information'),
+                        hintText: context.l10n.text('Email, phone, or website'),
                       ),
                       maxLines: 2,
                     ),

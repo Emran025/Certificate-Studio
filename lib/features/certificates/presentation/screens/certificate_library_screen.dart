@@ -1,3 +1,4 @@
+import '../../../../config/localization/app_localizations.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -102,7 +103,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: Text(context.l10n.text('Close')),
           ),
         ],
       ),
@@ -226,11 +227,11 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Choose file name field'),
+          title: Text(context.l10n.text('Choose file name field')),
           content: DropdownButtonFormField<String>(
             initialValue: selected,
-            decoration: const InputDecoration(
-              labelText: 'Field used for the exported file name',
+            decoration: InputDecoration(
+              labelText: context.l10n.text('Field used for the exported file name'),
             ),
             items: [
               for (final field in sortedFields)
@@ -243,11 +244,11 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.text('Cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, selected),
-              child: const Text('Export'),
+              child: Text(context.l10n.text('Export')),
             ),
           ],
         ),
@@ -282,7 +283,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
       actions: [
         IconButton(
           onPressed: _refresh,
-          tooltip: 'Refresh',
+          tooltip: context.l10n.text('Refresh'),
           icon: const Icon(Icons.refresh),
         ),
       ],
@@ -295,7 +296,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
         }
         if (snapshot.hasError) {
           return Center(
-            child: Text('Unable to load certificates: ${snapshot.error}'),
+            child: Text(context.l10n.text('Unable to load certificates: ${snapshot.error}')),
           );
         }
         final all = snapshot.data ?? const <_LibraryCertificate>[];
@@ -334,14 +335,14 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
                       if (all.isNotEmpty)
                         PopupMenuButton<String>(
                           onSelected: (value) => _exportAll(all, value),
-                          itemBuilder: (_) => const [
+                          itemBuilder: (_) => [
                             PopupMenuItem(
                               value: 'png',
-                              child: Text('Export all PNG files (ZIP)'),
+                              child: Text(context.l10n.text('Export all PNG files (ZIP)')),
                             ),
                             PopupMenuItem(
                               value: 'pdf',
-                              child: Text('Export all PDF files (ZIP)'),
+                              child: Text(context.l10n.text('Export all PDF files (ZIP)')),
                             ),
                           ],
                           child: Container(
@@ -358,7 +359,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
                               children: [
                                 Icon(Icons.archive_outlined),
                                 SizedBox(width: AppSpacing.xs),
-                                Text('Export all'),
+                                Text(context.l10n.text('Export all')),
                               ],
                             ),
                           ),
@@ -367,10 +368,9 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   TextField(
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       prefixIcon: Icon(Icons.search),
-                      hintText:
-                          'Search by recipient, certificate ID, or project',
+                      hintText: context.l10n.text('Search by recipient, certificate ID, or project'),
                     ),
                     onChanged: (value) => setState(() => _query = value),
                   ),
@@ -378,18 +378,18 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
                     const SizedBox(height: AppSpacing.sm),
                     Row(
                       children: [
-                        Text('${_selected.length} selected'),
+                        Text(context.l10n.text('${_selected.length} selected')),
                         const SizedBox(width: AppSpacing.md),
                         OutlinedButton.icon(
                           onPressed: () => _exportSelected(certificates, 'png'),
                           icon: const Icon(Icons.image_outlined),
-                          label: const Text('Export PNG ZIP'),
+                          label: Text(context.l10n.text('Export PNG ZIP')),
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         OutlinedButton.icon(
                           onPressed: () => _exportSelected(certificates, 'pdf'),
                           icon: const Icon(Icons.picture_as_pdf_outlined),
-                          label: const Text('Export PDF ZIP'),
+                          label: Text(context.l10n.text('Export PDF ZIP')),
                         ),
                       ],
                     ),
@@ -533,20 +533,20 @@ class _CertificateCard extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: onOpen,
                       icon: const Icon(Icons.visibility_outlined),
-                      label: const Text('View'),
+                      label: Text(context.l10n.text('View')),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   IconButton(
-                    tooltip: 'Verify',
+                    tooltip: context.l10n.text('Verify'),
                     onPressed: onVerify,
                     icon: const Icon(Icons.verified_user_outlined),
                   ),
                   PopupMenuButton<String>(
                     onSelected: onExport,
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'png', child: Text('Export PNG')),
-                      PopupMenuItem(value: 'pdf', child: Text('Export PDF')),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(value: 'png', child: Text(context.l10n.text('Export PNG'))),
+                      PopupMenuItem(value: 'pdf', child: Text(context.l10n.text('Export PDF'))),
                     ],
                   ),
                 ],
@@ -600,9 +600,9 @@ class _CertificatePreviewScreen extends StatelessWidget {
               );
             }
           },
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: 'png', child: Text('Export PNG')),
-            PopupMenuItem(value: 'pdf', child: Text('Export PDF')),
+          itemBuilder: (_) => [
+            PopupMenuItem(value: 'png', child: Text(context.l10n.text('Export PNG'))),
+            PopupMenuItem(value: 'pdf', child: Text(context.l10n.text('Export PDF'))),
           ],
         ),
       ],
@@ -773,7 +773,7 @@ class _CertificateDetails extends StatelessWidget {
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text('Close'),
+                              child: Text(context.l10n.text('Close')),
                             ),
                           ],
                         ),
@@ -781,7 +781,7 @@ class _CertificateDetails extends StatelessWidget {
                     }
                   },
                   icon: const Icon(Icons.verified_user_outlined),
-                  label: const Text('Verify certificate'),
+                  label: Text(context.l10n.text('Verify certificate')),
                 ),
               ),
             ],

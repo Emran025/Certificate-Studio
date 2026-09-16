@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'config/env/app_environment.dart';
+import 'config/localization/app_localizations.dart';
 import 'core/database/app_database.dart';
 import 'core/database/persistent_app_database.dart';
 import 'core/security/keys/institution_key_manager.dart';
@@ -26,8 +27,19 @@ class CertificateStudioApp extends StatelessWidget {
       title: AppEnvironment.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      locale: const Locale(AppEnvironment.defaultLocale),
-      supportedLocales: AppEnvironment.supportedLocales.map(Locale.new).toList(),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizationsDelegate(),
+        DefaultWidgetsLocalizations.delegate,
+        DefaultMaterialLocalizations.delegate,
+      ],
+      localeResolutionCallback: (locale, supportedLocales) {
+        if (locale == null) return supportedLocales.first;
+        return supportedLocales.firstWhere(
+          (supported) => supported.languageCode == locale.languageCode,
+          orElse: () => supportedLocales.first,
+        );
+      },
       home: database == null
           ? const _DatabaseUnavailableView()
           : AppStartupGate(
@@ -42,7 +54,9 @@ class _DatabaseUnavailableView extends StatelessWidget {
   const _DatabaseUnavailableView();
 
   @override
-  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Local workspace is unavailable.')));
+  Widget build(BuildContext context) => Scaffold(
+        body: Center(child: Text(context.l10n.text('localWorkspaceUnavailable'))),
+      );
 }
 
 // Backwards-compatible alias for existing consumers of the starter app.

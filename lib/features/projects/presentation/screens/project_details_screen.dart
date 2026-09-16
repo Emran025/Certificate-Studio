@@ -1,3 +1,4 @@
+import '../../../../config/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
@@ -33,7 +34,7 @@ class ProjectDetailsScreen extends StatelessWidget {
         title: Text(project.name),
         actions: [
           IconButton(
-            tooltip: 'Back to workspace',
+            tooltip: context.l10n.text('Back to workspace'),
             onPressed: onClose ?? () => Navigator.of(context).pop(),
             icon: const Icon(Icons.close),
           ),

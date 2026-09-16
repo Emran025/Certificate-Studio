@@ -30,7 +30,20 @@ class CertificateDesignerScreen extends StatefulWidget {
       _CertificateDesignerScreenState();
 }
 
-class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
+final class _SaveIntent extends Intent {
+  const _SaveIntent();
+}
+
+final class _UndoIntent extends Intent {
+  const _UndoIntent();
+}
+
+final class _RedoIntent extends Intent {
+  const _RedoIntent();
+}
+
+class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
+    with WidgetsBindingObserver {
   List<_DesignerField> _fields = [];
   List<String> _columns = [];
   Map<String, dynamic> _previewData = {};
@@ -38,6 +51,8 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
   String? _selectedId;
   bool _loading = true;
   bool _saving = false;
+  bool _hasUnsavedChanges = false;
+  bool _isPopping = false;
   String _saveLabel = 'Not saved';
   final Set<String> _loadedFontFamilies = {};
   String _projectFontFamily = 'Cairo';
@@ -55,7 +70,23 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _save();
+    }
   }
 
   Future<void> _load() async {
@@ -121,6 +152,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
       _undoStack
         ..clear()
         ..add(List<_DesignerField>.from(_fields));
+      _hasUnsavedChanges = false;
       _loading = false;
     });
   }
@@ -215,6 +247,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving || !_hasUnsavedChanges) return;
     setState(() {
       _saving = true;
       _saveLabel = 'Saving...';
@@ -244,8 +277,16 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     if (!mounted) return;
     setState(() {
       _saving = false;
+      _hasUnsavedChanges = false;
       _saveLabel = 'Saved just now';
     });
+  }
+
+  Future<void> _saveBeforeExit() async {
+    if (_isPopping) return;
+    _isPopping = true;
+    await _save();
+    if (mounted) Navigator.of(context).pop();
   }
 
   void _moveField(String id, Offset delta) {
@@ -317,6 +358,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     _redoStack.clear();
     setState(() {
       _fields = next;
+      _hasUnsavedChanges = true;
       _saveLabel = 'Unsaved changes';
     });
   }
@@ -326,6 +368,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     _redoStack.add(List<_DesignerField>.from(_fields));
     setState(() {
       _fields = List<_DesignerField>.from(_undoStack.removeLast());
+      _hasUnsavedChanges = true;
       _selectedId = _fields.any((field) => field.id == _selectedId)
           ? _selectedId
           : null;
@@ -339,6 +382,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     _undoStack.add(List<_DesignerField>.from(_fields));
     setState(() {
       _fields = List<_DesignerField>.from(next);
+      _hasUnsavedChanges = true;
       _saveLabel = 'Unsaved changes';
     });
   }
@@ -352,94 +396,134 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(context.l10n.text('Design · ${widget.projectName}')),
-        actions: [
-          Text(_saveLabel, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(width: AppSpacing.sm),
-          IconButton(
-            tooltip: context.l10n.text('Zoom out'),
-            onPressed: () =>
-                setState(() => _zoom = (_zoom - .1).clamp(.4, 2.2)),
-            icon: const Icon(Icons.remove),
-          ),
-          Text(
-            '${(_zoom * 100).round()}%',
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-          IconButton(
-            tooltip: context.l10n.text('Zoom in'),
-            onPressed: () =>
-                setState(() => _zoom = (_zoom + .1).clamp(.4, 2.2)),
-            icon: const Icon(Icons.add),
-          ),
-          IconButton(
-            tooltip: context.l10n.text('Undo'),
-            onPressed: _undoStack.length > 1 ? _undo : null,
-            icon: const Icon(Icons.undo),
-          ),
-          IconButton(
-            tooltip: context.l10n.text('Redo'),
-            onPressed: _redoStack.isNotEmpty ? _redo : null,
-            icon: const Icon(Icons.redo),
-          ),
-          IconButton(
-            tooltip: context.l10n.text('Save design'),
-            onPressed: _saving ? null : _save,
-            icon: const Icon(Icons.save_outlined),
-          ),
-        ],
-      ),
-      body: Row(
-        children: [
-          SizedBox(
-            width: 230,
-            child: _ElementsPanel(
-              columns: _columns,
-              fields: _fields,
-              selectedId: _selectedId,
-              onAdd: _addField,
-              onAddQr: _addQrField,
-              onSelect: (id) => setState(() => _selectedId = id),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _saveBeforeExit();
+      },
+      child: Shortcuts(
+        shortcuts: const {
+          SingleActivator(LogicalKeyboardKey.keyS, control: true):
+              _SaveIntent(),
+          SingleActivator(LogicalKeyboardKey.keyS, meta: true): _SaveIntent(),
+          SingleActivator(LogicalKeyboardKey.keyZ, control: true):
+              _UndoIntent(),
+          SingleActivator(LogicalKeyboardKey.keyZ, meta: true): _UndoIntent(),
+          SingleActivator(LogicalKeyboardKey.keyZ, control: true, shift: true):
+              _RedoIntent(),
+          SingleActivator(LogicalKeyboardKey.keyZ, meta: true, shift: true):
+              _RedoIntent(),
+          SingleActivator(LogicalKeyboardKey.keyY, control: true):
+              _RedoIntent(),
+          SingleActivator(LogicalKeyboardKey.keyY, meta: true): _RedoIntent(),
+        },
+        child: Actions(
+          actions: {
+            _SaveIntent: CallbackAction<_SaveIntent>(
+              onInvoke: (_) {
+                _save();
+                return null;
+              },
             ),
-          ),
-          Expanded(
-            child: Container(
-              color: AppColors.background,
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: _template == null
-                  ? const Center(
-                      child: Text(
-                        'Select a template before designing this certificate.',
-                      ),
-                    )
-                  : _Canvas(
+            _UndoIntent: CallbackAction<_UndoIntent>(
+              onInvoke: (_) {
+                if (_undoStack.length > 1) _undo();
+                return null;
+              },
+            ),
+            _RedoIntent: CallbackAction<_RedoIntent>(
+              onInvoke: (_) {
+                if (_redoStack.isNotEmpty) _redo();
+                return null;
+              },
+            ),
+          },
+          child: Focus(
+            autofocus: true,
+            child: Scaffold(
+              appBar: AppBar(
+                title: Text(
+                  context.l10n.text('Design · ${widget.projectName}'),
+                ),
+                actions: [
+                  Text(
+                    _saveLabel,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  IconButton(
+                    tooltip: context.l10n.text('Zoom out'),
+                    onPressed: () =>
+                        setState(() => _zoom = (_zoom - .1).clamp(.4, 2.2)),
+                    icon: const Icon(Icons.remove),
+                  ),
+                  Text(
+                    '${(_zoom * 100).round()}%',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                  IconButton(
+                    tooltip: context.l10n.text('Zoom in'),
+                    onPressed: () =>
+                        setState(() => _zoom = (_zoom + .1).clamp(.4, 2.2)),
+                    icon: const Icon(Icons.add),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
+              ),
+              body: Row(
+                children: [
+                  SizedBox(
+                    width: 230,
+                    child: _ElementsPanel(
+                      columns: _columns,
                       fields: _fields,
                       selectedId: _selectedId,
-                      previewData: _previewData,
-                      templatePath: _templatePath,
-                      canvasWidth: _canvasWidth,
-                      canvasHeight: _canvasHeight,
-                      zoom: _zoom,
-                      fontFamilies: _fontFamilies,
+                      onAdd: _addField,
+                      onAddQr: _addQrField,
                       onSelect: (id) => setState(() => _selectedId = id),
-                      onMove: _moveField,
-                      onResize: _resizeField,
                     ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      color: AppColors.background,
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: _template == null
+                          ? const Center(
+                              child: Text(
+                                'Select a template before designing this certificate.',
+                              ),
+                            )
+                          : _Canvas(
+                              fields: _fields,
+                              selectedId: _selectedId,
+                              previewData: _previewData,
+                              templatePath: _templatePath,
+                              canvasWidth: _canvasWidth,
+                              canvasHeight: _canvasHeight,
+                              zoom: _zoom,
+                              fontFamilies: _fontFamilies,
+                              onSelect: (id) =>
+                                  setState(() => _selectedId = id),
+                              onMove: _moveField,
+                              onResize: _resizeField,
+                            ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 300,
+                    child: _PropertiesPanel(
+                      field: _selected,
+                      columns: _columns,
+                      fontFamilies: _fontFamilies,
+                      onChanged: _replaceField,
+                      onDelete: _deleteSelected,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          SizedBox(
-            width: 300,
-            child: _PropertiesPanel(
-              field: _selected,
-              columns: _columns,
-              fontFamilies: _fontFamilies,
-              onChanged: _replaceField,
-              onDelete: _deleteSelected,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -957,16 +1041,9 @@ class _PropertiesPanel extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            TextFormField(
-              initialValue: selected.color,
-              decoration: InputDecoration(
-                labelText: context.l10n.text('Text color (#RRGGBB)'),
-              ),
-              onChanged: (value) {
-                if (RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value)) {
-                  onChanged(selected.copyWith(color: value));
-                }
-              },
+            _ColorInput(
+              value: selected.color,
+              onChanged: (color) => onChanged(selected.copyWith(color: color)),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -979,6 +1056,140 @@ class _PropertiesPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ColorInput extends StatelessWidget {
+  const _ColorInput({required this.value, required this.onChanged});
+
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  Color _parse(String value) {
+    final hex = value.replaceFirst('#', '');
+    return Color(int.tryParse('FF$hex', radix: 16) ?? 0xFF20332B);
+  }
+
+  String _hex(Color color) =>
+      '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+
+  Future<void> _openPicker(BuildContext context) async {
+    final controller = TextEditingController(text: value);
+    final palette = [
+      Colors.black,
+      Colors.white,
+      const Color(0xFF20332B),
+      Colors.red,
+      Colors.orange,
+      Colors.amber,
+      Colors.green,
+      Colors.teal,
+      Colors.blue,
+      Colors.indigo,
+      Colors.purple,
+      Colors.pink,
+      Colors.brown,
+      Colors.grey,
+    ];
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.text('Text color')),
+        content: StatefulBuilder(
+          builder: (context, setState) => SizedBox(
+            width: 320,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    labelText: context.l10n.text('Color (#RRGGBB)'),
+                    prefixIcon: Container(
+                      margin: const EdgeInsets.all(AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: _parse(controller.text),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                  onChanged: (text) {
+                    if (RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(text)) {
+                      onChanged(text.toUpperCase());
+                      setState(() {});
+                    }
+                  },
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    for (final color in palette)
+                      InkWell(
+                        onTap: () {
+                          final hex = _hex(color);
+                          controller.text = hex;
+                          onChanged(hex);
+                          Navigator.pop(dialogContext);
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: color.computeLuminance() > .7
+                                  ? Colors.black26
+                                  : Colors.transparent,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(context.l10n.text('Close')),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: () => _openPicker(context),
+    borderRadius: BorderRadius.circular(4),
+    child: InputDecorator(
+      decoration: InputDecoration(
+        labelText: context.l10n.text('Text color'),
+        suffixIcon: const Icon(Icons.arrow_drop_down),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              color: _parse(value),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black26),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(value.toUpperCase()),
+        ],
+      ),
+    ),
+  );
 }
 
 class _NumberInput extends StatefulWidget {

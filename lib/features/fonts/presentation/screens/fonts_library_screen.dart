@@ -1,13 +1,14 @@
 import '../../../../config/localization/app_localizations.dart';
-import 'dart:convert';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/database/app_database.dart';
-import '../../../../core/database/database_tables.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
+import '../../data/repositories/font_repository_impl.dart';
+import '../../domain/entities/font_asset.dart';
+import '../bloc/fonts_library_bloc.dart';
 
 class FontsLibraryScreen extends StatefulWidget {
   const FontsLibraryScreen({super.key, required this.database, this.projectId});
@@ -18,36 +19,6 @@ class FontsLibraryScreen extends StatefulWidget {
 }
 
 class _FontsLibraryScreenState extends State<FontsLibraryScreen> {
-  List<Map<String, Object?>> _fonts = const [];
-  String? _selectedId;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    final fonts = await widget.database.query(DatabaseTables.fonts);
-    final projects = widget.projectId == null
-        ? const <Map<String, Object?>>[]
-        : await widget.database.query(
-            DatabaseTables.projects,
-            where: {'id': widget.projectId},
-          );
-    final settings = projects.isEmpty
-        ? const <String, dynamic>{}
-        : _decode(projects.first['settings_json']);
-    if (mounted) {
-      setState(() {
-        _fonts = fonts.reversed.toList();
-        _selectedId = settings['font_id']?.toString();
-        _loading = false;
-      });
-    }
-  }
-
   Future<void> _import() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -57,164 +28,162 @@ class _FontsLibraryScreenState extends State<FontsLibraryScreen> {
     final file = result?.files.single;
     final bytes = file?.bytes;
     if (file == null || bytes == null || bytes.isEmpty) return;
-    final now = DateTime.now().toUtc().toIso8601String();
     final name = file.name.replaceFirst(RegExp(r'\.[^.]+$'), '');
     final format = file.extension?.toLowerCase() ?? 'ttf';
-    await widget.database.insert(DatabaseTables.fonts, {
-      'id': 'font-${DateTime.now().microsecondsSinceEpoch}',
-      'name': name,
-      'family': name,
-      'file_path': file.path ?? file.name,
-      'format': format,
-      'font_bytes': bytes,
-      'created_at': now,
-      'updated_at': now,
-    });
-    await _load();
-  }
-
-  Future<void> _delete(String id) async {
-    await widget.database.delete(DatabaseTables.fonts, id);
-    await _load();
-  }
-
-  Future<void> _use(String id) async {
-    if (widget.projectId == null) return;
-    final projects = await widget.database.query(
-      DatabaseTables.projects,
-      where: {'id': widget.projectId},
+    if (!mounted) return;
+    context.read<FontsLibraryBloc>().add(
+      FontAdded(
+        FontAsset(
+          id: 'font-${DateTime.now().microsecondsSinceEpoch}',
+          name: name,
+          family: name,
+          filePath: file.path ?? file.name,
+          format: format,
+        ),
+        bytes,
+      ),
     );
-    if (projects.isEmpty) return;
-    final settings = _decode(projects.first['settings_json']);
-    settings['font_id'] = id;
-    await widget.database.update(DatabaseTables.projects, widget.projectId!, {
-      'settings_json': jsonEncode(settings),
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    });
-    if (mounted) setState(() => _selectedId = id);
   }
-
-  Map<String, dynamic> _decode(Object? raw) => raw is String && raw.isNotEmpty
-      ? Map<String, dynamic>.from(jsonDecode(raw) as Map)
-      : <String, dynamic>{};
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(context.l10n.text('Fonts'))),
-    floatingActionButton: FloatingActionButton.extended(
-      onPressed: _import,
-      icon: const Icon(Icons.upload_file),
-      label: Text(context.l10n.text('Import font')),
-    ),
-    body: _loading
-        ? const Center(child: CircularProgressIndicator())
-        : Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: SizedBox(
-              width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.l10n.text('Font library'),
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    context.l10n.text('persistedFonts', {
-                      'count': _fonts.length.toString(),
-                    }),
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    context.l10n.text(
-                      'Arabic text keeps its original Unicode characters. If a selected font misses a glyph, the preview and export use the next available fallback font.',
-                    ),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Expanded(
-                    child: _fonts.isEmpty
-                        ? SizedBox(
-                            width: double.infinity,
-                            child: AppSurfaceCard(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    context.l10n.text(
-                                      'No fonts have been imported yet.',
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppSpacing.md),
-                                  FilledButton.icon(
-                                    onPressed: _import,
-                                    icon: const Icon(Icons.upload_file),
-                                    label: Text(
-                                      context.l10n.text('Import font'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        : ListView.separated(
-                            itemCount: _fonts.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(height: AppSpacing.sm),
-                            itemBuilder: (_, index) {
-                              final font = _fonts[index];
-                              final id = font['id']! as String;
-                              final selected = id == _selectedId;
-                              return AppSurfaceCard(
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    leading: const CircleAvatar(
-                                      child: Icon(Icons.text_fields),
-                                    ),
-                                    title: Text(
-                                      font['name']?.toString() ??
-                                          'Unnamed font',
-                                    ),
-                                    subtitle: Text(
-                                      context.l10n.text(
-                                        '${font['family']} · ${font['format'].toString().toUpperCase()}\n${font['file_path']}',
-                                      ),
-                                    ),
-                                    isThreeLine: true,
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        if (widget.projectId != null)
-                                          TextButton(
-                                            onPressed: selected
-                                                ? null
-                                                : () => _use(id),
-                                            child: Text(
-                                              selected ? 'In use' : 'Use',
-                                            ),
-                                          ),
-                                        IconButton(
-                                          tooltip: context.l10n.text('Delete'),
-                                          onPressed: () => _delete(id),
-                                          icon: const Icon(
-                                            Icons.delete_outline,
-                                          ),
+  Widget build(BuildContext context) => BlocProvider(
+    create: (_) =>
+        FontsLibraryBloc(FontRepositoryImpl(widget.database), widget.projectId)
+          ..add(const FontsRequested()),
+    child: BlocBuilder<FontsLibraryBloc, FontsLibraryState>(
+      builder: (context, state) => Scaffold(
+        appBar: AppBar(title: Text(context.l10n.text('Fonts'))),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _import,
+          icon: const Icon(Icons.upload_file),
+          label: Text(context.l10n.text('Import font')),
+        ),
+        body:
+            state.status == FontsLibraryStatus.loading ||
+                state.status == FontsLibraryStatus.initial
+            ? const Center(child: CircularProgressIndicator())
+            : Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.l10n.text('Font library'),
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        context.l10n.text('persistedFonts', {
+                          'count': state.fonts.length.toString(),
+                        }),
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        context.l10n.text(
+                          'Arabic text keeps its original Unicode characters. If a selected font misses a glyph, the preview and export use the next available fallback font.',
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      Expanded(
+                        child: state.fonts.isEmpty
+                            ? SizedBox(
+                                width: double.infinity,
+                                child: AppSurfaceCard(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        context.l10n.text(
+                                          'No fonts have been imported yet.',
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                      const SizedBox(height: AppSpacing.md),
+                                      FilledButton.icon(
+                                        onPressed: _import,
+                                        icon: const Icon(Icons.upload_file),
+                                        label: Text(
+                                          context.l10n.text('Import font'),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              );
-                            },
-                          ),
+                              )
+                            : ListView.separated(
+                                itemCount: state.fonts.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: AppSpacing.sm),
+                                itemBuilder: (_, index) {
+                                  final font = state.fonts[index];
+                                  final id = font.id;
+                                  final selected = id == state.selectedId;
+                                  return AppSurfaceCard(
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: ListTile(
+                                        contentPadding: EdgeInsets.zero,
+                                        leading: const CircleAvatar(
+                                          child: Icon(Icons.text_fields),
+                                        ),
+                                        title: Text(font.name),
+                                        subtitle: Text(
+                                          context.l10n.text(
+                                            '${font.family} · ${font.format.toUpperCase()}\n${font.filePath}',
+                                          ),
+                                        ),
+                                        isThreeLine: true,
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (widget.projectId != null)
+                                              TextButton(
+                                                onPressed: selected
+                                                    ? null
+                                                    : () => context
+                                                          .read<
+                                                            FontsLibraryBloc
+                                                          >()
+                                                          .add(
+                                                            FontSelected(id),
+                                                          ),
+                                                child: Text(
+                                                  selected
+                                                      ? context.l10n.text(
+                                                          'In use',
+                                                        )
+                                                      : context.l10n.text(
+                                                          'Use',
+                                                        ),
+                                                ),
+                                              ),
+                                            IconButton(
+                                              tooltip: context.l10n.text(
+                                                'Delete',
+                                              ),
+                                              onPressed: () => context
+                                                  .read<FontsLibraryBloc>()
+                                                  .add(FontDeleted(id)),
+                                              icon: const Icon(
+                                                Icons.delete_outline,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+      ),
+    ),
   );
 }

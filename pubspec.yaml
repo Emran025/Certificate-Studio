@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   archive: ^3.6.1
   certificate_crypto:
     path: packages/certificate_crypto
@@ -51,6 +53,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  flutter_bloc: ^9.1.1
 
 # printing declares pdf as a hosted dependency. Override that transitive
 # source so both packages use the local Arabic-shaping fork above.

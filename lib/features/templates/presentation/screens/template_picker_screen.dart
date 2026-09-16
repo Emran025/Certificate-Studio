@@ -1,14 +1,17 @@
 import '../../../../config/localization/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/database/app_database.dart';
-import '../../../../core/database/database_tables.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
+import '../../data/repositories/template_repository_impl.dart';
+import '../../domain/entities/template_asset.dart';
+import '../bloc/template_picker_bloc.dart';
 import '../template_file_support.dart';
 
-class TemplatePickerScreen extends StatefulWidget {
+class TemplatePickerScreen extends StatelessWidget {
   const TemplatePickerScreen({
     super.key,
     required this.database,
@@ -17,172 +20,125 @@ class TemplatePickerScreen extends StatefulWidget {
   final AppDatabase database;
   final String? projectId;
 
-  @override
-  State<TemplatePickerScreen> createState() => _TemplatePickerScreenState();
-}
-
-class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
-  List<Map<String, Object?>> _templates = [];
-  String? _selectedId;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    final templates = await widget.database.query(DatabaseTables.templates);
-    final projects = widget.projectId == null
-        ? const <Map<String, Object?>>[]
-        : await widget.database.query(
-            DatabaseTables.projects,
-            where: {'id': widget.projectId},
-          );
-    if (!mounted) return;
-    setState(() {
-      _templates = templates;
-      _selectedId = projects.isEmpty
-          ? null
-          : projects.first['template_id'] as String?;
-      _loading = false;
-    });
-  }
-
-  Future<void> _addTemplate() async {
+  Future<void> _addTemplate(BuildContext context) async {
+    final bloc = context.read<TemplatePickerBloc>();
     final draft = await showDialog<_TemplateDraft>(
       context: context,
       builder: (_) => const _TemplateDialog(),
     );
     if (draft == null) return;
-    final now = DateTime.now().toUtc().toIso8601String();
-    await widget.database.insert(DatabaseTables.templates, {
-      'id': 'template-${DateTime.now().microsecondsSinceEpoch}',
-      'name': draft.name,
-      'file_path': draft.path,
-      'width': draft.width,
-      'height': draft.height,
-      'dpi': draft.dpi,
-      'format': draft.format,
-      'created_at': now,
-      'updated_at': now,
-    });
-    await _load();
-  }
-
-  Future<void> _select(String id) async {
-    if (widget.projectId != null) {
-      await widget.database.update(DatabaseTables.projects, widget.projectId!, {
-        'template_id': id,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
-    }
-    if (mounted) setState(() => _selectedId = id);
-  }
-
-  Future<void> _delete(String id) async {
-    final linked = await widget.database.query(
-      DatabaseTables.projects,
-      where: {'template_id': id},
-    );
-    if (linked.isNotEmpty && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            context.l10n.text(
-              'This template is used by a project and cannot be deleted.',
-            ),
-          ),
+    bloc.add(
+      TemplateAdded(
+        TemplateAsset(
+          id: 'template-${DateTime.now().microsecondsSinceEpoch}',
+          name: draft.name,
+          filePath: draft.path,
+          width: draft.width,
+          height: draft.height,
+          dpi: draft.dpi,
+          format: draft.format,
         ),
-      );
-      return;
-    }
-    await widget.database.delete(DatabaseTables.templates, id);
-    await _load();
+      ),
+    );
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-    final projectMode = widget.projectId != null;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          context.l10n.text(projectMode ? 'Certificate template' : 'Templates'),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 920),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.text(
-                    projectMode
-                        ? 'Choose a certificate template'
-                        : 'Template library',
-                  ),
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  context.l10n.text(
-                    projectMode
-                        ? 'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.'
-                        : 'Browse persisted certificate backgrounds or import a new template.',
-                  ),
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                FilledButton.icon(
-                  onPressed: _addTemplate,
-                  icon: const Icon(Icons.add_photo_alternate_outlined),
-                  label: Text(context.l10n.text('Add template')),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                if (_templates.isEmpty)
-                  AppSurfaceCard(
-                    child: Text(
-                      context.l10n.text(
-                        'No templates saved yet. Add a PNG, JPG, or WEBP background image to continue.',
-                      ),
-                    ),
-                  )
-                else
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 300,
-                          mainAxisExtent: 280,
-                          crossAxisSpacing: AppSpacing.md,
-                          mainAxisSpacing: AppSpacing.md,
-                        ),
-                    itemCount: _templates.length,
-                    itemBuilder: (_, index) {
-                      final template = _templates[index];
-                      return _TemplateCard(
-                        template: template,
-                        selected: template['id'] == _selectedId,
-                        onSelect: () => _select(template['id']! as String),
-                        onDelete: () => _delete(template['id']! as String),
-                      );
-                    },
-                  ),
-              ],
+  Widget build(BuildContext context) => BlocProvider(
+    create: (_) =>
+        TemplatePickerBloc(TemplateRepositoryImpl(database), projectId)
+          ..add(const TemplatesRequested()),
+    child: BlocBuilder<TemplatePickerBloc, TemplatePickerState>(
+      builder: (context, state) {
+        if (state.status == TemplatePickerStatus.loading ||
+            state.status == TemplatePickerStatus.initial) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final projectMode = projectId != null;
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              context.l10n.text(
+                projectMode ? 'Certificate template' : 'Templates',
+              ),
             ),
           ),
-        ),
-      ),
-    );
-  }
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 920),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.l10n.text(
+                        projectMode
+                            ? 'Choose a certificate template'
+                            : 'Template library',
+                      ),
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      context.l10n.text(
+                        projectMode
+                            ? 'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.'
+                            : 'Browse persisted certificate backgrounds or import a new template.',
+                      ),
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    FilledButton.icon(
+                      onPressed: () => _addTemplate(context),
+                      icon: const Icon(Icons.add_photo_alternate_outlined),
+                      label: Text(context.l10n.text('Add template')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    if (state.templates.isEmpty)
+                      AppSurfaceCard(
+                        child: Text(
+                          context.l10n.text(
+                            'No templates saved yet. Add a PNG, JPG, or WEBP background image to continue.',
+                          ),
+                        ),
+                      )
+                    else
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 300,
+                              mainAxisExtent: 280,
+                              crossAxisSpacing: AppSpacing.md,
+                              mainAxisSpacing: AppSpacing.md,
+                            ),
+                        itemCount: state.templates.length,
+                        itemBuilder: (_, index) {
+                          final template = state.templates[index];
+                          return _TemplateCard(
+                            template: template,
+                            selected: template.id == state.selectedId,
+                            onSelect: () => context
+                                .read<TemplatePickerBloc>()
+                                .add(TemplateSelected(template.id)),
+                            onDelete: () => context
+                                .read<TemplatePickerBloc>()
+                                .add(TemplateDeleted(template.id)),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    ),
+  );
 }
 
 class _TemplateCard extends StatelessWidget {
@@ -192,14 +148,14 @@ class _TemplateCard extends StatelessWidget {
     required this.onSelect,
     required this.onDelete,
   });
-  final Map<String, Object?> template;
+  final TemplateAsset template;
   final bool selected;
   final VoidCallback onSelect;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
-    final path = template['file_path'] as String? ?? '';
+    final path = template.filePath;
     final exists = templateFileExists(path);
     return AppSurfaceCard(
       padding: const EdgeInsets.all(AppSpacing.sm),
@@ -214,13 +170,13 @@ class _TemplateCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            template['name']! as String,
+            template.name,
             style: Theme.of(context).textTheme.titleMedium,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           Text(
-            '${template['width']} × ${template['height']} · ${template['format'].toString().toUpperCase()}',
+            '${template.width} × ${template.height} · ${template.format.toUpperCase()}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           if (!exists)

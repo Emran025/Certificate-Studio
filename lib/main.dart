@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'config/env/app_environment.dart';
 import 'config/localization/app_localizations.dart';
 import 'core/database/app_database.dart';
@@ -27,11 +27,13 @@ class CertificateStudioApp extends StatelessWidget {
       title: AppEnvironment.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      locale: const Locale('ar'),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizationsDelegate(),
-        DefaultWidgetsLocalizations.delegate,
-        DefaultMaterialLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
       ],
       localeResolutionCallback: (locale, supportedLocales) {
         if (locale == null) return supportedLocales.first;
@@ -55,8 +57,8 @@ class _DatabaseUnavailableView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: Center(child: Text(context.l10n.text('localWorkspaceUnavailable'))),
-      );
+    body: Center(child: Text(context.l10n.text('localWorkspaceUnavailable'))),
+  );
 }
 
 // Backwards-compatible alias for existing consumers of the starter app.

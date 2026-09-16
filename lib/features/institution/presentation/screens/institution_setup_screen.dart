@@ -110,12 +110,14 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     Text(
-                      'Set up your institution',
+                      context.l10n.text('Set up your institution'),
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      'This information is used to identify your certificates and verification records.',
+                      context.l10n.text(
+                        'This information is used to identify your certificates and verification records.',
+                      ),
                       style: Theme.of(context).textTheme.bodyMedium
                           ?.copyWith(color: AppColors.textSecondary),
                     ),
@@ -172,7 +174,9 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
-                              'A private institution key will be generated and kept behind secure storage. It is never displayed or written into the project package.',
+                              context.l10n.text(
+                                'A private institution key will be generated and kept behind secure storage. It is never displayed or written into the project package.',
+                              ),
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: AppColors.textPrimary),
                             ),
@@ -193,8 +197,8 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                       width: double.infinity,
                       child: AppPrimaryButton(
                         label: _isSaving
-                            ? 'Saving...'
-                            : 'Continue to workspace',
+                            ? context.l10n.text('Saving...')
+                            : context.l10n.text('Continue to workspace'),
                         icon: _isSaving ? null : Icons.arrow_forward,
                         onPressed: _isSaving ? null : _save,
                       ),

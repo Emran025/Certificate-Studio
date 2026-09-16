@@ -1,5 +1,6 @@
 import '../../../../config/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../verification/presentation/screens/verification_screen.dart';
 import '../../../certificates/presentation/screens/certificate_library_screen.dart';
@@ -10,6 +11,9 @@ import '../../../../core/security/keys/project_key_manager.dart';
 import '../../../../shared/themes/app_colors.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
+import '../../data/repositories/workspace_repository_impl.dart';
+import '../../domain/entities/workspace_metrics.dart';
+import '../../domain/usecases/get_workspace_metrics.dart';
 import '../../../institution/domain/entities/institution.dart';
 import '../../../projects/data/repositories/project_repository_impl.dart';
 import '../../../projects/domain/entities/project.dart';
@@ -19,6 +23,7 @@ import '../../../projects/presentation/screens/project_details_screen.dart';
 import '../../../projects/presentation/screens/projects_library_screen.dart';
 import '../../../templates/presentation/screens/template_picker_screen.dart';
 import '../../../fonts/presentation/screens/fonts_library_screen.dart';
+import '../controllers/workspace_metrics_bloc.dart';
 
 class WorkspaceShell extends StatefulWidget {
   const WorkspaceShell({
@@ -40,6 +45,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   ProjectRepositoryImpl? _projectRepository;
   CreateProject? _createProject;
   Future<List<Project>>? _projectsFuture;
+  WorkspaceMetricsBloc? _workspaceMetricsBloc;
   Project? _activeProject;
   bool _showProjects = false;
   String _selectedNavigation = 'home';
@@ -55,6 +61,9 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
         ProjectKeyManager(widget.keyStorage ?? InMemoryKeyStorage()),
       );
       _projectsFuture = _loadProjects();
+      _workspaceMetricsBloc = WorkspaceMetricsBloc(
+        GetWorkspaceMetrics(WorkspaceRepositoryImpl(database)),
+      )..add(const WorkspaceMetricsRequested());
     }
   }
 
@@ -62,6 +71,12 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
     final repo = _projectRepository;
     if (repo == null) return Future.value(const <Project>[]);
     return repo.getAll(institutionId: widget.institution?.id);
+  }
+
+  @override
+  void dispose() {
+    _workspaceMetricsBloc?.close();
+    super.dispose();
   }
 
   Future<void> _openCreateProject() async {
@@ -104,8 +119,9 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   }
 
   void _openProjects() {
-    if (!mounted || widget.database == null || widget.institution == null)
+    if (!mounted || widget.database == null || widget.institution == null) {
       return;
+    }
     setState(() {
       _activeProject = null;
       _showProjects = true;
@@ -114,6 +130,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   }
 
   void _showHome() {
+    _workspaceMetricsBloc?.add(const WorkspaceMetricsRequested());
     setState(() {
       _activeProject = null;
       _showProjects = false;
@@ -146,6 +163,35 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
       _showProjects = false;
       _selectedNavigation = 'verification';
     });
+  }
+
+  Widget _buildWorkspaceContent() {
+    final bloc = _workspaceMetricsBloc;
+    if (bloc == null) {
+      return _WorkspaceContent(
+        database: widget.database,
+        institution: widget.institution,
+        projectsFuture: _projectsFuture,
+        metrics: const WorkspaceMetrics.empty(),
+        onCreateProject: _openCreateProject,
+        onVerify: _openVerification,
+        onOpenProject: _openProject,
+      );
+    }
+
+    return BlocBuilder<WorkspaceMetricsBloc, WorkspaceMetricsState>(
+      bloc: bloc,
+      builder: (context, state) => _WorkspaceContent(
+        database: widget.database,
+        institution: widget.institution,
+        projectsFuture: _projectsFuture,
+        metrics: state.metrics,
+        metricsError: state.errorMessage,
+        onCreateProject: _openCreateProject,
+        onVerify: _openVerification,
+        onOpenProject: _openProject,
+      ),
+    );
   }
 
   @override
@@ -193,14 +239,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
                       database: widget.database!,
                       keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
                     )
-                  : _WorkspaceContent(
-                      database: widget.database,
-                      institution: widget.institution,
-                      projectsFuture: _projectsFuture,
-                      onCreateProject: _openCreateProject,
-                      onVerify: _openVerification,
-                      onOpenProject: _openProject,
-                    ),
+                  : _buildWorkspaceContent(),
             ),
           ],
         ),
@@ -379,6 +418,8 @@ class _WorkspaceContent extends StatelessWidget {
     this.database,
     this.institution,
     this.projectsFuture,
+    required this.metrics,
+    this.metricsError,
     required this.onCreateProject,
     required this.onVerify,
     required this.onOpenProject,
@@ -387,6 +428,8 @@ class _WorkspaceContent extends StatelessWidget {
   final AppDatabase? database;
   final Institution? institution;
   final Future<List<Project>>? projectsFuture;
+  final WorkspaceMetrics metrics;
+  final String? metricsError;
   final VoidCallback onVerify;
   final VoidCallback onCreateProject;
   final ValueChanged<Project> onOpenProject;
@@ -424,7 +467,7 @@ class _WorkspaceContent extends StatelessWidget {
                     ),
                   ),
                   if (database?.isOpen ?? false) ...[
-                    AppStatusBadge(label: 'Offline ready'),
+                    AppStatusBadge(label: context.l10n.text('offlineReady')),
                     const SizedBox(width: AppSpacing.md),
                   ],
                   IconButton(
@@ -451,7 +494,7 @@ class _WorkspaceContent extends StatelessWidget {
                 children: [
                   Expanded(
                     child: AppPrimaryButton(
-                      label: 'New project',
+                      label: context.l10n.text('newProject'),
                       icon: Icons.add,
                       onPressed: onCreateProject,
                     ),
@@ -459,7 +502,7 @@ class _WorkspaceContent extends StatelessWidget {
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: AppSecondaryButton(
-                      label: 'Import project',
+                      label: context.l10n.text('importProject'),
                       icon: Icons.file_upload_outlined,
                       onPressed: () {},
                     ),
@@ -467,7 +510,7 @@ class _WorkspaceContent extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.xxl),
-              AppSectionHeader(title: 'Recent projects'),
+              AppSectionHeader(title: context.l10n.text('recentProjects')),
               const SizedBox(height: AppSpacing.md),
               _ProjectsSection(
                 projectsFuture: projectsFuture,
@@ -475,35 +518,44 @@ class _WorkspaceContent extends StatelessWidget {
                 onOpenProject: onOpenProject,
               ),
               const SizedBox(height: AppSpacing.xxl),
-              AppSectionHeader(title: 'Your workspace'),
+              AppSectionHeader(title: context.l10n.text('yourWorkspace')),
               const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
                   Expanded(
                     child: _MetricCard(
                       icon: Icons.image_outlined,
-                      value: '0',
+                      value: metrics.templates.toString(),
                       label: context.l10n.text('templates'),
                     ),
                   ),
-                  SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: _MetricCard(
                       icon: Icons.text_fields_outlined,
-                      value: '0',
+                      value: metrics.fonts.toString(),
                       label: context.l10n.text('fonts'),
                     ),
                   ),
-                  SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: _MetricCard(
                       icon: Icons.workspace_premium_outlined,
-                      value: '0',
+                      value: metrics.certificates.toString(),
                       label: context.l10n.text('certificates'),
                     ),
                   ),
                 ],
               ),
+              if (metricsError != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  context.l10n.text('Failed to load workspace metrics.'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.error,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -612,7 +664,7 @@ class _EmptyProjects extends StatelessWidget {
             ),
           ),
           AppSecondaryButton(
-            label: 'Create project',
+            label: context.l10n.text('createProject'),
             onPressed: onCreateProject,
           ),
         ],
@@ -659,7 +711,7 @@ class _ProjectPreviewCard extends StatelessWidget {
               'date': _relativeTime(project.updatedAt),
             }),
           ),
-          trailing: AppStatusBadge(label: 'Draft'),
+          trailing: AppStatusBadge(label: context.l10n.text('Draft')),
           onTap: onTap,
         ),
       ),

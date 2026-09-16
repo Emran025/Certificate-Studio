@@ -48,21 +48,22 @@ class _CertificateGenerationScreenState
     );
     setState(() => _total = students.length);
     try {
-      final result = await CertificateGenerationService(
-        widget.database,
-        widget.keyStorage,
-      ).generate(
-        projectId: widget.projectId,
-        institutionId: widget.institutionId,
-        onProgress: (completed, total) {
-          if (mounted) {
-            setState(() {
-              _completed = completed;
-              _total = total;
-            });
-          }
-        },
-      );
+      final result =
+          await CertificateGenerationService(
+            widget.database,
+            widget.keyStorage,
+          ).generate(
+            projectId: widget.projectId,
+            institutionId: widget.institutionId,
+            onProgress: (completed, total) {
+              if (mounted) {
+                setState(() {
+                  _completed = completed;
+                  _total = total;
+                });
+              }
+            },
+          );
       final certificates = await widget.database.query(
         DatabaseTables.certificates,
         where: {'project_id': widget.projectId},
@@ -98,7 +99,9 @@ class _CertificateGenerationScreenState
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(context.l10n.text('Generate · ${widget.projectName}'))),
+    appBar: AppBar(
+      title: Text(context.l10n.text('Generate · ${widget.projectName}')),
+    ),
     body: SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Center(
@@ -147,7 +150,11 @@ class _CertificateGenerationScreenState
                         value: _total == 0 ? null : _completed / _total,
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      Text(context.l10n.text('$_completed of $_total recipients processed')),
+                      Text(
+                        context.l10n.text(
+                          '$_completed of $_total recipients processed',
+                        ),
+                      ),
                     ],
                     if (_result case final result?) ...[
                       const SizedBox(height: AppSpacing.lg),
@@ -181,7 +188,9 @@ class _CertificateGenerationScreenState
                                 ),
                               ),
                         icon: const Icon(Icons.open_in_new),
-                        label: Text(context.l10n.text('Open certificate library')),
+                        label: Text(
+                          context.l10n.text('Open certificate library'),
+                        ),
                       ),
                       if (result.errors.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.md),
@@ -214,15 +223,15 @@ class _CertificateGenerationScreenState
                       onPressed: _certificates.isEmpty
                           ? null
                           : () => Navigator.of(context).push<void>(
-                                MaterialPageRoute(
-                                  builder: (_) => CertificateLibraryScreen(
-                                    database: widget.database,
-                                    keyStorage: widget.keyStorage,
-                                    projectId: widget.projectId,
-                                    title: 'Generated certificates',
-                                  ),
+                              MaterialPageRoute(
+                                builder: (_) => CertificateLibraryScreen(
+                                  database: widget.database,
+                                  keyStorage: widget.keyStorage,
+                                  projectId: widget.projectId,
+                                  title: 'Generated certificates',
                                 ),
                               ),
+                            ),
                       child: Text(context.l10n.text('Browse')),
                     ),
                   ],

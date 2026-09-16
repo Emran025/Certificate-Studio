@@ -231,7 +231,9 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
           content: DropdownButtonFormField<String>(
             initialValue: selected,
             decoration: InputDecoration(
-              labelText: context.l10n.text('Field used for the exported file name'),
+              labelText: context.l10n.text(
+                'Field used for the exported file name',
+              ),
             ),
             items: [
               for (final field in sortedFields)
@@ -296,7 +298,11 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
         }
         if (snapshot.hasError) {
           return Center(
-            child: Text(context.l10n.text('Unable to load certificates: ${snapshot.error}')),
+            child: Text(
+              context.l10n.text(
+                'Unable to load certificates: ${snapshot.error}',
+              ),
+            ),
           );
         }
         final all = snapshot.data ?? const <_LibraryCertificate>[];
@@ -338,11 +344,15 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
                           itemBuilder: (_) => [
                             PopupMenuItem(
                               value: 'png',
-                              child: Text(context.l10n.text('Export all PNG files (ZIP)')),
+                              child: Text(
+                                context.l10n.text('Export all PNG files (ZIP)'),
+                              ),
                             ),
                             PopupMenuItem(
                               value: 'pdf',
-                              child: Text(context.l10n.text('Export all PDF files (ZIP)')),
+                              child: Text(
+                                context.l10n.text('Export all PDF files (ZIP)'),
+                              ),
                             ),
                           ],
                           child: Container(
@@ -354,11 +364,11 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
                               horizontal: AppSpacing.md,
                               vertical: AppSpacing.sm,
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.archive_outlined),
-                                SizedBox(width: AppSpacing.xs),
+                                const Icon(Icons.archive_outlined),
+                                const SizedBox(width: AppSpacing.xs),
                                 Text(context.l10n.text('Export all')),
                               ],
                             ),
@@ -370,7 +380,9 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
                   TextField(
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.search),
-                      hintText: context.l10n.text('Search by recipient, certificate ID, or project'),
+                      hintText: context.l10n.text(
+                        'Search by recipient, certificate ID, or project',
+                      ),
                     ),
                     onChanged: (value) => setState(() => _query = value),
                   ),
@@ -545,8 +557,14 @@ class _CertificateCard extends StatelessWidget {
                   PopupMenuButton<String>(
                     onSelected: onExport,
                     itemBuilder: (_) => [
-                      PopupMenuItem(value: 'png', child: Text(context.l10n.text('Export PNG'))),
-                      PopupMenuItem(value: 'pdf', child: Text(context.l10n.text('Export PDF'))),
+                      PopupMenuItem(
+                        value: 'png',
+                        child: Text(context.l10n.text('Export PNG')),
+                      ),
+                      PopupMenuItem(
+                        value: 'pdf',
+                        child: Text(context.l10n.text('Export PDF')),
+                      ),
                     ],
                   ),
                 ],
@@ -601,8 +619,14 @@ class _CertificatePreviewScreen extends StatelessWidget {
             }
           },
           itemBuilder: (_) => [
-            PopupMenuItem(value: 'png', child: Text(context.l10n.text('Export PNG'))),
-            PopupMenuItem(value: 'pdf', child: Text(context.l10n.text('Export PDF'))),
+            PopupMenuItem(
+              value: 'png',
+              child: Text(context.l10n.text('Export PNG')),
+            ),
+            PopupMenuItem(
+              value: 'pdf',
+              child: Text(context.l10n.text('Export PDF')),
+            ),
           ],
         ),
       ],

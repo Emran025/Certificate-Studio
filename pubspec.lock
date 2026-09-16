@@ -490,7 +490,7 @@ packages:
   pdf:
     dependency: "direct main"
     description:
-      path: packages/pdf
+      path: "packages/pdf"
       relative: true
     source: path
     version: "3.12.0"

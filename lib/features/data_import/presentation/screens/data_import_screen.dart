@@ -129,7 +129,8 @@ class _DataImportScreenState extends State<DataImportScreen> {
     } on FormatException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
-      if (mounted) setState(() => _error = 'We could not import this workbook.');
+      if (mounted)
+        setState(() => _error = 'We could not import this workbook.');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -144,7 +145,11 @@ class _DataImportScreenState extends State<DataImportScreen> {
           if (_table.rowCount > 0)
             Padding(
               padding: const EdgeInsets.only(right: AppSpacing.md),
-              child: Center(child: Text(context.l10n.text('${_table.rowCount} records saved'))),
+              child: Center(
+                child: Text(
+                  context.l10n.text('${_table.rowCount} records saved'),
+                ),
+              ),
             ),
         ],
       ),
@@ -165,8 +170,9 @@ class _DataImportScreenState extends State<DataImportScreen> {
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.',
-                        style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(color: AppColors.textSecondary),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       AppSurfaceCard(
@@ -178,7 +184,9 @@ class _DataImportScreenState extends State<DataImportScreen> {
                               minLines: 5,
                               maxLines: 10,
                               decoration: InputDecoration(
-                                labelText: context.l10n.text('Paste table data'),
+                                labelText: context.l10n.text(
+                                  'Paste table data',
+                                ),
                                 hintText: context.l10n.text('tableDataExample'),
                                 alignLabelWithHint: true,
                               ),
@@ -253,7 +261,6 @@ class _DataImportScreenState extends State<DataImportScreen> {
             ),
     );
   }
-
 }
 
 class _DataPreview extends StatelessWidget {

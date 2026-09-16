@@ -104,7 +104,8 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   }
 
   void _openProjects() {
-    if (!mounted || widget.database == null || widget.institution == null) return;
+    if (!mounted || widget.database == null || widget.institution == null)
+      return;
     setState(() {
       _activeProject = null;
       _showProjects = true;
@@ -171,35 +172,35 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
                       onClose: _showHome,
                     )
                   : _showProjects
-                      ? ProjectsLibraryScreen(
-                          database: widget.database!,
-                          institutionId: widget.institution!.id,
-                          keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
-                          onOpenProject: _openProject,
-                          onClose: _showHome,
-                        )
-                      : _selectedNavigation == 'templates'
-                          ? TemplatePickerScreen(database: widget.database!)
-                          : _selectedNavigation == 'fonts'
-                              ? FontsLibraryScreen(database: widget.database!)
-                              : _selectedNavigation == 'certificates'
-                                  ? CertificateLibraryScreen(
-                                      database: widget.database!,
-                                      keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
-                                    )
-                                  : _selectedNavigation == 'verification'
-                                      ? VerificationScreen(
-                                          database: widget.database!,
-                                          keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
-                                        )
-                                      : _WorkspaceContent(
-                                          database: widget.database,
-                                          institution: widget.institution,
-                                          projectsFuture: _projectsFuture,
-                                          onCreateProject: _openCreateProject,
-                                          onVerify: _openVerification,
-                                          onOpenProject: _openProject,
-                                        ),
+                  ? ProjectsLibraryScreen(
+                      database: widget.database!,
+                      institutionId: widget.institution!.id,
+                      keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
+                      onOpenProject: _openProject,
+                      onClose: _showHome,
+                    )
+                  : _selectedNavigation == 'templates'
+                  ? TemplatePickerScreen(database: widget.database!)
+                  : _selectedNavigation == 'fonts'
+                  ? FontsLibraryScreen(database: widget.database!)
+                  : _selectedNavigation == 'certificates'
+                  ? CertificateLibraryScreen(
+                      database: widget.database!,
+                      keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
+                    )
+                  : _selectedNavigation == 'verification'
+                  ? VerificationScreen(
+                      database: widget.database!,
+                      keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
+                    )
+                  : _WorkspaceContent(
+                      database: widget.database,
+                      institution: widget.institution,
+                      projectsFuture: _projectsFuture,
+                      onCreateProject: _openCreateProject,
+                      onVerify: _openVerification,
+                      onOpenProject: _openProject,
+                    ),
             ),
           ],
         ),
@@ -302,7 +303,7 @@ class _WorkspaceNavigation extends StatelessWidget {
               selected: selected == 'verification',
               onTap: onVerification,
             ),
-            const _NavigationItem(
+            _NavigationItem(
               icon: Icons.settings_outlined,
               label: context.l10n.text('settings'),
             ),
@@ -408,13 +409,15 @@ class _WorkspaceContent extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          institution?.name ?? 'Workspace',
+                          institution?.name ?? context.l10n.text('Workspace'),
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: AppColors.textSecondary),
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          'Create and manage your certificates',
+                          context.l10n.text(
+                            'Create and manage your certificates',
+                          ),
                           style: Theme.of(context).textTheme.headlineLarge,
                         ),
                       ],
@@ -474,7 +477,7 @@ class _WorkspaceContent extends StatelessWidget {
               const SizedBox(height: AppSpacing.xxl),
               AppSectionHeader(title: 'Your workspace'),
               const SizedBox(height: AppSpacing.md),
-              const Row(
+              Row(
                 children: [
                   Expanded(
                     child: _MetricCard(
@@ -538,9 +541,10 @@ class _ProjectsSection extends StatelessWidget {
         }
         if (snapshot.hasError) {
           return Text(
-            'Failed to load projects. Please try again.',
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: AppColors.error),
+            context.l10n.text('Failed to load projects. Please try again.'),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.error),
           );
         }
         final projects = snapshot.data ?? const <Project>[];
@@ -592,14 +596,17 @@ class _EmptyProjects extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Create your first project',
+                  context.l10n.text('Create your first project'),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
-                  'Start with project information, then add a template and student data.',
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: AppColors.textSecondary),
+                  context.l10n.text(
+                    'Start with project information, then add a template and student data.',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -645,7 +652,12 @@ class _ProjectPreviewCard extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           subtitle: Text(
-            '${project.courseName ?? 'Certificate project'}  •  Updated ${_relativeTime(project.updatedAt)}',
+            context.l10n.text('projectUpdated', {
+              'course':
+                  project.courseName ??
+                  context.l10n.text('Certificate project'),
+              'date': _relativeTime(project.updatedAt),
+            }),
           ),
           trailing: AppStatusBadge(label: 'Draft'),
           onTap: onTap,
@@ -683,8 +695,9 @@ class _MetricCard extends StatelessWidget {
               Text(value, style: Theme.of(context).textTheme.headlineMedium),
               Text(
                 label,
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: AppColors.textSecondary),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
               ),
             ],
           ),

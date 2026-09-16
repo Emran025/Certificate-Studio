@@ -34,7 +34,12 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
 
   Future<void> _load() async {
     final templates = await widget.database.query(DatabaseTables.templates);
-    final projects = widget.projectId == null ? const <Map<String, Object?>>[] : await widget.database.query(DatabaseTables.projects, where: {'id': widget.projectId});
+    final projects = widget.projectId == null
+        ? const <Map<String, Object?>>[]
+        : await widget.database.query(
+            DatabaseTables.projects,
+            where: {'id': widget.projectId},
+          );
     if (!mounted) return;
     setState(() {
       _templates = templates;
@@ -48,7 +53,7 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
   Future<void> _addTemplate() async {
     final draft = await showDialog<_TemplateDraft>(
       context: context,
-          builder: (_) => const _TemplateDialog(),
+      builder: (_) => const _TemplateDialog(),
     );
     if (draft == null) return;
     final now = DateTime.now().toUtc().toIso8601String();
@@ -85,7 +90,9 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'This template is used by a project and cannot be deleted.',
+            context.l10n.text(
+              'This template is used by a project and cannot be deleted.',
+            ),
           ),
         ),
       );
@@ -102,7 +109,11 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
     }
     final projectMode = widget.projectId != null;
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.text(projectMode ? 'Certificate template' : 'Templates'))),
+      appBar: AppBar(
+        title: Text(
+          context.l10n.text(projectMode ? 'Certificate template' : 'Templates'),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Center(
@@ -112,12 +123,20 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  context.l10n.text(projectMode ? 'Choose a certificate template' : 'Template library'),
+                  context.l10n.text(
+                    projectMode
+                        ? 'Choose a certificate template'
+                        : 'Template library',
+                  ),
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  context.l10n.text(projectMode ? 'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.' : 'Browse persisted certificate backgrounds or import a new template.'),
+                  context.l10n.text(
+                    projectMode
+                        ? 'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.'
+                        : 'Browse persisted certificate backgrounds or import a new template.',
+                  ),
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -130,7 +149,9 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
                 if (_templates.isEmpty)
                   AppSurfaceCard(
                     child: Text(
-                      context.l10n.text('No templates saved yet. Add a PNG, JPG, or WEBP background image to continue.'),
+                      context.l10n.text(
+                        'No templates saved yet. Add a PNG, JPG, or WEBP background image to continue.',
+                      ),
                     ),
                   )
                 else
@@ -301,12 +322,13 @@ class _TemplateDialogState extends State<_TemplateDialog> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              _field(_name, 'Template name'),
+              _field(context, _name, 'Template name'),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: _field(
+                      context,
                       _path,
                       'Background image',
                       readOnly: true,
@@ -334,23 +356,38 @@ class _TemplateDialogState extends State<_TemplateDialog> {
                 ),
               Row(
                 children: [
-                  Expanded(child: _field(_width, 'Width', number: true)),
+                  Expanded(
+                    child: _field(context, _width, 'Width', number: true),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(child: _field(_height, 'Height', number: true)),
+                  Expanded(
+                    child: _field(context, _height, 'Height', number: true),
+                  ),
                 ],
               ),
               Row(
                 children: [
-                  Expanded(child: _field(_dpi, 'DPI', number: true)),
+                  Expanded(child: _field(context, _dpi, 'DPI', number: true)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: _format,
-                      decoration: InputDecoration(labelText: context.l10n.text('Format')),
-                      items: const [
-                        DropdownMenuItem(value: 'png', child: Text(context.l10n.text('PNG'))),
-                        DropdownMenuItem(value: 'jpg', child: Text(context.l10n.text('JPG'))),
-                        DropdownMenuItem(value: 'webp', child: Text(context.l10n.text('WEBP'))),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.text('Format'),
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'png',
+                          child: Text(context.l10n.text('PNG')),
+                        ),
+                        DropdownMenuItem(
+                          value: 'jpg',
+                          child: Text(context.l10n.text('JPG')),
+                        ),
+                        DropdownMenuItem(
+                          value: 'webp',
+                          child: Text(context.l10n.text('WEBP')),
+                        ),
                       ],
                       onChanged: (value) =>
                           setState(() => _format = value ?? 'png'),
@@ -412,6 +449,7 @@ class _TemplateDialogState extends State<_TemplateDialog> {
   }
 
   Widget _field(
+    BuildContext context,
     TextEditingController controller,
     String label, {
     bool number = false,
@@ -423,10 +461,12 @@ class _TemplateDialogState extends State<_TemplateDialog> {
       controller: controller,
       keyboardType: number ? TextInputType.number : TextInputType.text,
       readOnly: readOnly,
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(labelText: context.l10n.text(label)),
       validator:
           validator ??
-          (value) => value == null || value.trim().isEmpty ? 'Required' : null,
+          (value) => value == null || value.trim().isEmpty
+              ? context.l10n.text('Required')
+              : null,
     ),
   );
 }

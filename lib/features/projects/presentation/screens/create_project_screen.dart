@@ -1,3 +1,4 @@
+import '../../../../config/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/themes/app_colors.dart';
@@ -72,9 +73,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create new project'),
+        title: Text(context.l10n.text('Create new project')),
         leading: IconButton(
-          tooltip: 'Close',
+          tooltip: context.l10n.text('Close'),
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.close),
         ),
@@ -138,9 +139,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           TextFormField(
                             controller: _nameController,
                             autofocus: true,
-                            decoration: const InputDecoration(
-                              labelText: 'Project name *',
-                              hintText: 'e.g. Flutter Advanced Course 2026',
+                            decoration: InputDecoration(
+                              labelText: context.l10n.text('Project name *'),
+                              hintText: context.l10n.text('e.g. Flutter Advanced Course 2026'),
                             ),
                             validator: (value) =>
                                 value == null || value.trim().isEmpty
@@ -150,25 +151,25 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           const SizedBox(height: AppSpacing.md),
                           TextFormField(
                             controller: _organizationController,
-                            decoration: const InputDecoration(
-                              labelText: 'Organization',
-                              hintText: 'Academy or institution name',
+                            decoration: InputDecoration(
+                              labelText: context.l10n.text('Organization'),
+                              hintText: context.l10n.text('Academy or institution name'),
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
                           TextFormField(
                             controller: _courseController,
-                            decoration: const InputDecoration(
-                              labelText: 'Course or program',
-                              hintText: 'e.g. Flutter Advanced',
+                            decoration: InputDecoration(
+                              labelText: context.l10n.text('Course or program'),
+                              hintText: context.l10n.text('e.g. Flutter Advanced'),
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
                           TextFormField(
                             controller: _descriptionController,
-                            decoration: const InputDecoration(
-                              labelText: 'Description',
-                              hintText: 'Optional project notes',
+                            decoration: InputDecoration(
+                              labelText: context.l10n.text('Description'),
+                              hintText: context.l10n.text('Optional project notes'),
                             ),
                             maxLines: 3,
                           ),

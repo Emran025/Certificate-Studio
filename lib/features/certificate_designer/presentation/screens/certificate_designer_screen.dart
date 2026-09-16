@@ -1,3 +1,4 @@
+import '../../../../config/localization/app_localizations.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 
@@ -353,12 +354,12 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: Text('Design · ${widget.projectName}'),
+        title: Text(context.l10n.text('Design · ${widget.projectName}')),
         actions: [
           Text(_saveLabel, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(width: AppSpacing.sm),
           IconButton(
-            tooltip: 'Zoom out',
+            tooltip: context.l10n.text('Zoom out'),
             onPressed: () =>
                 setState(() => _zoom = (_zoom - .1).clamp(.4, 2.2)),
             icon: const Icon(Icons.remove),
@@ -368,23 +369,23 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen> {
             style: Theme.of(context).textTheme.labelMedium,
           ),
           IconButton(
-            tooltip: 'Zoom in',
+            tooltip: context.l10n.text('Zoom in'),
             onPressed: () =>
                 setState(() => _zoom = (_zoom + .1).clamp(.4, 2.2)),
             icon: const Icon(Icons.add),
           ),
           IconButton(
-            tooltip: 'Undo',
+            tooltip: context.l10n.text('Undo'),
             onPressed: _undoStack.length > 1 ? _undo : null,
             icon: const Icon(Icons.undo),
           ),
           IconButton(
-            tooltip: 'Redo',
+            tooltip: context.l10n.text('Redo'),
             onPressed: _redoStack.isNotEmpty ? _redo : null,
             icon: const Icon(Icons.redo),
           ),
           IconButton(
-            tooltip: 'Save design',
+            tooltip: context.l10n.text('Save design'),
             onPressed: _saving ? null : _save,
             icon: const Icon(Icons.save_outlined),
           ),
@@ -476,14 +477,14 @@ class _ElementsPanel extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Elements', style: Theme.of(context).textTheme.titleMedium),
+        Text(context.l10n.text('Elements'), style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
             onPressed: columns.isEmpty ? null : onAdd,
             icon: const Icon(Icons.add),
-            label: const Text('Data field'),
+            label: Text(context.l10n.text('Data field')),
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -492,14 +493,14 @@ class _ElementsPanel extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: onAddQr,
             icon: const Icon(Icons.qr_code_2),
-            label: const Text('QR code'),
+            label: Text(context.l10n.text('QR code')),
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
-        Text('Layers', style: Theme.of(context).textTheme.labelLarge),
+        Text(context.l10n.text('Layers'), style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: AppSpacing.xs),
         if (fields.isEmpty)
-          const Text('Add a field from imported data to start designing.'),
+          Text(context.l10n.text('Add a field from imported data to start designing.')),
         Expanded(
           child: ListView(
             children: [
@@ -580,7 +581,7 @@ class _Canvas extends StatelessWidget {
                   : Container(
                       color: Colors.white,
                       child: const Center(
-                        child: Text('Template image unavailable'),
+                        child: Text(context.l10n.text('Template image unavailable')),
                       ),
                     ),
             ),
@@ -749,7 +750,7 @@ class _PropertiesPanel extends StatelessWidget {
     final selected = field;
     if (selected == null) {
       return const Center(
-        child: Text('Select a field to edit its properties.'),
+        child: Text(context.l10n.text('Select a field to edit its properties.')),
       );
     }
     return Container(
@@ -770,7 +771,7 @@ class _PropertiesPanel extends StatelessWidget {
               initialValue: columns.contains(selected.source)
                   ? selected.source
                   : null,
-              decoration: const InputDecoration(labelText: 'Data source field'),
+              decoration: InputDecoration(labelText: context.l10n.text('Data source field')),
               items: [
                 for (final column in columns)
                   DropdownMenuItem(value: column, child: Text(column)),
@@ -848,7 +849,7 @@ class _PropertiesPanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             DropdownButtonFormField<String>(
               initialValue: selected.fontFamily,
-              decoration: const InputDecoration(labelText: 'Font family'),
+              decoration: InputDecoration(labelText: context.l10n.text('Font family')),
               isExpanded: true,
               items: [
                 for (final family in fontFamilies)
@@ -871,11 +872,11 @@ class _PropertiesPanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             DropdownButtonFormField<String>(
               initialValue: selected.alignment,
-              decoration: const InputDecoration(labelText: 'Text alignment'),
+              decoration: InputDecoration(labelText: context.l10n.text('Text alignment')),
               items: const [
-                DropdownMenuItem(value: 'left', child: Text('Left')),
-                DropdownMenuItem(value: 'center', child: Text('Center')),
-                DropdownMenuItem(value: 'right', child: Text('Right')),
+                DropdownMenuItem(value: 'left', child: Text(context.l10n.text('Left'))),
+                DropdownMenuItem(value: 'center', child: Text(context.l10n.text('Center'))),
+                DropdownMenuItem(value: 'right', child: Text(context.l10n.text('Right'))),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -886,10 +887,10 @@ class _PropertiesPanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             DropdownButtonFormField<String>(
               initialValue: selected.direction,
-              decoration: const InputDecoration(labelText: 'Text direction'),
+              decoration: InputDecoration(labelText: context.l10n.text('Text direction')),
               items: const [
-                DropdownMenuItem(value: 'ltr', child: Text('LTR')),
-                DropdownMenuItem(value: 'rtl', child: Text('RTL')),
+                DropdownMenuItem(value: 'ltr', child: Text(context.l10n.text('LTR'))),
+                DropdownMenuItem(value: 'rtl', child: Text(context.l10n.text('RTL'))),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -902,7 +903,7 @@ class _PropertiesPanel extends StatelessWidget {
               color: Colors.transparent,
               child: SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Bold'),
+                title: Text(context.l10n.text('Bold')),
                 value: selected.bold,
                 onChanged: (value) => onChanged(selected.copyWith(bold: value)),
               ),
@@ -912,7 +913,7 @@ class _PropertiesPanel extends StatelessWidget {
               color: Colors.transparent,
               child: SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Italic'),
+                title: Text(context.l10n.text('Italic')),
                 value: selected.italic,
                 onChanged: (value) =>
                     onChanged(selected.copyWith(italic: value)),
@@ -921,8 +922,8 @@ class _PropertiesPanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             TextFormField(
               initialValue: selected.color,
-              decoration: const InputDecoration(
-                labelText: 'Text color (#RRGGBB)',
+              decoration: InputDecoration(
+                labelText: context.l10n.text('Text color (#RRGGBB)'),
               ),
               onChanged: (value) {
                 if (RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value)) {
@@ -935,7 +936,7 @@ class _PropertiesPanel extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onDelete,
             icon: const Icon(Icons.delete_outline),
-            label: const Text('Delete field'),
+            label: Text(context.l10n.text('Delete field')),
           ),
         ],
       ),
@@ -1044,7 +1045,7 @@ class _ColumnPicker extends StatelessWidget {
   final List<String> columns;
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Add data field'),
+    title: Text(context.l10n.text('Add data field')),
     content: SizedBox(
       width: 360,
       child: columns.isEmpty
@@ -1066,7 +1067,7 @@ class _ColumnPicker extends StatelessWidget {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.l10n.text('Cancel')),
       ),
     ],
   );

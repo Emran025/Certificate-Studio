@@ -1,3 +1,4 @@
+import '../../../../config/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../verification/presentation/screens/verification_screen.dart';
@@ -266,44 +267,44 @@ class _WorkspaceNavigation extends StatelessWidget {
             const SizedBox(height: AppSpacing.xxl),
             _NavigationItem(
               icon: Icons.home_outlined,
-              label: 'Home',
+              label: context.l10n.text('home'),
               selected: selected == 'home',
               onTap: onHome,
             ),
             _NavigationItem(
               icon: Icons.folder_outlined,
-              label: 'Projects',
+              label: context.l10n.text('projects'),
               selected: selected == 'projects',
               onTap: onProjects,
             ),
             _NavigationItem(
               icon: Icons.image_outlined,
-              label: 'Templates',
+              label: context.l10n.text('templates'),
               selected: selected == 'templates',
               onTap: onTemplates,
             ),
             _NavigationItem(
               icon: Icons.text_fields_outlined,
-              label: 'Fonts',
+              label: context.l10n.text('fonts'),
               selected: selected == 'fonts',
               onTap: onFonts,
             ),
             _NavigationItem(
               icon: Icons.workspace_premium_outlined,
-              label: 'Certificates',
+              label: context.l10n.text('certificates'),
               selected: selected == 'certificates',
               onTap: onCertificates,
             ),
             const Spacer(),
             _NavigationItem(
               icon: Icons.verified_user_outlined,
-              label: 'Verification',
+              label: context.l10n.text('verification'),
               selected: selected == 'verification',
               onTap: onVerification,
             ),
             const _NavigationItem(
               icon: Icons.settings_outlined,
-              label: 'Settings',
+              label: context.l10n.text('settings'),
             ),
           ],
         ),
@@ -420,17 +421,17 @@ class _WorkspaceContent extends StatelessWidget {
                     ),
                   ),
                   if (database?.isOpen ?? false) ...[
-                    const AppStatusBadge(label: 'Offline ready'),
+                    AppStatusBadge(label: 'Offline ready'),
                     const SizedBox(width: AppSpacing.md),
                   ],
                   IconButton(
-                    tooltip: 'Notifications',
+                    tooltip: context.l10n.text('Notifications'),
                     onPressed: () {},
                     icon: const Icon(Icons.notifications_none_outlined),
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   IconButton(
-                    tooltip: 'Settings',
+                    tooltip: context.l10n.text('Settings'),
                     onPressed: () {},
                     icon: const Icon(Icons.settings_outlined),
                   ),
@@ -438,7 +439,7 @@ class _WorkspaceContent extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: onVerify,
                     icon: const Icon(Icons.verified_user_outlined),
-                    label: const Text('Verify'),
+                    label: Text(context.l10n.text('Verify')),
                   ),
                 ],
               ),
@@ -463,7 +464,7 @@ class _WorkspaceContent extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.xxl),
-              const AppSectionHeader(title: 'Recent projects'),
+              AppSectionHeader(title: 'Recent projects'),
               const SizedBox(height: AppSpacing.md),
               _ProjectsSection(
                 projectsFuture: projectsFuture,
@@ -471,7 +472,7 @@ class _WorkspaceContent extends StatelessWidget {
                 onOpenProject: onOpenProject,
               ),
               const SizedBox(height: AppSpacing.xxl),
-              const AppSectionHeader(title: 'Your workspace'),
+              AppSectionHeader(title: 'Your workspace'),
               const SizedBox(height: AppSpacing.md),
               const Row(
                 children: [
@@ -479,7 +480,7 @@ class _WorkspaceContent extends StatelessWidget {
                     child: _MetricCard(
                       icon: Icons.image_outlined,
                       value: '0',
-                      label: 'Templates',
+                      label: context.l10n.text('templates'),
                     ),
                   ),
                   SizedBox(width: AppSpacing.md),
@@ -487,7 +488,7 @@ class _WorkspaceContent extends StatelessWidget {
                     child: _MetricCard(
                       icon: Icons.text_fields_outlined,
                       value: '0',
-                      label: 'Fonts',
+                      label: context.l10n.text('fonts'),
                     ),
                   ),
                   SizedBox(width: AppSpacing.md),
@@ -495,7 +496,7 @@ class _WorkspaceContent extends StatelessWidget {
                     child: _MetricCard(
                       icon: Icons.workspace_premium_outlined,
                       value: '0',
-                      label: 'Certificates',
+                      label: context.l10n.text('certificates'),
                     ),
                   ),
                 ],
@@ -646,7 +647,7 @@ class _ProjectPreviewCard extends StatelessWidget {
           subtitle: Text(
             '${project.courseName ?? 'Certificate project'}  •  Updated ${_relativeTime(project.updatedAt)}',
           ),
-          trailing: const AppStatusBadge(label: 'Draft'),
+          trailing: AppStatusBadge(label: 'Draft'),
           onTap: onTap,
         ),
       ),

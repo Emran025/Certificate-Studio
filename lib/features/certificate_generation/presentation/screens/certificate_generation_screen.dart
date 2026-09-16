@@ -1,3 +1,4 @@
+import '../../../../config/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
@@ -76,7 +77,7 @@ class _CertificateGenerationScreenState
       if (!mounted) return;
       setState(() => _running = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Generation failed: $error')),
+        SnackBar(content: Text(context.l10n.text('Generation failed: $error'))),
       );
     }
   }
@@ -97,7 +98,7 @@ class _CertificateGenerationScreenState
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text('Generate · ${widget.projectName}')),
+    appBar: AppBar(title: Text(context.l10n.text('Generate · ${widget.projectName}'))),
     body: SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Center(
@@ -136,7 +137,7 @@ class _CertificateGenerationScreenState
                           FilledButton.icon(
                             onPressed: _generate,
                             icon: const Icon(Icons.play_arrow),
-                            label: const Text('Generate'),
+                            label: Text(context.l10n.text('Generate')),
                           ),
                       ],
                     ),
@@ -146,7 +147,7 @@ class _CertificateGenerationScreenState
                         value: _total == 0 ? null : _completed / _total,
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      Text('$_completed of $_total recipients processed'),
+                      Text(context.l10n.text('$_completed of $_total recipients processed')),
                     ],
                     if (_result case final result?) ...[
                       const SizedBox(height: AppSpacing.lg),
@@ -180,7 +181,7 @@ class _CertificateGenerationScreenState
                                 ),
                               ),
                         icon: const Icon(Icons.open_in_new),
-                        label: const Text('Open certificate library'),
+                        label: Text(context.l10n.text('Open certificate library')),
                       ),
                       if (result.errors.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.md),
@@ -222,7 +223,7 @@ class _CertificateGenerationScreenState
                                   ),
                                 ),
                               ),
-                      child: const Text('Browse'),
+                      child: Text(context.l10n.text('Browse')),
                     ),
                   ],
                 ),

@@ -1,3 +1,4 @@
+import '../../../../config/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
@@ -109,21 +110,21 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete ${project.name}?'),
+        title: Text(context.l10n.text('Delete ${project.name}?')),
         content: const Text(
           'This permanently removes the project, recipient data, design, generated certificates, verification records, and project key.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.text('Cancel')),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete project'),
+            child: Text(context.l10n.text('Delete project')),
           ),
         ],
       ),
@@ -183,14 +184,14 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
     if (mounted) {
       setState(() => _projects = _load());
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('${project.name} deleted')));
+          .showSnackBar(SnackBar(content: Text(context.l10n.text('${project.name} deleted'))));
     }
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Projects'),
+      title: Text(context.l10n.text('Projects')),
       leading: widget.onClose == null
           ? null
           : IconButton(
@@ -201,7 +202,7 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
     floatingActionButton: FloatingActionButton.extended(
       onPressed: _create,
       icon: const Icon(Icons.add),
-      label: const Text('New project'),
+      label: Text(context.l10n.text('New project')),
     ),
     body: FutureBuilder<List<Project>>(
       future: _projects,
@@ -211,7 +212,7 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
         }
         if (snapshot.hasError) {
           return Center(
-            child: Text('Unable to load projects: ${snapshot.error}'),
+            child: Text(context.l10n.text('Unable to load projects: ${snapshot.error}')),
           );
         }
         final projects = snapshot.data ?? const <Project>[];
@@ -246,7 +247,7 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
                                 FilledButton.icon(
                                   onPressed: _create,
                                   icon: const Icon(Icons.add),
-                                  label: const Text('Create project'),
+                                  label: Text(context.l10n.text('Create project')),
                                 ),
                               ],
                             ),
@@ -305,12 +306,12 @@ class _ProjectTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            tooltip: 'Generate and create verification records',
+            tooltip: context.l10n.text('Generate and create verification records'),
             onPressed: onGenerate,
             icon: const Icon(Icons.verified_outlined),
           ),
           IconButton(
-            tooltip: 'Delete project',
+            tooltip: context.l10n.text('Delete project'),
             onPressed: onDelete,
             icon: Icon(
               Icons.delete_outline,

@@ -1,3 +1,4 @@
+import '../../../../config/localization/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -138,12 +139,12 @@ class _DataImportScreenState extends State<DataImportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Student data'),
+        title: Text(context.l10n.text('Student data')),
         actions: [
           if (_table.rowCount > 0)
             Padding(
               padding: const EdgeInsets.only(right: AppSpacing.md),
-              child: Center(child: Text('${_table.rowCount} records saved')),
+              child: Center(child: Text(context.l10n.text('${_table.rowCount} records saved'))),
             ),
         ],
       ),
@@ -176,8 +177,8 @@ class _DataImportScreenState extends State<DataImportScreen> {
                               controller: _controller,
                               minLines: 5,
                               maxLines: 10,
-                              decoration: const InputDecoration(
-                                labelText: 'Paste table data',
+                              decoration: InputDecoration(
+                                labelText: context.l10n.text('Paste table data'),
                                 hintText: 'Field 1\tField 2\tField 3\nValue 1\tValue 2\tValue 3',
                                 alignLabelWithHint: true,
                               ),

@@ -1,3 +1,4 @@
+import '../../../../config/localization/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -42,7 +43,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     if (!supportedExtensions.contains(extension)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a PDF, PNG, JPG, or JPEG certificate.')),
+          SnackBar(content: Text(context.l10n.text('Please select a PDF, PNG, JPG, or JPEG certificate.'))),
         );
       }
       return;
@@ -73,40 +74,40 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Verify certificate')),
+    appBar: AppBar(title: Text(context.l10n.text('Verify certificate'))),
     body: SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 760), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Verify certificate', style: Theme.of(context).textTheme.headlineMedium),
+        Text(context.l10n.text('Verify certificate'), style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: AppSpacing.xs),
-        Text('Use the certificate file itself. Verification runs offline from its embedded security record.', style: Theme.of(context).textTheme.bodyLarge),
+        Text(context.l10n.text('Use the certificate file itself. Verification runs offline from its embedded security record.'), style: Theme.of(context).textTheme.bodyLarge),
         const SizedBox(height: AppSpacing.xl),
         AppSurfaceCard(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('Certificate file', style: Theme.of(context).textTheme.titleLarge),
+          Text(context.l10n.text('Certificate file'), style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: AppSpacing.xs),
-          const Text('Select an issued certificate. For PNG/JPG images, the QR code is extracted automatically and the result reports extraction success or failure.'),
+          Text(context.l10n.text('Select an issued certificate. For PNG/JPG images, the QR code is extracted automatically and the result reports extraction success or failure.')),
           const SizedBox(height: AppSpacing.md),
-          FilledButton.icon(onPressed: _checking ? null : _pickCertificate, icon: const Icon(Icons.upload_file), label: const Text('Select certificate file')),
+          FilledButton.icon(onPressed: _checking ? null : _pickCertificate, icon: const Icon(Icons.upload_file), label: Text(context.l10n.text('Select certificate file'))),
         ])),
         const SizedBox(height: AppSpacing.md),
         AppSurfaceCard(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('QR verification', style: Theme.of(context).textTheme.titleLarge),
+          Text(context.l10n.text('QR verification'), style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: AppSpacing.xs),
-          const Text('Scan the QR code with your device and paste its cstudio:// payload here.'),
+          Text(context.l10n.text('Scan the QR code with your device and paste its cstudio:// payload here.')),
           const SizedBox(height: AppSpacing.sm),
-          TextField(controller: _qrController, maxLines: 2, decoration: const InputDecoration(labelText: 'QR payload', prefixIcon: Icon(Icons.qr_code_2))),
+          TextField(controller: _qrController, maxLines: 2, decoration: InputDecoration(labelText: context.l10n.text('QR payload'), prefixIcon: Icon(Icons.qr_code_2))),
           const SizedBox(height: AppSpacing.sm),
-          OutlinedButton.icon(onPressed: _checking ? null : _verifyQr, icon: const Icon(Icons.qr_code_scanner), label: const Text('Verify QR payload')),
+          OutlinedButton.icon(onPressed: _checking ? null : _verifyQr, icon: const Icon(Icons.qr_code_scanner), label: Text(context.l10n.text('Verify QR payload'))),
         ])),
         const SizedBox(height: AppSpacing.md),
         AppSurfaceCard(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('Certificate ID', style: Theme.of(context).textTheme.titleLarge),
+          Text(context.l10n.text('Certificate ID'), style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: AppSpacing.xs),
-          const Text('Additional lookup method for certificates already available in this offline workspace.'),
+          Text(context.l10n.text('Additional lookup method for certificates already available in this offline workspace.')),
           const SizedBox(height: AppSpacing.sm),
-          TextField(controller: _idController, decoration: const InputDecoration(labelText: 'Certificate ID', hintText: 'certificate-…', prefixIcon: Icon(Icons.badge_outlined)), onSubmitted: (_) => _verifyId()),
+          TextField(controller: _idController, decoration: InputDecoration(labelText: context.l10n.text('Certificate ID'), hintText: context.l10n.text('certificate-…'), prefixIcon: Icon(Icons.badge_outlined)), onSubmitted: (_) => _verifyId()),
           const SizedBox(height: AppSpacing.sm),
-          OutlinedButton.icon(onPressed: _checking ? null : _verifyId, icon: const Icon(Icons.verified_user_outlined), label: const Text('Verify certificate ID')),
+          OutlinedButton.icon(onPressed: _checking ? null : _verifyId, icon: const Icon(Icons.verified_user_outlined), label: Text(context.l10n.text('Verify certificate ID'))),
         ])),
         if (_checking) const Padding(padding: EdgeInsets.all(AppSpacing.lg), child: Center(child: CircularProgressIndicator())),
         if (_result case final result?) ...[const SizedBox(height: AppSpacing.lg), _ResultCard(result: result)],

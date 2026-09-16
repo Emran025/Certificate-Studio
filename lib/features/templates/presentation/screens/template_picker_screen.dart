@@ -1,3 +1,4 @@
+import '../../../../config/localization/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -82,7 +83,7 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
     );
     if (linked.isNotEmpty && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
             'This template is used by a project and cannot be deleted.',
           ),
@@ -123,7 +124,7 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
                 FilledButton.icon(
                   onPressed: _addTemplate,
                   icon: const Icon(Icons.add_photo_alternate_outlined),
-                  label: const Text('Add template'),
+                  label: Text(context.l10n.text('Add template')),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 if (_templates.isEmpty)
@@ -219,11 +220,11 @@ class _TemplateCard extends StatelessWidget {
                       )
                     : TextButton(
                         onPressed: onSelect,
-                        child: const Text('Use template'),
+                        child: Text(context.l10n.text('Use template')),
                       ),
               ),
               IconButton(
-                tooltip: 'Delete',
+                tooltip: context.l10n.text('Delete'),
                 onPressed: onDelete,
                 icon: const Icon(Icons.delete_outline),
               ),
@@ -292,7 +293,7 @@ class _TemplateDialogState extends State<_TemplateDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Add template'),
+    title: Text(context.l10n.text('Add template')),
     content: SizedBox(
       width: 440,
       child: Form(
@@ -318,7 +319,7 @@ class _TemplateDialogState extends State<_TemplateDialog> {
                     child: OutlinedButton.icon(
                       onPressed: _chooseBackground,
                       icon: const Icon(Icons.folder_open_outlined),
-                      label: const Text('Choose image'),
+                      label: Text(context.l10n.text('Choose image')),
                     ),
                   ),
                 ],
@@ -345,11 +346,11 @@ class _TemplateDialogState extends State<_TemplateDialog> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: _format,
-                      decoration: const InputDecoration(labelText: 'Format'),
+                      decoration: InputDecoration(labelText: context.l10n.text('Format')),
                       items: const [
-                        DropdownMenuItem(value: 'png', child: Text('PNG')),
-                        DropdownMenuItem(value: 'jpg', child: Text('JPG')),
-                        DropdownMenuItem(value: 'webp', child: Text('WEBP')),
+                        DropdownMenuItem(value: 'png', child: Text(context.l10n.text('PNG'))),
+                        DropdownMenuItem(value: 'jpg', child: Text(context.l10n.text('JPG'))),
+                        DropdownMenuItem(value: 'webp', child: Text(context.l10n.text('WEBP'))),
                       ],
                       onChanged: (value) =>
                           setState(() => _format = value ?? 'png'),
@@ -365,7 +366,7 @@ class _TemplateDialogState extends State<_TemplateDialog> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.l10n.text('Cancel')),
       ),
       FilledButton(
         onPressed: () {
@@ -382,7 +383,7 @@ class _TemplateDialogState extends State<_TemplateDialog> {
             ),
           );
         },
-        child: const Text('Save'),
+        child: Text(context.l10n.text('Save')),
       ),
     ],
   );

@@ -118,14 +118,16 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Project information',
+                                  context.l10n.text('Project information'),
                                   style: Theme.of(
                                     context,
                                   ).textTheme.headlineMedium,
                                 ),
                                 const SizedBox(height: AppSpacing.xs),
                                 Text(
-                                  'Set up the context for this certificate-issuing project. You can configure templates and data next.',
+                                  context.l10n.text(
+                                    'Set up the context for this certificate-issuing project. You can configure templates and data next.',
+                                  ),
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(
                                         color: AppColors.textSecondary,
@@ -189,7 +191,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           ),
                           const SizedBox(height: AppSpacing.lg),
                           Text(
-                            'Certificate type',
+                            context.l10n.text('Certificate type'),
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: AppSpacing.xs),
@@ -221,7 +223,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                                             : Icons.circle_outlined,
                                         size: 16,
                                       ),
-                                      label: Text(type.value),
+                                      label: Text(context.l10n.text(type.value)),
                                       selected: _projectType == type.key,
                                       onSelected: (_) => setState(
                                         () => _projectType = type.key,
@@ -244,14 +246,16 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               AppSecondaryButton(
-                                label: 'Cancel',
+                                label: context.l10n.text('Cancel'),
                                 onPressed: _isSaving
                                     ? null
                                     : () => Navigator.of(context).pop(),
                               ),
                               const SizedBox(width: AppSpacing.md),
                               AppPrimaryButton(
-                                label: _isSaving ? 'Creating...' : 'Continue',
+                                label: _isSaving
+                                    ? context.l10n.text('Creating...')
+                                    : context.l10n.text('Continue'),
                                 icon: _isSaving ? null : Icons.arrow_forward,
                                 onPressed: _isSaving ? null : _create,
                               ),

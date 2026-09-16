@@ -1,9 +1,8 @@
 import '../../../../config/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/database/app_database.dart';
-import '../../../../core/database/database_tables.dart';
-import '../../../../core/files/certificate_artifact_store.dart';
 import '../../../../core/security/keys/institution_key_manager.dart';
 import '../../../../core/security/keys/project_key_manager.dart';
 import '../../../../shared/themes/app_spacing.dart';
@@ -11,6 +10,8 @@ import '../../../../shared/widgets/design_system.dart';
 import '../../data/repositories/project_repository_impl.dart';
 import '../../domain/entities/project.dart';
 import '../../domain/usecases/create_project.dart';
+import '../../domain/usecases/delete_project.dart';
+import '../bloc/projects_library_bloc.dart';
 import '../../../certificate_generation/presentation/screens/certificate_generation_screen.dart';
 import 'create_project_screen.dart';
 import 'project_details_screen.dart';
@@ -36,7 +37,7 @@ class ProjectsLibraryScreen extends StatefulWidget {
 class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
   late final ProjectRepositoryImpl _repository;
   late final CreateProject _createProject;
-  late Future<List<Project>> _projects;
+  late final ProjectsLibraryBloc _bloc;
 
   @override
   void initState() {
@@ -46,11 +47,18 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
       _repository,
       ProjectKeyManager(widget.keyStorage),
     );
-    _projects = _load();
+    _bloc = ProjectsLibraryBloc(
+      _repository,
+      DeleteProject(_repository, widget.keyStorage),
+      widget.institutionId,
+    )..add(const ProjectsRequested());
   }
 
-  Future<List<Project>> _load() =>
-      _repository.getAll(institutionId: widget.institutionId);
+  @override
+  void dispose() {
+    _bloc.close();
+    super.dispose();
+  }
 
   Future<void> _create() async {
     final project = await Navigator.of(context).push<Project>(
@@ -61,12 +69,7 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
         ),
       ),
     );
-    if (project != null && mounted) {
-      final projects = _load();
-      setState(() {
-        _projects = projects;
-      });
-    }
+    if (project != null && mounted) _bloc.add(const ProjectsRequested());
   }
 
   Future<void> _open(Project project) async {
@@ -84,12 +87,6 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
         ),
       ),
     );
-    if (mounted) {
-      final projects = _load();
-      setState(() {
-        _projects = projects;
-      });
-    }
   }
 
   Future<void> _generate(Project project) async {
@@ -133,66 +130,21 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
     );
     if (confirmed != true) return;
 
-    final certificates = await widget.database.query(
-      DatabaseTables.certificates,
-      where: {'project_id': project.id},
-      columns: ['file_path', 'image_path'],
-    );
-    final artifacts = CertificateArtifactStore();
-    await Future.wait([
-      for (final certificate in certificates)
-        for (final key in ['file_path', 'image_path'])
-          if ((certificate[key] as String?)?.isNotEmpty == true)
-            artifacts.delete(certificate[key]! as String),
-    ]);
-    widget.database.beginBatch();
-    try {
-      await widget.database.deleteWhere(DatabaseTables.verificationRecords, {
-        'project_id': project.id,
-      });
-      await widget.database.deleteWhere(DatabaseTables.certificates, {
-        'project_id': project.id,
-      });
-      final jobs = await widget.database.query(
-        DatabaseTables.generationJobs,
-        where: {'project_id': project.id},
-        columns: ['id'],
-      );
-      await widget.database.deleteWhereIn(
-        DatabaseTables.generationItems,
-        'job_id',
-        jobs.map((job) => job['id']),
-      );
-      await widget.database.deleteWhere(DatabaseTables.generationJobs, {
-        'project_id': project.id,
-      });
-      for (final table in [
-        DatabaseTables.certificateFields,
-        DatabaseTables.certificateLayouts,
-        DatabaseTables.students,
-        DatabaseTables.signatures,
-      ]) {
-        await widget.database.deleteWhere(table, {'project_id': project.id});
-      }
-      await widget.database.delete(
-        DatabaseTables.settings,
-        'mapping:${project.id}',
-      );
-      await widget.database.delete(DatabaseTables.projects, project.id);
-    } finally {
-      await widget.database.endBatch();
-    }
-    await widget.keyStorage.delete('project.${project.id}.key');
-    if (mounted) {
-      setState(() => _projects = _load());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.text('${project.name} deleted'))),
-      );
-    }
+    if (mounted) _bloc.add(ProjectDeleted(project));
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => BlocProvider.value(
+    value: _bloc,
+    child: BlocListener<ProjectsLibraryBloc, ProjectsLibraryState>(
+      listener: (context, state) {
+        if (state.deletedProjectName != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.text('${state.deletedProjectName} deleted'))),
+          );
+        }
+      },
+      child: Scaffold(
     appBar: AppBar(
       title: Text(context.l10n.text('Projects')),
       leading: widget.onClose == null
@@ -207,20 +159,20 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
       icon: const Icon(Icons.add),
       label: Text(context.l10n.text('New project')),
     ),
-    body: FutureBuilder<List<Project>>(
-      future: _projects,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
+    body: BlocBuilder<ProjectsLibraryBloc, ProjectsLibraryState>(
+      builder: (context, state) {
+        if (state.status == ProjectsLibraryStatus.loading ||
+            state.status == ProjectsLibraryStatus.deleting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError) {
+        if (state.status == ProjectsLibraryStatus.failure) {
           return Center(
             child: Text(
-              context.l10n.text('Unable to load projects: ${snapshot.error}'),
+              context.l10n.text('Unable to load projects: ${state.errorMessage}'),
             ),
           );
         }
-        final projects = snapshot.data ?? const <Project>[];
+        final projects = state.projects;
         return Padding(
           padding: const EdgeInsets.all(AppSpacing.xl),
           child: Center(
@@ -230,12 +182,12 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Project workspace',
+                    context.l10n.text('Project workspace'),
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    '${projects.length} persisted project${projects.length == 1 ? '' : 's'}',
+                    context.l10n.text('persistedProjects', {'count': '${projects.length}'}),
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -245,8 +197,8 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text(
-                                  'No projects have been created yet.',
+                                Text(
+                                  context.l10n.text('No projects have been created yet.'),
                                 ),
                                 const SizedBox(height: AppSpacing.md),
                                 FilledButton.icon(
@@ -278,6 +230,8 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
         );
       },
     ),
+      ),
+    ),
   );
 }
 
@@ -306,7 +260,7 @@ class _ProjectTile extends StatelessWidget {
             if (project.courseName?.isNotEmpty == true) project.courseName!,
             if (project.organizationName?.isNotEmpty == true)
               project.organizationName!,
-            'Created ${project.createdAt.day}/${project.createdAt.month}/${project.createdAt.year}',
+            context.l10n.text('createdDate', {'date': '${project.createdAt.day}/${project.createdAt.month}/${project.createdAt.year}'}),
           ].join(' · '),
         ),
         trailing: Row(

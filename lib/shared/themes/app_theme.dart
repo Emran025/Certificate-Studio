@@ -68,47 +68,31 @@ abstract final class AppTheme {
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          minimumSize: const Size(0, 44),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        style: _buttonStyle(
+          textTheme: textTheme,
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.textOnPrimary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.card),
-          ),
-          textStyle: textTheme.labelLarge?.copyWith(inherit: true),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(0, 44),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        style: _buttonStyle(
+          textTheme: textTheme,
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.textOnPrimary,
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.card),
-          ),
-          textStyle: textTheme.labelLarge?.copyWith(inherit: true),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size(0, 44),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        style: _buttonStyle(
+          textTheme: textTheme,
           foregroundColor: AppColors.primary,
           side: const BorderSide(color: AppColors.primary),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.card),
-          ),
-          textStyle: textTheme.labelLarge?.copyWith(inherit: true),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
+        style: _buttonStyle(
+          textTheme: textTheme,
           foregroundColor: AppColors.primary,
-          minimumSize: const Size(0, 44),
-          textStyle: textTheme.labelLarge?.copyWith(inherit: true),
         ),
       ),
       dividerTheme: const DividerThemeData(
@@ -191,6 +175,38 @@ abstract final class AppTheme {
     ).apply(
       bodyColor: AppColors.textPrimary,
       displayColor: AppColors.textPrimary,
+      fontFamily: 'Cairo',
+    );
+  }
+
+  static ButtonStyle _buttonStyle({
+    required TextTheme textTheme,
+    Color? backgroundColor,
+    Color? foregroundColor,
+    BorderSide? side,
+    double? elevation,
+  }) {
+    return ButtonStyle(
+      minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
+      padding: const WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      ),
+      shape: WidgetStatePropertyAll(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
+      ),
+      textStyle: WidgetStatePropertyAll(
+        textTheme.labelLarge?.copyWith(inherit: false),
+      ),
+      backgroundColor: backgroundColor != null
+          ? WidgetStatePropertyAll(backgroundColor)
+          : null,
+      foregroundColor: foregroundColor != null
+          ? WidgetStatePropertyAll(foregroundColor)
+          : null,
+      side: side != null ? WidgetStatePropertyAll(side) : null,
+      elevation: elevation != null ? WidgetStatePropertyAll(elevation) : null,
     );
   }
 

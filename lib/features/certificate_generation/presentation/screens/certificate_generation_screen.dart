@@ -111,12 +111,12 @@ class _CertificateGenerationScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Generate certificates',
+                context.l10n.text('Generate certificates'),
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Create signed PDF and high-resolution PNG certificates with offline verification records.',
+                context.l10n.text('Create signed PDF and high-resolution PNG certificates with offline verification records.'),
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: AppSpacing.xl),
@@ -131,8 +131,8 @@ class _CertificateGenerationScreenState
                         Expanded(
                           child: Text(
                             _running
-                                ? 'Generating certificates…'
-                                : 'Ready to generate',
+                                ? context.l10n.text('Generating certificates…')
+                                : context.l10n.text('Ready to generate'),
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                         ),
@@ -161,11 +161,11 @@ class _CertificateGenerationScreenState
                       Row(
                         children: [
                           _Metric(
-                            label: 'Generated',
+                            label: context.l10n.text('Generated'),
                             value: '${result.generated}',
                           ),
-                          _Metric(label: 'Failed', value: '${result.failed}'),
-                          _Metric(label: 'Total', value: '${result.total}'),
+                          _Metric(label: context.l10n.text('Failed'), value: '${result.failed}'),
+                          _Metric(label: context.l10n.text('Total'), value: '${result.total}'),
                         ],
                       ),
                       const SizedBox(height: AppSpacing.sm),
@@ -183,7 +183,7 @@ class _CertificateGenerationScreenState
                                     database: widget.database,
                                     keyStorage: widget.keyStorage,
                                     projectId: widget.projectId,
-                                    title: 'Generated certificates',
+                                    title: context.l10n.text('Generated certificates'),
                                   ),
                                 ),
                               ),
@@ -215,8 +215,8 @@ class _CertificateGenerationScreenState
                     Expanded(
                       child: Text(
                         _certificates.isEmpty
-                            ? 'No certificates generated yet. Import recipient data, design the layout, then generate.'
-                            : '${_certificates.length} generated certificate${_certificates.length == 1 ? '' : 's'} available in the library.',
+                            ? context.l10n.text('No certificates generated yet. Import recipient data, design the layout, then generate.')
+                            : context.l10n.text('${_certificates.length} generated certificates available in the library.'),
                       ),
                     ),
                     OutlinedButton(
@@ -228,7 +228,7 @@ class _CertificateGenerationScreenState
                                   database: widget.database,
                                   keyStorage: widget.keyStorage,
                                   projectId: widget.projectId,
-                                  title: 'Generated certificates',
+                                  title: context.l10n.text('Generated certificates'),
                                 ),
                               ),
                             ),
@@ -255,7 +255,7 @@ class _Metric extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(value, style: Theme.of(context).textTheme.headlineSmall),
-        Text(label),
+        Text(context.l10n.text(label)),
       ],
     ),
   );

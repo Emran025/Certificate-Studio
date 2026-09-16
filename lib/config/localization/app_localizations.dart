@@ -19,6 +19,18 @@ class AppLocalizations {
 
   String text(String key, [Map<String, String> args = const {}]) {
     if (isArabic) {
+      if (key == 'signed' || key == 'Signed') return 'موقّعة';
+      if (key == 'draft' || key == 'Draft') return 'مسودة';
+      if (key.endsWith(' selected')) {
+        final count = key.substring(0, key.length - ' selected'.length);
+        return '$count محدد';
+      }
+      if (key.endsWith(' persisted projects') ||
+          key.endsWith(' persisted project')) {
+        final count = key.split(' ').first;
+        return '$count مشروع محفوظ';
+      }
+
       if (key.startsWith('Verification could not be completed: ')) {
         return 'تعذر إكمال التحقق: ${key.substring('Verification could not be completed: '.length)}';
       }
@@ -30,6 +42,58 @@ class AppLocalizations {
       }
       if (key.startsWith('Generation failed: ')) {
         return 'فشل الإنشاء: ${key.substring('Generation failed: '.length)}';
+      }
+      if (key.startsWith('Delete ') && key.endsWith('?')) {
+        final name = key.substring('Delete '.length, key.length - 1);
+        return 'حذف $name؟';
+      }
+      if (key.startsWith('Design · ')) {
+        return 'تصميم · ${key.substring('Design · '.length)}';
+      }
+      if (key.startsWith('Generate · ')) {
+        return 'إنشاء · ${key.substring('Generate · '.length)}';
+      }
+      if (key.startsWith('Export failed: ')) {
+        return 'فشل التصدير: ${key.substring('Export failed: '.length)}';
+      }
+      if (key.endsWith(' records saved')) {
+        final count = key.substring(0, key.length - ' records saved'.length);
+        return '$count سجل محفوظ';
+      }
+      if (key.contains(' recipients processed')) {
+        final match = RegExp(
+          r'(\d+)\s+of\s+(\d+)\s+recipients processed',
+        ).firstMatch(key);
+        if (match != null) {
+          return 'تمت معالجة ${match.group(1)} من ${match.group(2)} مستلم';
+        }
+      }
+      if (key.endsWith(' exported as a ZIP archive.')) {
+        final count = key
+            .substring(0, key.length - ' exported as a ZIP archive.'.length)
+            .replaceAll(' certificates', '')
+            .replaceAll(' certificate', '');
+        return 'تم تصدير $count شهادة كأرشيف ZIP.';
+      }
+      if (key.contains(' generated certificate') &&
+          key.contains('available in the library.')) {
+        final count = key.split(' ').first;
+        return '$count شهادة منشأة متاحة في المكتبة.';
+      }
+      if (key.startsWith('Job ') && key.contains(' · ')) {
+        final parts = key.substring('Job '.length).split(' · ');
+        final statusMap = {
+          'completed': 'مكتمل',
+          'failed': 'فشل',
+          'running': 'قيد التشغيل',
+          'pending': 'قيد الانتظار',
+        };
+        final status = statusMap[parts.last.toLowerCase()] ?? parts.last;
+        return 'المهمة ${parts.first} · $status';
+      }
+      if (RegExp(r'^\d+ persisted project(s)?$').hasMatch(key)) {
+        final count = key.split(' ').first;
+        return '$count مشروع محفوظ';
       }
       if (key.endsWith(' deleted')) {
         return '${key.substring(0, key.length - ' deleted'.length)} تم حذفه';
@@ -44,6 +108,117 @@ class AppLocalizations {
   }
 
   static const _en = <String, String>{
+    'Project workspace': 'Project workspace',
+    'Projectworkspace': 'Projectworkspace',
+    'New project': 'New project',
+    'Import project': 'Import project',
+    'Recent projects': 'Recent projects',
+    'Your workspace': 'Your workspace',
+    'Create project': 'Create project',
+    'Create your first project': 'Create your first project',
+    'Start with project information, then add a template and student data.':
+        'Start with project information, then add a template and student data.',
+    'No projects have been created yet.': 'No projects have been created yet.',
+    'Offline ready': 'Offline ready',
+    'Draft': 'Draft',
+    'Verify certificate': 'Verify certificate',
+    'Use the certificate file itself. Verification runs offline from its embedded security record.':
+        'Use the certificate file itself. Verification runs offline from its embedded security record.',
+    'Certificate file': 'Certificate file',
+    'Select an issued certificate. For PNG/JPG images, the QR code is extracted automatically and the result reports extraction success or failure.':
+        'Select an issued certificate. For PNG/JPG images, the QR code is extracted automatically and the result reports extraction success or failure.',
+    'Select certificate file': 'Select certificate file',
+    'QR verification': 'QR verification',
+    'Scan the QR code with your device and paste its cstudio:// payload here.':
+        'Scan the QR code with your device and paste its cstudio:// payload here.',
+    'QR payload': 'QR payload',
+    'Verify QR payload': 'Verify QR payload',
+    'Certificate ID': 'Certificate ID',
+    'Additional lookup method for certificates already available in this offline workspace.':
+        'Additional lookup method for certificates already available in this offline workspace.',
+    'Verify certificate ID': 'Verify certificate ID',
+    'certificate-…': 'certificate-…',
+    'Certificate library': 'Certificate library',
+    'Export all': 'Export all',
+    'Export all PNG files (ZIP)': 'Export all PNG files (ZIP)',
+    'Export all PDF files (ZIP)': 'Export all PDF files (ZIP)',
+    'Generated certificates': 'Generated certificates',
+    'Browse, preview, verify, and export the actual generated certificate files.':
+        'Browse, preview, verify, and export the actual generated certificate files.',
+    'Search by recipient, certificate ID, or project':
+        'Search by recipient, certificate ID, or project',
+    'signed': 'signed',
+    'Signed': 'Signed',
+    'valid': 'valid',
+    'failed': 'failed',
+    'pending': 'pending',
+    'generating': 'generating',
+    'generated': 'generated',
+    'Recipient unavailable': 'Recipient unavailable',
+    'Certificate preview': 'Certificate preview',
+    'View': 'View',
+    'Export PNG': 'Export PNG',
+    'Export PDF': 'Export PDF',
+    'Export PNG ZIP': 'Export PNG ZIP',
+    'Export PDF ZIP': 'Export PDF ZIP',
+    'No certificates match your search.': 'No certificates match your search.',
+    'No certificates generated yet.': 'No certificates generated yet.',
+    'Field properties': 'Field properties',
+    'Position and size': 'Position and size',
+    'Select a template before designing this certificate.':
+        'Select a template before designing this certificate.',
+    'Import recipient data first so fields can be mapped to columns.':
+        'Import recipient data first so fields can be mapped to columns.',
+    'Unsaved changes': 'Unsaved changes',
+    'Saved': 'Saved',
+    'Saving...': 'Saving...',
+    'Template name': 'Template name',
+    'Background image': 'Background image',
+    'Choose image': 'Choose image',
+    'DPI': 'DPI',
+    'Choose a certificate template': 'Choose a certificate template',
+    'Template library': 'Template library',
+    'Add template': 'Add template',
+    'Use template': 'Use template',
+    'Selected': 'Selected',
+    'In use': 'In use',
+    'Use': 'Use',
+    'Import font': 'Import font',
+    'Font library': 'Font library',
+    'Generate certificates': 'Generate certificates',
+    'Create signed PDF and high-resolution PNG certificates with offline verification records.':
+        'Create signed PDF and high-resolution PNG certificates with offline verification records.',
+    'Ready to generate': 'Ready to generate',
+    'Generating certificates…': 'Generating certificates…',
+    'Open certificate library': 'Open certificate library',
+    'Certificate is authentic': 'Certificate is authentic',
+    'The signature and document hash are valid.':
+        'The signature and document hash are valid.',
+    'The requested file is unavailable.': 'The requested file is unavailable.',
+    'Certificate exported successfully.': 'Certificate exported successfully.',
+    'No generated files were available to export.':
+        'No generated files were available to export.',
+    'Choose file name field': 'Choose file name field',
+    'Field used for the exported file name':
+        'Field used for the exported file name',
+    'Verification QR': 'Verification QR',
+    'Set up your institution': 'Set up your institution',
+    'Continue to workspace': 'Continue to workspace',
+    'Add student data': 'Add student data',
+    'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.':
+        'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.',
+    'Paste table data': 'Paste table data',
+    'Choose Excel file': 'Choose Excel file',
+    'Paste from clipboard': 'Paste from clipboard',
+    'Import data': 'Import data',
+    'Data preview': 'Data preview',
+    'No recipient data yet. Import a table to continue to certificate design.':
+        'No recipient data yet. Import a table to continue to certificate design.',
+    'Certificate type': 'Certificate type',
+    'Creating...': 'Creating...',
+    'Create new project': 'Create new project',
+    'Delete project': 'Delete project',
+
     'localWorkspaceUnavailable': 'Local workspace is unavailable.',
     'home': 'Home',
     'projects': 'Projects',
@@ -86,37 +261,22 @@ class AppLocalizations {
     'continue': 'Continue',
     'back': 'Back',
     'persistedFonts': '{count} persisted fonts available to projects.',
-    'Add student data': 'Add student data',
-    'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.':
-        'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.',
-    'Choose Excel file': 'Choose Excel file',
-    'Paste from clipboard': 'Paste from clipboard',
-    'Saving...': 'Saving...',
-    'Import data': 'Import data',
-    'Data preview': 'Data preview',
-    'No recipient data yet. Import a table to continue to certificate design.':
-        'No recipient data yet. Import a table to continue to certificate design.',
-    'Set up your institution': 'Set up your institution',
     'This information is used to identify your certificates and verification records.':
         'This information is used to identify your certificates and verification records.',
     'A private institution key will be generated and kept behind secure storage. It is never displayed or written into the project package.':
         'A private institution key will be generated and kept behind secure storage. It is never displayed or written into the project package.',
-    'Continue to workspace': 'Continue to workspace',
     'Institution name is required.': 'Institution name is required.',
     'Project information': 'Project information',
     'Set up the context for this certificate-issuing project. You can configure templates and data next.':
         'Set up the context for this certificate-issuing project. You can configure templates and data next.',
     'Project name is required.': 'Project name is required.',
-    'Certificate type': 'Certificate type',
     'Training': 'Training',
     'Achievement': 'Achievement',
     'Participation': 'Participation',
     'Custom': 'Custom',
-    'Creating...': 'Creating...',
     'Continue': 'Continue',
     'Configure this project, then design and generate certificates.':
         'Configure this project, then design and generate certificates.',
-    'Project workspace': 'Project workspace',
     'Choose the certificate background.': 'Choose the certificate background.',
     'Import or paste recipient data.': 'Import or paste recipient data.',
     'Choose the font available to this project.':
@@ -138,27 +298,19 @@ class AppLocalizations {
     'Not provided': 'Not provided',
     'Certificate template': 'Certificate template',
     'Template image unavailable': 'Template image unavailable',
-    'Search by recipient, certificate ID, or project':
-        'Search by recipient, certificate ID, or project',
     'Please select a PDF, PNG, JPG, or JPEG certificate.':
         'Please select a PDF, PNG, JPG, or JPEG certificate.',
     'Create and manage your certificates':
         'Create and manage your certificates',
     'Failed to load projects. Please try again.':
         'Failed to load projects. Please try again.',
-    'Create your first project': 'Create your first project',
-    'Start with project information, then add a template and student data.':
-        'Start with project information, then add a template and student data.',
     'projectUpdated': '{course}  •  Updated {date}',
     'Certificate project': 'Certificate project',
     'persistedProjects': '{count} persisted projects',
     'createdDate': 'Created {date}',
-    'No projects have been created yet.': 'No projects have been created yet.',
     'This permanently removes the project, recipient data, design, generated certificates, verification records, and project key.':
         'This permanently removes the project, recipient data, design, generated certificates, verification records, and project key.',
     'tableDataExample': 'Field 1\tField 2\tField 3\nValue 1\tValue 2\tValue 3',
-    'Choose a certificate template': 'Choose a certificate template',
-    'Template library': 'Template library',
     'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.':
         'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.',
     'Browse persisted certificate backgrounds or import a new template.':
@@ -166,7 +318,6 @@ class AppLocalizations {
     'No templates saved yet. Add a PNG, JPG, or WEBP background image to continue.':
         'No templates saved yet. Add a PNG, JPG, or WEBP background image to continue.',
     'File not found at saved path': 'File not found at saved path',
-    'Selected': 'Selected',
     'Required': 'Required',
     'Valid certificate': 'Valid certificate',
     'Integrity compromised': 'Integrity compromised',
@@ -192,9 +343,126 @@ class AppLocalizations {
     'The exported file was not written.': 'The exported file was not written.',
     'SQLCipher persistence is not available on Flutter Web.':
         'SQLCipher persistence is not available on Flutter Web.',
+    'e.g. Al-Noor Academy': 'e.g. Al-Noor Academy',
+    'e.g. Flutter Advanced Course 2026': 'e.g. Flutter Advanced Course 2026',
+    'e.g. Flutter Advanced': 'e.g. Flutter Advanced',
+    'No certificates generated yet. Import recipient data, design the layout, then generate.':
+        'No certificates generated yet. Import recipient data, design the layout, then generate.',
+    'Choose file': 'Choose file',
   };
 
   static const _ar = <String, String>{
+    'Project workspace': 'مساحة عمل المشروع',
+    'Projectworkspace': 'مساحة عمل المشروع',
+    'New project': 'مشروع جديد',
+    'Import project': 'استيراد مشروع',
+    'Recent projects': 'المشاريع الأخيرة',
+    'Your workspace': 'مساحة عملك',
+    'Create project': 'إنشاء مشروع',
+    'Create your first project': 'أنشئ مشروعك الأول',
+    'Start with project information, then add a template and student data.':
+        'ابدأ بمعلومات المشروع، ثم أضف قالبًا وبيانات الطلاب.',
+    'No projects have been created yet.': 'لم يتم إنشاء أي مشاريع بعد.',
+    'Offline ready': 'جاهز للعمل دون اتصال',
+    'Draft': 'مسودة',
+    'Verify certificate': 'التحقق من الشهادة',
+    'Use the certificate file itself. Verification runs offline from its embedded security record.':
+        'استخدم ملف الشهادة نفسه. يعمل التحقق دون اتصال اعتمادًا على سجل الأمان المضمّن.',
+    'Certificate file': 'ملف الشهادة',
+    'Select an issued certificate. For PNG/JPG images, the QR code is extracted automatically and the result reports extraction success or failure.':
+        'اختر شهادة صادرة. لصور PNG/JPG، يُستخرج رمز QR تلقائيًا ويعرض تقرير نجاح أو فشل الاستخراج.',
+    'Select certificate file': 'اختيار ملف الشهادة',
+    'QR verification': 'التحقق عبر رمز QR',
+    'Scan the QR code with your device and paste its cstudio:// payload here.':
+        'امسح رمز QR بجهازك والصق بيانات cstudio:// هنا.',
+    'QR payload': 'بيانات QR',
+    'Verify QR payload': 'التحقق من بيانات QR',
+    'Certificate ID': 'معرّف الشهادة',
+    'Additional lookup method for certificates already available in this offline workspace.':
+        'طريقة بحث إضافية للشهادات المتاحة في مساحة العمل غير المتصلة.',
+    'Verify certificate ID': 'التحقق من معرّف الشهادة',
+    'certificate-…': 'certificate-…',
+    'Certificate library': 'مكتبة الشهادات',
+    'Export all': 'تصدير الكل',
+    'Export all PNG files (ZIP)': 'تصدير جميع ملفات PNG (ZIP)',
+    'Export all PDF files (ZIP)': 'تصدير جميع ملفات PDF (ZIP)',
+    'Generated certificates': 'الشهادات المنشأة',
+    'Browse, preview, verify, and export the actual generated certificate files.':
+        'استعراض ومعاينة والتحقق وتصدير ملفات الشهادات المنشأة.',
+    'Search by recipient, certificate ID, or project':
+        'البحث بالمستلم أو معرّف الشهادة أو المشروع',
+    'signed': 'موقّعة',
+    'Signed': 'موقّعة',
+    'valid': 'صالحة',
+    'failed': 'فشل',
+    'pending': 'قيد الانتظار',
+    'generating': 'جارٍ الإنشاء',
+    'generated': 'تم الإنشاء',
+    'Recipient unavailable': 'المستلم غير متوفر',
+    'Certificate preview': 'معاينة الشهادة',
+    'View': 'عرض',
+    'Export PNG': 'تصدير PNG',
+    'Export PDF': 'تصدير PDF',
+    'Export PNG ZIP': 'تصدير PNG ZIP',
+    'Export PDF ZIP': 'تصدير PDF ZIP',
+    'No certificates match your search.': 'لا توجد شهادات تطابق بحثك.',
+    'No certificates generated yet.': 'لم يتم إنشاء أي شهادات بعد.',
+    'Field properties': 'خصائص الحقل',
+    'Position and size': 'الموضع والحجم',
+    'Select a template before designing this certificate.':
+        'اختر قالبًا قبل تصميم هذه الشهادة.',
+    'Import recipient data first so fields can be mapped to columns.':
+        'استورد بيانات المستلمين أولاً لربط الحقول بالأعمدة.',
+    'Unsaved changes': 'تغييرات غير محفوظة',
+    'Saved': 'تم الحفظ',
+    'Saving...': 'جارٍ الحفظ...',
+    'Template name': 'اسم القالب',
+    'Background image': 'صورة الخلفية',
+    'Choose image': 'اختيار صورة',
+    'DPI': 'دقة العرض (DPI)',
+    'Choose a certificate template': 'اختر قالب شهادة',
+    'Template library': 'مكتبة القوالب',
+    'Add template': 'إضافة قالب',
+    'Use template': 'استخدام القالب',
+    'Selected': 'محدد',
+    'In use': 'قيد الاستخدام',
+    'Use': 'استخدام',
+    'Import font': 'استيراد خط',
+    'Font library': 'مكتبة الخطوط',
+    'Generate certificates': 'إنشاء الشهادات',
+    'Create signed PDF and high-resolution PNG certificates with offline verification records.':
+        'أنشئ شهادات PDF موقعة وصور PNG عالية الدقة مع سجلات تحقق دون اتصال.',
+    'Ready to generate': 'جاهز للإنشاء',
+    'Generating certificates…': 'جارٍ إنشاء الشهادات…',
+    'Open certificate library': 'فتح مكتبة الشهادات',
+    'Certificate is authentic': 'الشهادة أصلية وموثقة',
+    'The signature and document hash are valid.':
+        'التوقيع الرقمي وتجزئة المستند صالحان.',
+    'The requested file is unavailable.': 'الملف المطلوب غير متاح.',
+    'Certificate exported successfully.': 'تم تصدير الشهادة بنجاح.',
+    'No generated files were available to export.':
+        'لا توجد ملفات منشأة متاحة للتصدير.',
+    'Choose file name field': 'اختيار حقل اسم الملف',
+    'Field used for the exported file name':
+        'الحقل المستخدم لتسمية الملف المُصدّر',
+    'Verification QR': 'رمز QR للتحقق',
+    'Set up your institution': 'إعداد المؤسسة',
+    'Continue to workspace': 'المتابعة إلى مساحة العمل',
+    'Add student data': 'إضافة بيانات الطلاب',
+    'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.':
+        'استورد ملف ‎.xlsx أو الصق جدولًا. سيصبح الصف الأول أسماء الأعمدة.',
+    'Paste table data': 'لصق بيانات الجدول',
+    'Choose Excel file': 'اختيار ملف Excel',
+    'Paste from clipboard': 'لصق من الحافظة',
+    'Import data': 'استيراد البيانات',
+    'Data preview': 'معاينة البيانات',
+    'No recipient data yet. Import a table to continue to certificate design.':
+        'لا توجد بيانات مستلمين بعد. استورد جدولًا للمتابعة إلى تصميم الشهادة.',
+    'Certificate type': 'نوع الشهادة',
+    'Creating...': 'جارٍ الإنشاء...',
+    'Create new project': 'إنشاء مشروع جديد',
+    'Delete project': 'حذف المشروع',
+
     'localWorkspaceUnavailable': 'مساحة العمل المحلية غير متاحة.',
     'home': 'الرئيسية',
     'projects': 'المشاريع',
@@ -240,7 +508,6 @@ class AppLocalizations {
     'Arabic name': 'الاسم بالعربية',
     'Back to workspace': 'العودة إلى مساحة العمل',
     'Certificate': 'الشهادة',
-    'Choose Excel file': 'اختيار ملف Excel',
     'Contact information': 'معلومات التواصل',
     'Course': 'الدورة',
     'Course / project': 'الدورة / المشروع',
@@ -251,7 +518,6 @@ class AppLocalizations {
     'Design': 'التصميم',
     'Digital signature': 'التوقيع الرقمي',
     'Document hash': 'تجزئة المستند',
-    'Draft': 'مسودة',
     'Email, phone, or website': 'البريد الإلكتروني أو الهاتف أو الموقع',
     'English name': 'الاسم بالإنجليزية',
     'Failed': 'فشل',
@@ -261,7 +527,6 @@ class AppLocalizations {
     'Generate': 'إنشاء',
     'Generate and create verification records': 'إنشاء سجلات التحقق',
     'Generated': 'تم الإنشاء',
-    'Generated certificates': 'الشهادات المنشأة',
     'Height': 'الارتفاع',
     'Identifier': 'المعرّف',
     'Institution': 'المؤسسة',
@@ -271,12 +536,8 @@ class AppLocalizations {
     'Issue date': 'تاريخ الإصدار',
     'Optional project notes': 'ملاحظات المشروع الاختيارية',
     'Organization': 'الجهة',
-    'Paste from clipboard': 'لصق من الحافظة',
-    'Paste table data': 'لصق بيانات الجدول',
     'Project name *': 'اسم المشروع *',
-    'Project workspace': 'مساحة عمل المشروع',
     'QR extraction': 'استخراج QR',
-    'Recent projects': 'المشاريع الأخيرة',
     'Recipient': 'المستلم',
     'Redo': 'إعادة',
     'Refresh': 'تحديث',
@@ -287,8 +548,6 @@ class AppLocalizations {
     'Text alignment': 'محاذاة النص',
     'Text color (#RRGGBB)': 'لون النص (#RRGGBB)',
     'Text direction': 'اتجاه النص',
-    'Use template': 'استخدام القالب',
-    'View': 'عرض',
     'Total': 'الإجمالي',
     'Type': 'النوع',
     'Undo': 'تراجع',
@@ -298,9 +557,6 @@ class AppLocalizations {
     'Add a field from imported data to start designing.':
         'أضف حقلًا من البيانات المستوردة لبدء التصميم.',
     'Add data field': 'إضافة حقل بيانات',
-    'Add template': 'إضافة قالب',
-    'Additional lookup method for certificates already available in this offline workspace.':
-        'طريقة بحث إضافية للشهادات المتاحة في مساحة العمل غير المتصلة.',
     'Bold': 'عريض',
     'Browse': 'استعراض',
     'Center': 'توسيط',
@@ -308,60 +564,36 @@ class AppLocalizations {
     'Delete field': 'حذف الحقل',
     'Elements': 'العناصر',
     'Export': 'تصدير',
-    'Export PDF': 'تصدير PDF',
-    'Export PNG': 'تصدير PNG',
-    'Font library': 'مكتبة الخطوط',
-    'Import font': 'استيراد خط',
     'Italic': 'مائل',
     'Layers': 'الطبقات',
     'Left': 'يسار',
     'No fonts have been imported yet.': 'لم يتم استيراد أي خطوط بعد.',
-    'Open certificate library': 'فتح مكتبة الشهادات',
     'QR code': 'رمز QR',
     'RTL': 'من اليمين إلى اليسار',
     'LTR': 'من اليسار إلى اليمين',
     'Right': 'يمين',
-    'Scan the QR code with your device and paste its cstudio:// payload here.':
-        'امسح رمز QR بجهازك والصق بيانات cstudio:// هنا.',
     'Select a field to edit its properties.': 'اختر حقلًا لتعديل خصائصه.',
     'Select a field': 'اختيار حقل',
     'Template image unavailable': 'صورة القالب غير متاحة',
-    'Use the certificate file itself. Verification runs offline from its embedded security record.':
-        'استخدم ملف الشهادة نفسه. يعمل التحقق دون اتصال اعتمادًا على سجل الأمان المضمّن.',
     'X': 'س',
     'Y': 'ص',
-    'Verify certificate': 'التحقق من الشهادة',
-    'Certificate file': 'ملف الشهادة',
-    'QR verification': 'التحقق عبر رمز QR',
     'Arabic text keeps its original Unicode characters. If a selected font misses a glyph, the preview and export use the next available fallback font.':
         'يحتفظ النص العربي بمحارف Unicode الأصلية. إذا كان الخط المحدد لا يدعم رمزًا، فسيستخدم العرض والتصدير خطًا احتياطيًا مناسبًا.',
     'persistedFonts': '{count} خط محفوظ متاح للمشاريع.',
-    'Add student data': 'إضافة بيانات الطلاب',
-    'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.':
-        'استورد ملف ‎.xlsx أو الصق جدولًا. سيصبح الصف الأول أسماء الأعمدة.',
 
-    'Saving...': 'جارٍ الحفظ...',
-    'Import data': 'استيراد البيانات',
-    'Data preview': 'معاينة البيانات',
-    'No recipient data yet. Import a table to continue to certificate design.':
-        'لا توجد بيانات مستلمين بعد. استورد جدولًا للمتابعة إلى تصميم الشهادة.',
-    'Set up your institution': 'إعداد المؤسسة',
     'This information is used to identify your certificates and verification records.':
         'تُستخدم هذه المعلومات للتعريف بشهاداتك وسجلات التحقق.',
     'A private institution key will be generated and kept behind secure storage. It is never displayed or written into the project package.':
         'سيتم إنشاء مفتاح خاص بالمؤسسة وحفظه في تخزين آمن. لن يتم عرضه أو كتابته داخل حزمة المشروع.',
-    'Continue to workspace': 'المتابعة إلى مساحة العمل',
     'Institution name is required.': 'اسم المؤسسة مطلوب.',
     'Project information': 'معلومات المشروع',
     'Set up the context for this certificate-issuing project. You can configure templates and data next.':
         'حدّد سياق مشروع إصدار الشهادات. يمكنك إعداد القوالب والبيانات لاحقًا.',
     'Project name is required.': 'اسم المشروع مطلوب.',
-    'Certificate type': 'نوع الشهادة',
     'Training': 'تدريب',
     'Achievement': 'إنجاز',
     'Participation': 'مشاركة',
     'Custom': 'مخصص',
-    'Creating...': 'جارٍ الإنشاء...',
     'Continue': 'متابعة',
     'Configure this project, then design and generate certificates.':
         'اضبط هذا المشروع ثم صمّم الشهادات وأنشئها.',
@@ -383,27 +615,20 @@ class AppLocalizations {
     'Valid Ed25519 signature': 'توقيع Ed25519 صالح',
     'Not provided': 'غير متوفر',
     'Certificate template': 'قالب الشهادة',
-    'Search by recipient, certificate ID, or project':
-        'البحث بالمستلم أو معرّف الشهادة أو المشروع',
     'Please select a PDF, PNG, JPG, or JPEG certificate.':
         'يرجى اختيار شهادة بصيغة PDF أو PNG أو JPG أو JPEG.',
     'Create and manage your certificates': 'أنشئ شهاداتك وأدرها بسهولة',
     'Failed to load projects. Please try again.':
         'تعذر تحميل المشاريع. يرجى المحاولة مرة أخرى.',
-    'Create your first project': 'أنشئ مشروعك الأول',
-    'Start with project information, then add a template and student data.':
-        'ابدأ بمعلومات المشروع، ثم أضف قالبًا وبيانات الطلاب.',
     'projectUpdated': '{course}  •  آخر تحديث {date}',
     'Certificate project': 'مشروع شهادة',
     'persistedProjects': '{count} مشروع محفوظ',
     'createdDate': 'تاريخ الإنشاء {date}',
-    'No projects have been created yet.': 'لم يتم إنشاء أي مشاريع بعد.',
     'This permanently removes the project, recipient data, design, generated certificates, verification records, and project key.':
         'سيؤدي هذا إلى حذف المشروع وبيانات المستلمين والتصميم والشهادات المنشأة وسجلات التحقق ومفتاح المشروع نهائيًا.',
     'tableDataExample':
         'الحقل 1\tالحقل 2\tالحقل 3\nالقيمة 1\tالقيمة 2\tالقيمة 3',
-    'Choose a certificate template': 'اختر قالب شهادة',
-    'Template library': 'مكتبة القوالب',
+
     'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.':
         'اختر صورة خلفية من جهازك، واعرضها ثم استخدمها كلوحة شهادة للمشروع.',
     'Browse persisted certificate backgrounds or import a new template.':
@@ -411,7 +636,6 @@ class AppLocalizations {
     'No templates saved yet. Add a PNG, JPG, or WEBP background image to continue.':
         'لا توجد قوالب محفوظة بعد. أضف صورة خلفية بصيغة PNG أو JPG أو WEBP للمتابعة.',
     'File not found at saved path': 'لم يتم العثور على الملف في المسار المحفوظ',
-    'Selected': 'محدد',
     'Required': 'مطلوب',
     'Valid certificate': 'شهادة صالحة',
     'Integrity compromised': 'تم اكتشاف خلل في سلامة البيانات',
@@ -436,6 +660,12 @@ class AppLocalizations {
     'The exported file was not written.': 'تعذر كتابة الملف المُصدّر.',
     'SQLCipher persistence is not available on Flutter Web.':
         'تخزين SQLCipher غير متاح على Flutter Web.',
+    'e.g. Al-Noor Academy': 'مثال: أكاديمية النور',
+    'e.g. Flutter Advanced Course 2026': 'مثال: دورة فلاتر المتقدمة 2026',
+    'e.g. Flutter Advanced': 'مثال: فلاتر متقدم',
+    'No certificates generated yet. Import recipient data, design the layout, then generate.':
+        'لم يتم إنشاء أي شهادات بعد. استورد بيانات المستلمين وصمم المخطط ثم أنشئ الشهادات.',
+    'Choose file': 'اختيار ملف',
   };
 }
 

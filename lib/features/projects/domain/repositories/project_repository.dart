@@ -5,4 +5,5 @@ abstract interface class ProjectRepository {
   Future<Project?> getById(String id);
   Future<Project> save(Project project);
   Future<void> delete(String id);
+  Future<void> deleteCascade(String id);
 }

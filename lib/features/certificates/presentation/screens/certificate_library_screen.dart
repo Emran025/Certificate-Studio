@@ -1,11 +1,10 @@
 import '../../../../config/localization/app_localizations.dart';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/database/app_database.dart';
-import '../../../../core/database/database_tables.dart';
 import '../../../../core/files/certificate_artifact_store.dart';
 import '../../../../core/security/keys/institution_key_manager.dart';
 import '../../../../shared/themes/app_colors.dart';
@@ -13,6 +12,10 @@ import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
 import '../../../verification/domain/certificate_verification_service.dart';
 import '../../domain/certificate_export_service.dart';
+import '../../data/repositories/certificate_repository_impl.dart';
+import '../../domain/entities/certificate_record.dart';
+import '../../domain/usecases/get_certificates.dart';
+import '../bloc/certificate_library_bloc.dart';
 
 class CertificateLibraryScreen extends StatefulWidget {
   const CertificateLibraryScreen({
@@ -34,7 +37,7 @@ class CertificateLibraryScreen extends StatefulWidget {
 }
 
 class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
-  late Future<List<_LibraryCertificate>> _certificates;
+  late final CertificateLibraryBloc _certificatesBloc;
   final CertificateExportService _exporter = CertificateExportService();
   String _query = '';
   final Set<String> _selected = {};
@@ -42,33 +45,19 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
   @override
   void initState() {
     super.initState();
-    _certificates = _loadCertificates();
+    _certificatesBloc = CertificateLibraryBloc(
+      GetCertificates(CertificateRepositoryImpl(widget.database)),
+      widget.projectId,
+    )..add(const CertificatesRequested());
   }
 
-  Future<List<_LibraryCertificate>> _loadCertificates() async {
-    final rows = await widget.database.query(
-      DatabaseTables.certificates,
-      where: widget.projectId == null
-          ? const {}
-          : {'project_id': widget.projectId},
-    );
-    final result = <_LibraryCertificate>[];
-    for (final row in rows.reversed) {
-      final students = await widget.database.query(
-        DatabaseTables.students,
-        where: {'id': row['student_id']},
-      );
-      result.add(_LibraryCertificate(row, students.firstOrNull));
-    }
-    return result;
+  @override
+  void dispose() {
+    _certificatesBloc.close();
+    super.dispose();
   }
 
-  void _refresh() {
-    final certificates = _loadCertificates();
-    setState(() {
-      _certificates = certificates;
-    });
-  }
+  void _refresh() => _certificatesBloc.add(const CertificatesRequested());
 
   Future<void> _verify(_LibraryCertificate certificate) async {
     final result = await CertificateVerificationService(
@@ -281,7 +270,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(widget.title),
+      title: Text(context.l10n.text(widget.title)),
       actions: [
         IconButton(
           onPressed: _refresh,
@@ -290,22 +279,23 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
         ),
       ],
     ),
-    body: FutureBuilder<List<_LibraryCertificate>>(
-      future: _certificates,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
+    body: BlocBuilder<CertificateLibraryBloc, CertificateLibraryState>(
+      bloc: _certificatesBloc,
+      builder: (context, state) {
+        if (state.status == CertificateLibraryStatus.loading ||
+            state.status == CertificateLibraryStatus.initial) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError) {
+        if (state.status == CertificateLibraryStatus.failure) {
           return Center(
             child: Text(
               context.l10n.text(
-                'Unable to load certificates: ${snapshot.error}',
+                'Unable to load certificates: ${state.errorMessage}',
               ),
             ),
           );
         }
-        final all = snapshot.data ?? const <_LibraryCertificate>[];
+        final all = state.certificates;
         final certificates = all
             .where(
               (certificate) =>
@@ -327,12 +317,14 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Generated certificates',
+                              context.l10n.text('Generated certificates'),
                               style: Theme.of(context).textTheme.headlineMedium,
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             Text(
-                              'Browse, preview, verify, and export the actual generated certificate files.',
+                              context.l10n.text(
+                                'Browse, preview, verify, and export the actual generated certificate files.',
+                              ),
                               style: Theme.of(context).textTheme.bodyLarge,
                             ),
                           ],
@@ -412,8 +404,12 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
                         ? AppSurfaceCard(
                             child: Text(
                               _query.isEmpty
-                                  ? 'No certificates generated yet.'
-                                  : 'No certificates match your search.',
+                                  ? context.l10n.text(
+                                      'No certificates generated yet.',
+                                    )
+                                  : context.l10n.text(
+                                      'No certificates match your search.',
+                                    ),
                             ),
                           )
                         : GridView.builder(
@@ -506,7 +502,7 @@ class _CertificateCard extends StatelessWidget {
                 top: 8,
                 right: 8,
                 child: AppStatusBadge(
-                  label: certificate.status,
+                  label: context.l10n.text(certificate.status),
                   color: AppColors.success,
                   backgroundColor: AppColors.successSurface,
                 ),
@@ -900,65 +896,4 @@ class _ArtifactImage extends StatelessWidget {
   }
 }
 
-class _LibraryCertificate {
-  _LibraryCertificate(this.row, this.student);
-  final Map<String, Object?> row;
-  final Map<String, Object?>? student;
-  String get id => row['id']?.toString() ?? '';
-  String get status => row['status']?.toString() ?? 'unknown';
-  String? get imageReference => row['image_path'] as String?;
-  String? get pdfReference => row['file_path'] as String?;
-  Map<String, dynamic> get data {
-    final rawStudent = student?['data_json'];
-    if (rawStudent is String) {
-      final decoded = jsonDecode(rawStudent);
-      if (decoded is Map) return Map<String, dynamic>.from(decoded);
-    }
-    final rawDocument = row['document_json'];
-    if (rawDocument is String) {
-      final decoded = jsonDecode(rawDocument);
-      final fields = decoded is Map ? decoded['fields'] : null;
-      if (fields is Map) return Map<String, dynamic>.from(fields);
-    }
-    return {};
-  }
-
-  String? valueFor(String field) {
-    final exact = data[field];
-    if (exact != null) return exact.toString();
-    final normalized = field.trim().toLowerCase().replaceAll(
-      RegExp(r'\s+'),
-      '_',
-    );
-    for (final entry in data.entries) {
-      final key = entry.key.trim().toLowerCase().replaceAll(
-        RegExp(r'\s+'),
-        '_',
-      );
-      if (key == normalized && entry.value != null) {
-        return entry.value.toString();
-      }
-    }
-    return null;
-  }
-
-  String get recipient {
-    final raw = student?['data_json'];
-    if (raw is! String) return '';
-    final data = jsonDecode(raw);
-    if (data is! Map) return '';
-    for (final value in data.values) {
-      if (value != null && value.toString().trim().isNotEmpty) {
-        return value.toString();
-      }
-    }
-    return '';
-  }
-
-  String get searchText =>
-      '$id $status ${row['project_id']} $recipient'.toLowerCase();
-}
-
-extension<T> on Iterable<T> {
-  T? get firstOrNull => isEmpty ? null : first;
-}
+typedef _LibraryCertificate = CertificateRecord;

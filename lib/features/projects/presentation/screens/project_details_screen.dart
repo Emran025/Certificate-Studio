@@ -88,7 +88,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                               Text(
                                 project.description?.isNotEmpty == true
                                     ? project.description!
-                                    : 'Configure this project, then design and generate certificates.',
+                                    : context.l10n.text('Configure this project, then design and generate certificates.'),
                                 style: Theme.of(context).textTheme.bodyLarge
                                     ?.copyWith(color: AppColors.textSecondary),
                               ),
@@ -101,7 +101,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 AppSectionHeader(
-                  title: 'Project workspace',
+                  title: context.l10n.text('Projectworkspace'),
                   action: AppStatusBadge(
                     label: (project.settings['project_type'] ?? 'course')
                         .toString()
@@ -222,7 +222,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: AppSpacing.sm),
                             Text(
-                              'Project information',
+                              context.l10n.text('Project information'),
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                           ],
@@ -244,13 +244,13 @@ class ProjectDetailsScreen extends StatelessWidget {
                                   width: itemWidth,
                                   icon: Icons.school_outlined,
                                   label: 'Course',
-                                  value: project.courseName ?? 'Not set',
+                                  value: project.courseName ?? context.l10n.text('Not set'),
                                 ),
                                 _InfoTile(
                                   width: itemWidth,
                                   icon: Icons.business_outlined,
                                   label: 'Organization',
-                                  value: project.organizationName ?? 'Not set',
+                                  value: project.organizationName ?? context.l10n.text('Not set'),
                                 ),
                                 _InfoTile(
                                   width: itemWidth,

@@ -102,7 +102,7 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
     }
     final projectMode = widget.projectId != null;
     return Scaffold(
-      appBar: AppBar(title: Text(projectMode ? 'Certificate template' : 'Templates')),
+      appBar: AppBar(title: Text(context.l10n.text(projectMode ? 'Certificate template' : 'Templates'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Center(
@@ -112,12 +112,12 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  projectMode ? 'Choose a certificate template' : 'Template library',
+                  context.l10n.text(projectMode ? 'Choose a certificate template' : 'Template library'),
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  projectMode ? 'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.' : 'Browse persisted certificate backgrounds or import a new template.',
+                  context.l10n.text(projectMode ? 'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.' : 'Browse persisted certificate backgrounds or import a new template.'),
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -128,9 +128,9 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 if (_templates.isEmpty)
-                  const AppSurfaceCard(
+                  AppSurfaceCard(
                     child: Text(
-                      'No templates saved yet. Add a PNG, JPG, or WEBP background image to continue.',
+                      context.l10n.text('No templates saved yet. Add a PNG, JPG, or WEBP background image to continue.'),
                     ),
                   )
                 else
@@ -204,7 +204,7 @@ class _TemplateCard extends StatelessWidget {
           ),
           if (!exists)
             Text(
-              'File not found at saved path',
+              context.l10n.text('File not found at saved path'),
               style: TextStyle(
                 color: Theme.of(context).colorScheme.error,
                 fontSize: 11,
@@ -214,8 +214,8 @@ class _TemplateCard extends StatelessWidget {
             children: [
               Expanded(
                 child: selected
-                    ? const Text(
-                        'Selected',
+                    ? Text(
+                        context.l10n.text('Selected'),
                         style: TextStyle(color: Colors.green),
                       )
                     : TextButton(

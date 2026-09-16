@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../config/localization/app_localizations.dart';
 import '../themes/app_colors.dart';
 import '../themes/app_spacing.dart';
 
@@ -18,13 +19,13 @@ class AppPrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final child = icon == null
-        ? Text(label)
+        ? Text(context.l10n.text(label))
         : Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 18),
               const SizedBox(width: AppSpacing.xs),
-              Text(label),
+              Text(context.l10n.text(label)),
             ],
           );
     return ElevatedButton(onPressed: onPressed, child: child);
@@ -46,13 +47,13 @@ class AppSecondaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final child = icon == null
-        ? Text(label)
+        ? Text(context.l10n.text(label))
         : Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 18),
               const SizedBox(width: AppSpacing.xs),
-              Text(label),
+              Text(context.l10n.text(label)),
             ],
           );
     return OutlinedButton(onPressed: onPressed, child: child);
@@ -108,7 +109,7 @@ class AppStatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
-        label,
+        context.l10n.text(label),
         style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),
       ),
     );
@@ -126,7 +127,7 @@ class AppSectionHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+          child: Text(context.l10n.text(title), style: Theme.of(context).textTheme.titleLarge),
         ),
         ?action,
       ],

@@ -145,7 +145,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                             ),
                             validator: (value) =>
                                 value == null || value.trim().isEmpty
-                                ? 'Project name is required.'
+                                ? context.l10n.text('Project name is required.')
                                 : null,
                           ),
                           const SizedBox(height: AppSpacing.md),
@@ -217,7 +217,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           if (_errorMessage != null) ...[
                             const SizedBox(height: AppSpacing.md),
                             Text(
-                              _errorMessage!,
+                              context.l10n.text(_errorMessage!),
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: AppColors.error),
                             ),

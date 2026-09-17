@@ -55,19 +55,25 @@ class WorkspaceTransferService {
       where: {'key': 'app.settings'},
     );
     final archive = Archive()
-      ..addFile(_jsonFile(_profileManifest, {
-        'format': _profileFormat,
-        'institution': institutions.first,
-      }))
-      ..addFile(_jsonFile(_profileKeys, {
-        'format': _profileFormat,
-        'institution_public_key': publicKey,
-        'institution_private_key': privateKey,
-      }))
-      ..addFile(_jsonFile(_profileSettings, {
-        'format': _profileFormat,
-        'settings': settings.isEmpty ? null : settings.first,
-      }));
+      ..addFile(
+        _jsonFile(_profileManifest, {
+          'format': _profileFormat,
+          'institution': institutions.first,
+        }),
+      )
+      ..addFile(
+        _jsonFile(_profileKeys, {
+          'format': _profileFormat,
+          'institution_public_key': publicKey,
+          'institution_private_key': privateKey,
+        }),
+      )
+      ..addFile(
+        _jsonFile(_profileSettings, {
+          'format': _profileFormat,
+          'settings': settings.isEmpty ? null : settings.first,
+        }),
+      );
     final encoded = ZipEncoder().encode(archive);
     if (encoded == null || encoded.isEmpty) {
       throw StateError('The institution profile archive could not be created.');
@@ -112,7 +118,10 @@ class WorkspaceTransferService {
     if (derived['public_key'] != publicKey['public_key']) {
       throw const FormatException('The institution key pair does not match.');
     }
-    final institution = _decodeArchiveJson(entries, _profileManifest)['institution'];
+    final institution = _decodeArchiveJson(
+      entries,
+      _profileManifest,
+    )['institution'];
     if (institution is! Map) {
       throw const FormatException('Institution data is missing.');
     }

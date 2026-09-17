@@ -1,4 +1,5 @@
 import '../../../../config/localization/app_localizations.dart';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -451,9 +452,7 @@ class _TemplateDialogState extends State<_TemplateDialog> {
   );
 
   Future<void> _chooseBackground() async {
-    final file = await FilePicker.pickFile(
-      type: FileType.image,
-    );
+    final file = await FilePicker.pickFile(type: FileType.image);
     final path = file?.path;
     if (path == null || path.isEmpty || !mounted) return;
     setState(() {

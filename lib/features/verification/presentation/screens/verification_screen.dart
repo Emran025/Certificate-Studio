@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../config/localization/app_localizations.dart';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -47,9 +48,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   Future<void> _pickCertificate() async {
     // Use FileType.any instead of an image-only picker on web/desktop. The
     // extension is validated here so PDF certificates are selectable too.
-    final picked = await FilePicker.pickFiles(
-      type: FileType.any,
-    );
+    final picked = await FilePicker.pickFiles(type: FileType.any);
     final file = picked.isEmpty ? null : picked.first;
     if (file == null) return;
     final extension = file.name.split('.').last.toLowerCase();
@@ -271,9 +270,8 @@ class _ResultCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(color: color),
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(color: color),
                 ),
               ),
             ],

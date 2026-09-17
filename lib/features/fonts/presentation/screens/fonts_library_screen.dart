@@ -140,150 +140,233 @@ class _FontsLibraryScreenState extends State<FontsLibraryScreen> {
                         icon: const Icon(Icons.upload_file),
                         label: Text(context.l10n.text('Import font')),
                       ),
+                      if (widget.projectId != null)
+                        IconButton(
+                          tooltip: context.l10n.text('Back'),
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: Icon(
+                            context.l10n.text('Back') == 'Back'
+                                ? Icons.arrow_back
+                                : Icons.arrow_forward,
+                          ),
+                        ),
                     ],
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.xl),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _FontPreviewEditor(
-                          controller: _previewController,
-                          bold: _bold,
-                          italic: _italic,
-                          underline: _underline,
-                          onBoldChanged: (value) =>
-                              setState(() => _bold = value),
-                          onItalicChanged: (value) =>
-                              setState(() => _italic = value),
-                          onUnderlineChanged: (value) =>
-                              setState(() => _underline = value),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        Expanded(
-                          child: state.fonts.isEmpty
-                              ? SizedBox(
-                                  width: double.infinity,
-                                  child: AppSurfaceCard(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          context.l10n.text(
-                                            'No fonts have been imported yet.',
-                                          ),
-                                        ),
-                                        const SizedBox(height: AppSpacing.md),
-                                        FilledButton.icon(
-                                          onPressed: _import,
-                                          icon: const Icon(Icons.upload_file),
-                                          label: Text(
-                                            context.l10n.text('Import font'),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              : ListView.separated(
-                                  itemCount: state.fonts.length,
-                                  separatorBuilder: (_, _) =>
-                                      const SizedBox(height: AppSpacing.sm),
-                                  itemBuilder: (_, index) {
-                                    final font = state.fonts[index];
-                                    final id = font.id;
-                                    final selected = id == state.selectedId;
-                                    return AppSurfaceCard(
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: ListTile(
-                                          contentPadding: EdgeInsets.zero,
-                                          leading: const CircleAvatar(
-                                            child: Icon(Icons.text_fields),
-                                          ),
-                                          title: Text(font.name),
-                                          subtitle: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                _previewController.text,
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  fontFamily: font.family,
-                                                  fontSize: 22,
-                                                  fontWeight: _bold
-                                                      ? FontWeight.bold
-                                                      : FontWeight.normal,
-                                                  fontStyle: _italic
-                                                      ? FontStyle.italic
-                                                      : FontStyle.normal,
-                                                  decoration: _underline
-                                                      ? TextDecoration.underline
-                                                      : TextDecoration.none,
-                                                ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact =
+                          constraints.maxWidth < AppBreakpoints.tablet;
+                      final contentPadding = compact
+                          ? const EdgeInsets.all(AppSpacing.sm)
+                          : const EdgeInsets.all(AppSpacing.xl);
+                      return Padding(
+                        padding: contentPadding,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _FontPreviewEditor(
+                              controller: _previewController,
+                              bold: _bold,
+                              italic: _italic,
+                              underline: _underline,
+                              onBoldChanged: (value) =>
+                                  setState(() => _bold = value),
+                              onItalicChanged: (value) =>
+                                  setState(() => _italic = value),
+                              onUnderlineChanged: (value) =>
+                                  setState(() => _underline = value),
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            Expanded(
+                              child: state.fonts.isEmpty
+                                  ? SizedBox(
+                                      width: double.infinity,
+                                      child: AppSurfaceCard(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              context.l10n.text(
+                                                'No fonts have been imported yet.',
                                               ),
-                                              const SizedBox(height: 4),
-                                              Text(
+                                            ),
+                                            const SizedBox(
+                                              height: AppSpacing.md,
+                                            ),
+                                            FilledButton.icon(
+                                              onPressed: _import,
+                                              icon: const Icon(
+                                                Icons.upload_file,
+                                              ),
+                                              label: Text(
                                                 context.l10n.text(
-                                                  '${font.family} · ${font.format.toUpperCase()}\n${font.filePath}',
+                                                  'Import font',
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                          isThreeLine: true,
-                                          trailing: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              if (widget.projectId != null)
-                                                TextButton(
-                                                  onPressed: selected
-                                                      ? null
-                                                      : () => context
-                                                            .read<
-                                                              FontsLibraryBloc
-                                                            >()
-                                                            .add(
-                                                              FontSelected(id),
-                                                            ),
-                                                  child: Text(
-                                                    selected
-                                                        ? context.l10n.text(
-                                                            'In use',
-                                                          )
-                                                        : context.l10n.text(
-                                                            'Use',
-                                                          ),
-                                                  ),
-                                                ),
-                                              IconButton(
-                                                tooltip: context.l10n.text(
-                                                  'Delete',
-                                                ),
-                                                onPressed: () => context
-                                                    .read<FontsLibraryBloc>()
-                                                    .add(FontDeleted(id)),
-                                                icon: const Icon(
-                                                  Icons.delete_outline,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    );
-                                  },
-                                ),
+                                    )
+                                  : ListView.separated(
+                                      itemCount: state.fonts.length,
+                                      separatorBuilder: (_, _) =>
+                                          const SizedBox(height: AppSpacing.sm),
+                                      itemBuilder: (_, index) {
+                                        final font = state.fonts[index];
+                                        final id = font.id;
+                                        final selected = id == state.selectedId;
+                                        return _FontCard(
+                                          font: font,
+                                          previewText: _previewController.text,
+                                          bold: _bold,
+                                          italic: _italic,
+                                          underline: _underline,
+                                          selected: selected,
+                                          compact: compact,
+                                          onUse: widget.projectId == null
+                                              ? null
+                                              : () => context
+                                                    .read<FontsLibraryBloc>()
+                                                    .add(FontSelected(id)),
+                                          onDelete: () => context
+                                              .read<FontsLibraryBloc>()
+                                              .add(FontDeleted(id)),
+                                        );
+                                      },
+                                    ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ),
         );
       },
     ),
   );
+}
+
+class _FontCard extends StatelessWidget {
+  const _FontCard({
+    required this.font,
+    required this.previewText,
+    required this.bold,
+    required this.italic,
+    required this.underline,
+    required this.selected,
+    required this.compact,
+    required this.onUse,
+    required this.onDelete,
+  });
+
+  final FontAsset font;
+  final String previewText;
+  final bool bold;
+  final bool italic;
+  final bool underline;
+  final bool selected;
+  final bool compact;
+  final VoidCallback? onUse;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final previewStyle = TextStyle(
+      fontFamily: font.family,
+      fontSize: compact ? 16 : 22,
+      fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+      fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+      decoration: underline ? TextDecoration.underline : TextDecoration.none,
+    );
+    final actions = <Widget>[
+      if (onUse != null)
+        TextButton(
+          onPressed: selected ? null : onUse,
+          child: Text(
+            selected ? context.l10n.text('In use') : context.l10n.text('Use'),
+          ),
+        ),
+      IconButton(
+        tooltip: context.l10n.text('Delete'),
+        onPressed: onDelete,
+        icon: const Icon(Icons.delete_outline),
+      ),
+    ];
+
+    return AppSurfaceCard(
+      padding: EdgeInsets.all(compact ? AppSpacing.sm : AppSpacing.md),
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const CircleAvatar(
+                      radius: 18,
+                      child: Icon(Icons.text_fields, size: 18),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        font.name,
+                        style: Theme.of(context).textTheme.titleSmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    ...actions,
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  previewText,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: previewStyle,
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  context.l10n.text(
+                    '${font.family} · ${font.format.toUpperCase()}',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            )
+          : Material(
+              color: Colors.transparent,
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const CircleAvatar(child: Icon(Icons.text_fields)),
+                title: Text(font.name),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      previewText,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: previewStyle,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      context.l10n.text(
+                        '${font.family} · ${font.format.toUpperCase()}\n${font.filePath}',
+                      ),
+                    ),
+                  ],
+                ),
+                isThreeLine: true,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: actions,
+                ),
+              ),
+            ),
+    );
+  }
 }
 
 class _FontPreviewEditor extends StatelessWidget {

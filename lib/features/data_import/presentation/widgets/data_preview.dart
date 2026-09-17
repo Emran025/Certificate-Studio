@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/localization/app_localizations.dart';
 import '../../../../shared/themes/app_spacing.dart';
+import '../../../../shared/themes/app_colors.dart';
 import '../../../../shared/widgets/design_system.dart';
 import '../../domain/entities/imported_table.dart';
 
@@ -208,6 +209,25 @@ class DataPreview extends StatelessWidget {
           ),
           LayoutBuilder(
             builder: (context, constraints) {
+              final compact = constraints.maxWidth < AppBreakpoints.tablet;
+              if (compact) {
+                return ListView.separated(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  itemCount: table.rows.take(50).length,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: AppSpacing.sm),
+                  itemBuilder: (context, index) => _MobileStudentCard(
+                    row: table.rows[index],
+                    columns: table.columns,
+                    rowNumber: index + 1,
+                    disabled: disabled,
+                    onEdit: () => _editRow(context, index),
+                    onDelete: () => _deleteRow(index),
+                    onEditColumn: (column) => _editColumn(context, column),
+                    onDeleteColumn: (column) => _deleteColumn(context, column),
+                  ),
+                );
+              }
               final tableWidth =
                   constraints.maxWidth > (table.columns.length * 190.0 + 92.0)
                   ? constraints.maxWidth
@@ -298,6 +318,152 @@ class DataPreview extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _MobileStudentCard extends StatelessWidget {
+  const _MobileStudentCard({
+    required this.row,
+    required this.columns,
+    required this.rowNumber,
+    required this.disabled,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onEditColumn,
+    required this.onDeleteColumn,
+  });
+
+  final Map<String, String> row;
+  final List<String> columns;
+  final int rowNumber;
+  final bool disabled;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final ValueChanged<String> onEditColumn;
+  final ValueChanged<String> onDeleteColumn;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSurfaceCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            color: Theme.of(context).colorScheme.primaryContainer,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    context.l10n.text('Student row {number}', {
+                      'number': '$rowNumber',
+                    }),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: context.l10n.text('Edit student'),
+                  onPressed: disabled ? null : onEdit,
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  visualDensity: VisualDensity.compact,
+                ),
+                IconButton(
+                  tooltip: context.l10n.text('Delete student row'),
+                  onPressed: disabled ? null : onDelete,
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            child: Column(
+              children: [
+                for (var index = 0; index < columns.length; index++) ...[
+                  _MobileStudentField(
+                    column: columns[index],
+                    value: row[columns[index]] ?? '',
+                    disabled: disabled,
+                    onEdit: () => onEditColumn(columns[index]),
+                    onDelete: () => onDeleteColumn(columns[index]),
+                  ),
+                  if (index < columns.length - 1) const Divider(height: 1),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileStudentField extends StatelessWidget {
+  const _MobileStudentField({
+    required this.column,
+    required this.value,
+    required this.disabled,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final String column;
+  final String value;
+  final bool disabled;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final labelStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: context.themeMutedText,
+      fontWeight: FontWeight.w600,
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: 2, child: Text(column, style: labelStyle)),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value.isEmpty ? '—' : value,
+              textAlign: TextAlign.end,
+              softWrap: true,
+            ),
+          ),
+          IconButton(
+            tooltip: context.l10n.text('Edit field'),
+            onPressed: disabled ? null : onEdit,
+            icon: const Icon(Icons.edit_outlined, size: 16),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+          ),
+          IconButton(
+            tooltip: context.l10n.text('Delete field'),
+            onPressed: disabled ? null : onDelete,
+            icon: const Icon(Icons.delete_outline, size: 16),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ColumnHeader extends StatelessWidget {

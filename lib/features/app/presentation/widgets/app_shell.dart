@@ -66,6 +66,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   Project? _activeProject;
   bool _showProjects = false;
   String _selectedNavigation = 'home';
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -213,59 +214,129 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final useDrawer = constraints.maxWidth < AppBreakpoints.desktop;
+        final content = _activeProject != null
+            ? ProjectDetailsScreen(
+                project: _activeProject!,
+                database: widget.database!,
+                keyStorage: widget.keyStorage,
+                onClose: _showHome,
+              )
+            : _showProjects
+            ? ProjectsLibraryScreen(
+                database: widget.database!,
+                institutionId: widget.institution!.id,
+                keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
+                onOpenProject: _openProject,
+                onClose: _showHome,
+              )
+            : _selectedNavigation == 'templates'
+            ? TemplatePickerScreen(database: widget.database!)
+            : _selectedNavigation == 'fonts'
+            ? FontsLibraryScreen(database: widget.database!)
+            : _selectedNavigation == 'certificates'
+            ? CertificateLibraryScreen(
+                database: widget.database!,
+                keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
+              )
+            : _selectedNavigation == 'verification'
+            ? VerificationScreen(
+                database: widget.database!,
+                keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
+              )
+            : _selectedNavigation == 'settings'
+            ? SettingsScreen(
+                database: widget.database!,
+                institutionId: widget.institution!.id,
+                settings: widget.appSettings,
+                keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
+                onSettingsChanged: widget.onSettingsChanged,
+              )
+            : _buildWorkspaceContent();
+        void navigate(VoidCallback? action) {
+          action?.call();
+          if (useDrawer) _scaffoldKey.currentState?.closeDrawer();
+        }
+
+        final navigation = _WorkspaceNavigation(
+          selected: _selectedNavigation,
+          onHome: () => navigate(_showHome),
+          onProjects: () => navigate(_openProjects),
+          onTemplates: () => navigate(_openTemplates),
+          onFonts: () => navigate(_openFonts),
+          onCertificates: () => navigate(_openCertificateLibrary),
+          onVerification: () => navigate(_openVerification),
+          onSettings: () => navigate(_openSettings),
+        );
+
+        return Scaffold(
+          key: _scaffoldKey,
+          drawer: useDrawer ? Drawer(child: SafeArea(child: navigation)) : null,
+          body: SafeArea(
+            child: Column(
+              children: [
+                if (useDrawer)
+                  _CompactWorkspaceHeader(
+                    onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+                  ),
+                Expanded(
+                  child: Row(
+                    children: [
+                      if (!useDrawer) navigation,
+                      Expanded(child: content),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CompactWorkspaceHeader extends StatelessWidget {
+  const _CompactWorkspaceHeader({required this.onOpenDrawer});
+
+  final VoidCallback onOpenDrawer;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      child: Container(
+        height: 64,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: context.themeBorder)),
+        ),
         child: Row(
           children: [
-            _WorkspaceNavigation(
-              selected: _selectedNavigation,
-              onHome: _showHome,
-              onProjects: _openProjects,
-              onTemplates: _openTemplates,
-              onFonts: _openFonts,
-              onCertificates: _openCertificateLibrary,
-              onVerification: _openVerification,
-              onSettings: _openSettings,
+            IconButton(
+              onPressed: onOpenDrawer,
+              tooltip: context.l10n.text('Open navigation'),
+              icon: const Icon(Icons.menu),
             ),
+            const SizedBox(width: AppSpacing.xs),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.input),
+              child: Image.asset(
+                'assets/images/certificate_studio_logo.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: _activeProject != null
-                  ? ProjectDetailsScreen(
-                      project: _activeProject!,
-                      database: widget.database!,
-                      keyStorage: widget.keyStorage,
-                      onClose: _showHome,
-                    )
-                  : _showProjects
-                  ? ProjectsLibraryScreen(
-                      database: widget.database!,
-                      institutionId: widget.institution!.id,
-                      keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
-                      onOpenProject: _openProject,
-                      onClose: _showHome,
-                    )
-                  : _selectedNavigation == 'templates'
-                  ? TemplatePickerScreen(database: widget.database!)
-                  : _selectedNavigation == 'fonts'
-                  ? FontsLibraryScreen(database: widget.database!)
-                  : _selectedNavigation == 'certificates'
-                  ? CertificateLibraryScreen(
-                      database: widget.database!,
-                      keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
-                    )
-                  : _selectedNavigation == 'verification'
-                  ? VerificationScreen(
-                      database: widget.database!,
-                      keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
-                    )
-                  : _selectedNavigation == 'settings'
-                  ? SettingsScreen(
-                      database: widget.database!,
-                      institutionId: widget.institution!.id,
-                      settings: widget.appSettings,
-                      keyStorage: widget.keyStorage ?? InMemoryKeyStorage(),
-                      onSettingsChanged: widget.onSettingsChanged,
-                    )
-                  : _buildWorkspaceContent(),
+              child: Text(
+                context.l10n.text(AppEnvironment.appNameKey),
+                style: Theme.of(context).textTheme.titleMedium,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
@@ -495,24 +566,38 @@ class _WorkspaceContent extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppPrimaryButton(
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final buttons = [
+                      AppPrimaryButton(
                         label: context.l10n.text('newProject'),
                         icon: Icons.add,
                         onPressed: onCreateProject,
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: AppSecondaryButton(
+                      AppSecondaryButton(
                         label: context.l10n.text('importProject'),
                         icon: Icons.file_upload_outlined,
                         onPressed: () {},
                       ),
-                    ),
-                  ],
+                    ];
+                    if (constraints.maxWidth < AppBreakpoints.mobile) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          buttons[0],
+                          const SizedBox(height: AppSpacing.sm),
+                          buttons[1],
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(child: buttons[0]),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(child: buttons[1]),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: AppSpacing.xxl),
                 AppSectionHeader(title: context.l10n.text('recentProjects')),
@@ -525,32 +610,45 @@ class _WorkspaceContent extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xxl),
                 AppSectionHeader(title: context.l10n.text('yourWorkspace')),
                 const SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _MetricCard(
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < AppBreakpoints.tablet;
+                    final cards = [
+                      _MetricCard(
                         icon: Icons.image_outlined,
                         value: metrics.templates.toString(),
                         label: context.l10n.text('templates'),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: _MetricCard(
+                      _MetricCard(
                         icon: Icons.text_fields_outlined,
                         value: metrics.fonts.toString(),
                         label: context.l10n.text('fonts'),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: _MetricCard(
+                      _MetricCard(
                         icon: Icons.workspace_premium_outlined,
                         value: metrics.certificates.toString(),
                         label: context.l10n.text('certificates'),
                       ),
-                    ),
-                  ],
+                    ];
+                    if (compact) {
+                      return Column(
+                        children: [
+                          for (final card in cards) ...[
+                            card,
+                            const SizedBox(height: AppSpacing.md),
+                          ],
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        for (var index = 0; index < cards.length; index++) ...[
+                          if (index > 0) const SizedBox(width: AppSpacing.md),
+                          Expanded(child: cards[index]),
+                        ],
+                      ],
+                    );
+                  },
                 ),
                 if (metricsError != null) ...[
                   const SizedBox(height: AppSpacing.sm),

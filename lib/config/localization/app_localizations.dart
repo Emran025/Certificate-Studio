@@ -252,6 +252,7 @@ class AppLocalizations {
         'Field name must be unique and not empty.',
     'At least one field is required.': 'At least one field is required.',
     'Edit student': 'Edit student',
+    'Student row {number}': 'Student row {number}',
     'Detected fixed values': 'Choose one of the detected values',
     'Value must be between {min} and {max}.':
         'Value must be between {min} and {max}.',
@@ -299,6 +300,7 @@ class AppLocalizations {
     'offlineReady': 'Offline ready',
     'notifications': 'Notifications',
     'verify': 'Verify',
+    'Open navigation': 'Open navigation',
     'newProject': 'New project',
     'importProject': 'Import project',
     'recentProjects': 'Recent projects',
@@ -560,6 +562,7 @@ class AppLocalizations {
         'يجب أن يكون اسم الحقل غير فارغ وفريدًا.',
     'At least one field is required.': 'يجب الإبقاء على حقل واحد على الأقل.',
     'Edit student': 'تعديل بيانات الطالب',
+    'Student row {number}': 'صف الطالب {number}',
     'Detected fixed values': 'اختر إحدى القيم المكتشفة',
     'Value must be between {min} and {max}.':
         'يجب أن تكون القيمة بين {min} و {max}.',
@@ -607,6 +610,7 @@ class AppLocalizations {
     'offlineReady': 'جاهز للعمل دون اتصال',
     'notifications': 'الإشعارات',
     'verify': 'تحقق',
+    'Open navigation': 'فتح قائمة التنقل',
     'newProject': 'مشروع جديد',
     'importProject': 'استيراد مشروع',
     'recentProjects': 'المشاريع الأخيرة',

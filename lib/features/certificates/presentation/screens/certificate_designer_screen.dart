@@ -402,6 +402,44 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final usePanelDrawers = screenWidth < AppBreakpoints.desktop;
+    final compactToolbar = screenWidth < AppBreakpoints.tablet;
+    final elementsPanel = _ElementsPanel(
+      columns: _columns,
+      fields: _fields,
+      selectedId: _selectedId,
+      onAdd: _addField,
+      onAddQr: _addQrField,
+      onSelect: (id) {
+        setState(() => _selectedId = id);
+        if (usePanelDrawers) Navigator.of(context).pop();
+      },
+    );
+    final propertiesPanel = _PropertiesPanel(
+      field: _selected,
+      columns: _columns,
+      fontFamilies: _fontFamilies,
+      onChanged: _replaceField,
+      onDelete: _deleteSelected,
+    );
+    final canvas = _template == null
+        ? const Center(
+            child: Text('Select a template before designing this certificate.'),
+          )
+        : _Canvas(
+            fields: _fields,
+            selectedId: _selectedId,
+            previewData: _previewData,
+            templatePath: _templatePath,
+            canvasWidth: _canvasWidth,
+            canvasHeight: _canvasHeight,
+            zoom: _zoom,
+            fontFamilies: _fontFamilies,
+            onSelect: (id) => setState(() => _selectedId = id),
+            onMove: _moveField,
+            onResize: _resizeField,
+          );
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -447,15 +485,45 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
           child: Focus(
             autofocus: true,
             child: Scaffold(
+              drawer: usePanelDrawers
+                  ? Drawer(
+                      width: math.min(320, screenWidth * .86),
+                      child: SafeArea(child: elementsPanel),
+                    )
+                  : null,
+              endDrawer: usePanelDrawers
+                  ? Drawer(
+                      width: math.min(360, screenWidth * .9),
+                      child: SafeArea(child: propertiesPanel),
+                    )
+                  : null,
               appBar: AppBar(
+                leading: usePanelDrawers
+                    ? Builder(
+                        builder: (context) => IconButton(
+                          tooltip: context.l10n.text('Elements'),
+                          icon: const Icon(Icons.layers_outlined),
+                          onPressed: () => Scaffold.of(context).openDrawer(),
+                        ),
+                      )
+                    : null,
                 title: Text(
                   context.l10n.text('Design · ${widget.projectName}'),
                 ),
                 actions: [
-                  Text(
-                    _saveLabel,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  if (!compactToolbar)
+                    Text(
+                      _saveLabel,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  if (usePanelDrawers)
+                    Builder(
+                      builder: (context) => IconButton(
+                        tooltip: context.l10n.text('Field properties'),
+                        icon: const Icon(Icons.tune),
+                        onPressed: () => Scaffold.of(context).openEndDrawer(),
+                      ),
+                    ),
                   const SizedBox(width: AppSpacing.sm),
                   IconButton(
                     tooltip: context.l10n.text('Zoom out'),
@@ -478,53 +546,19 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
               ),
               body: Row(
                 children: [
-                  SizedBox(
-                    width: 230,
-                    child: _ElementsPanel(
-                      columns: _columns,
-                      fields: _fields,
-                      selectedId: _selectedId,
-                      onAdd: _addField,
-                      onAddQr: _addQrField,
-                      onSelect: (id) => setState(() => _selectedId = id),
-                    ),
-                  ),
+                  if (!usePanelDrawers)
+                    SizedBox(width: 230, child: elementsPanel),
                   Expanded(
                     child: Container(
                       color: context.themeBackground,
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      child: _template == null
-                          ? const Center(
-                              child: Text(
-                                'Select a template before designing this certificate.',
-                              ),
-                            )
-                          : _Canvas(
-                              fields: _fields,
-                              selectedId: _selectedId,
-                              previewData: _previewData,
-                              templatePath: _templatePath,
-                              canvasWidth: _canvasWidth,
-                              canvasHeight: _canvasHeight,
-                              zoom: _zoom,
-                              fontFamilies: _fontFamilies,
-                              onSelect: (id) =>
-                                  setState(() => _selectedId = id),
-                              onMove: _moveField,
-                              onResize: _resizeField,
-                            ),
+                      padding: EdgeInsets.all(
+                        compactToolbar ? AppSpacing.sm : AppSpacing.lg,
+                      ),
+                      child: canvas,
                     ),
                   ),
-                  SizedBox(
-                    width: 300,
-                    child: _PropertiesPanel(
-                      field: _selected,
-                      columns: _columns,
-                      fontFamilies: _fontFamilies,
-                      onChanged: _replaceField,
-                      onDelete: _deleteSelected,
-                    ),
-                  ),
+                  if (!usePanelDrawers)
+                    SizedBox(width: 300, child: propertiesPanel),
                 ],
               ),
             ),

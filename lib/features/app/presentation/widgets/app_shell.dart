@@ -612,7 +612,8 @@ class _WorkspaceContent extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final compact = constraints.maxWidth < AppBreakpoints.tablet;
+                    final compact =
+                        constraints.maxWidth < AppBreakpoints.tablet;
                     final cards = [
                       _MetricCard(
                         icon: Icons.image_outlined,

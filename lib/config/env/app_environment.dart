@@ -3,7 +3,7 @@
 /// Secrets and institution keys must never be hard-coded here. They belong in
 /// the platform key storage abstraction described by the project architecture.
 abstract final class AppEnvironment {
-  static const appName = 'اسـتوديو الشهـــــــائد'; // 'Certificate Studio'
+  static const appNameKey = 'Certificate Studio';
   static const appVersion = '1.0.0';
   static const supportedLocales = ['en', 'ar'];
   static const defaultLocale = 'en';

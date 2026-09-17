@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/security/keys/institution_key_manager.dart';
 import '../../../data_import/presentation/screens/data_import_screen.dart';
-import '../../../certificate_designer/presentation/screens/certificate_designer_screen.dart';
-import '../../../certificate_generation/presentation/screens/certificate_generation_screen.dart';
+import '../../../certificates/presentation/screens/certificate_designer_screen.dart';
+import '../../../certificates/presentation/screens/certificate_generation_screen.dart';
 import '../../../templates/presentation/screens/template_picker_screen.dart';
 import '../../../fonts/presentation/screens/fonts_library_screen.dart';
+import '../../../settings/data/services/workspace_transfer_service.dart';
 import '../../../../shared/themes/app_colors.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
@@ -29,259 +30,257 @@ class ProjectDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final transfer = WorkspaceTransferService(database);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(project.name),
-        actions: [
-          IconButton(
-            tooltip: context.l10n.text('Back to workspace'),
-            onPressed: onClose ?? () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppSurfaceCard(
-                  padding: EdgeInsets.zero,
-                  child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.xl),
-                    decoration: const BoxDecoration(
-                      gradient: AppGradients.page,
-                      border: Border(
-                        bottom: BorderSide(color: AppColors.primary, width: 3),
-                      ),
+      body: AppPageTable(
+        header: AppPageHeader(
+          title: project.name,
+          subtitle: project.description?.isNotEmpty == true
+              ? project.description
+              : context.l10n.text(
+                  'Configure this project, then design and generate certificates.',
+                ),
+          icon: Icons.workspace_premium_outlined,
+          actions: [
+            IconButton(
+              tooltip: context.l10n.text('Back to workspace'),
+              onPressed: onClose ?? () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close),
+            ),
+          ],
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppSectionHeader(
+                    title: context.l10n.text('Projectworkspace'),
+                    action: AppStatusBadge(
+                      label: (project.settings['project_type'] ?? 'course')
+                          .toString()
+                          .toUpperCase(),
+                      color: context.themePrimary,
+                      backgroundColor: context.themeSelection,
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(AppRadius.card),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Wrap(
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.md,
+                    children: [
+                      for (final action in [
+                        _ProjectActionData(
+                          icon: Icons.ios_share,
+                          title: context.l10n.text('Export project'),
+                          description: context.l10n.text(
+                            'Export the background, font, data, and field positions.',
                           ),
-                          child: const Icon(
-                            Icons.workspace_premium_outlined,
-                            color: AppColors.textOnPrimary,
-                            size: 30,
+                          onPressed: () async {
+                            try {
+                              final path = await transfer.exportProject(
+                                project.id,
+                              );
+                              if (context.mounted && path != null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Project exported successfully.',
+                                    ),
+                                  ),
+                                );
+                              }
+                            } on Object catch (error) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      context.l10n.text(
+                                        'Export failed: $error',
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                        _ProjectActionData(
+                          icon: Icons.image_outlined,
+                          title: context.l10n.text('Template'),
+                          description: context.l10n.text(
+                            'Choose the certificate background.',
+                          ),
+                          onPressed: () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => TemplatePickerScreen(
+                                database: database,
+                                projectId: project.id,
+                              ),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                project.name,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineLarge,
+                        _ProjectActionData(
+                          icon: Icons.table_chart_outlined,
+                          title: context.l10n.text('Student data'),
+                          description: context.l10n.text(
+                            'Import or paste recipient data.',
+                          ),
+                          onPressed: () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => DataImportScreen(
+                                database: database,
+                                projectId: project.id,
                               ),
-                              const SizedBox(height: AppSpacing.xs),
+                            ),
+                          ),
+                        ),
+                        _ProjectActionData(
+                          icon: Icons.text_fields_outlined,
+                          title: context.l10n.text('Fonts'),
+                          description: context.l10n.text(
+                            'Choose the font available to this project.',
+                          ),
+                          onPressed: () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => FontsLibraryScreen(
+                                database: database,
+                                projectId: project.id,
+                              ),
+                            ),
+                          ),
+                        ),
+                        _ProjectActionData(
+                          icon: Icons.design_services_outlined,
+                          title: context.l10n.text('Design'),
+                          description: context.l10n.text(
+                            'Place fields on the certificate canvas.',
+                          ),
+                          onPressed: () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => CertificateDesignerScreen(
+                                database: database,
+                                projectId: project.id,
+                                projectName: project.name,
+                              ),
+                            ),
+                          ),
+                        ),
+                        _ProjectActionData(
+                          icon: Icons.play_circle_outline,
+                          title: context.l10n.text('Generate'),
+                          description: context.l10n.text(
+                            'Create certificates after setup is complete.',
+                          ),
+                          onPressed: () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => CertificateGenerationScreen(
+                                database: database,
+                                keyStorage: keyStorage ?? InMemoryKeyStorage(),
+                                projectId: project.id,
+                                projectName: project.name,
+                                institutionId: project.institutionId,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ])
+                        _ProjectAction(data: action),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  AppSurfaceCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.lg,
+                            AppSpacing.lg,
+                            AppSpacing.lg,
+                            AppSpacing.md,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(AppSpacing.xs),
+                                decoration: BoxDecoration(
+                                  color: context.themeSelection,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.card,
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.info_outline,
+                                  color: context.themePrimary,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
                               Text(
-                                project.description?.isNotEmpty == true
-                                    ? project.description!
-                                    : context.l10n.text(
-                                        'Configure this project, then design and generate certificates.',
-                                      ),
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(color: AppColors.textSecondary),
+                                context.l10n.text('Project information'),
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
                             ],
+                          ),
+                        ),
+                        const Divider(height: 1),
+                        Padding(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final itemWidth = constraints.maxWidth < 520
+                                  ? constraints.maxWidth
+                                  : (constraints.maxWidth - AppSpacing.md) / 2;
+                              return Wrap(
+                                spacing: AppSpacing.md,
+                                runSpacing: AppSpacing.md,
+                                children: [
+                                  _InfoTile(
+                                    width: itemWidth,
+                                    icon: Icons.school_outlined,
+                                    label: context.l10n.text('Course'),
+                                    value:
+                                        project.courseName ??
+                                        context.l10n.text('Not set'),
+                                  ),
+                                  _InfoTile(
+                                    width: itemWidth,
+                                    icon: Icons.business_outlined,
+                                    label: context.l10n.text('Organization'),
+                                    value:
+                                        project.organizationName ??
+                                        context.l10n.text('Not set'),
+                                  ),
+                                  _InfoTile(
+                                    width: itemWidth,
+                                    icon: Icons.category_outlined,
+                                    label: context.l10n.text('Type'),
+                                    value:
+                                        (project.settings['project_type'] ??
+                                                'course')
+                                            .toString(),
+                                  ),
+                                  _InfoTile(
+                                    width: itemWidth,
+                                    icon: Icons.calendar_today_outlined,
+                                    label: context.l10n.text('Created'),
+                                    value: _formatDate(project.createdAt),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                AppSectionHeader(
-                  title: context.l10n.text('Projectworkspace'),
-                  action: AppStatusBadge(
-                    label: (project.settings['project_type'] ?? 'course')
-                        .toString()
-                        .toUpperCase(),
-                    color: AppColors.primary,
-                    backgroundColor: AppColors.primaryLight,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Wrap(
-                  spacing: AppSpacing.md,
-                  runSpacing: AppSpacing.md,
-                  children: [
-                    for (final action in [
-                      _ProjectActionData(
-                        icon: Icons.image_outlined,
-                        title: 'Template',
-                        description: 'Choose the certificate background.',
-                        onPressed: () => Navigator.of(context).push<void>(
-                          MaterialPageRoute(
-                            builder: (_) => TemplatePickerScreen(
-                              database: database,
-                              projectId: project.id,
-                            ),
-                          ),
-                        ),
-                      ),
-                      _ProjectActionData(
-                        icon: Icons.table_chart_outlined,
-                        title: 'Student data',
-                        description: 'Import or paste recipient data.',
-                        onPressed: () => Navigator.of(context).push<void>(
-                          MaterialPageRoute(
-                            builder: (_) => DataImportScreen(
-                              database: database,
-                              projectId: project.id,
-                            ),
-                          ),
-                        ),
-                      ),
-                      _ProjectActionData(
-                        icon: Icons.text_fields_outlined,
-                        title: 'Fonts',
-                        description:
-                            'Choose the font available to this project.',
-                        onPressed: () => Navigator.of(context).push<void>(
-                          MaterialPageRoute(
-                            builder: (_) => FontsLibraryScreen(
-                              database: database,
-                              projectId: project.id,
-                            ),
-                          ),
-                        ),
-                      ),
-                      _ProjectActionData(
-                        icon: Icons.design_services_outlined,
-                        title: 'Design',
-                        description: 'Place fields on the certificate canvas.',
-                        onPressed: () => Navigator.of(context).push<void>(
-                          MaterialPageRoute(
-                            builder: (_) => CertificateDesignerScreen(
-                              database: database,
-                              projectId: project.id,
-                              projectName: project.name,
-                            ),
-                          ),
-                        ),
-                      ),
-                      _ProjectActionData(
-                        icon: Icons.play_circle_outline,
-                        title: 'Generate',
-                        description:
-                            'Create certificates after setup is complete.',
-                        onPressed: () => Navigator.of(context).push<void>(
-                          MaterialPageRoute(
-                            builder: (_) => CertificateGenerationScreen(
-                              database: database,
-                              keyStorage: keyStorage ?? InMemoryKeyStorage(),
-                              projectId: project.id,
-                              projectName: project.name,
-                              institutionId: project.institutionId,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ])
-                      _ProjectAction(data: action),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                AppSurfaceCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.lg,
-                          AppSpacing.lg,
-                          AppSpacing.lg,
-                          AppSpacing.md,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(AppSpacing.xs),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryLight,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.card,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.info_outline,
-                                color: AppColors.primary,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Text(
-                              context.l10n.text('Project information'),
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 1),
-                      Padding(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final itemWidth = constraints.maxWidth < 520
-                                ? constraints.maxWidth
-                                : (constraints.maxWidth - AppSpacing.md) / 2;
-                            return Wrap(
-                              spacing: AppSpacing.md,
-                              runSpacing: AppSpacing.md,
-                              children: [
-                                _InfoTile(
-                                  width: itemWidth,
-                                  icon: Icons.school_outlined,
-                                  label: 'Course',
-                                  value:
-                                      project.courseName ??
-                                      context.l10n.text('Not set'),
-                                ),
-                                _InfoTile(
-                                  width: itemWidth,
-                                  icon: Icons.business_outlined,
-                                  label: 'Organization',
-                                  value:
-                                      project.organizationName ??
-                                      context.l10n.text('Not set'),
-                                ),
-                                _InfoTile(
-                                  width: itemWidth,
-                                  icon: Icons.category_outlined,
-                                  label: 'Type',
-                                  value:
-                                      (project.settings['project_type'] ??
-                                              'course')
-                                          .toString(),
-                                ),
-                                _InfoTile(
-                                  width: itemWidth,
-                                  icon: Icons.calendar_today_outlined,
-                                  label: 'Created',
-                                  value: _formatDate(project.createdAt),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -315,7 +314,7 @@ class _ProjectAction extends StatelessWidget {
       child: Card(
         clipBehavior: Clip.antiAlias,
         elevation: 1,
-        shadowColor: AppColors.shadow,
+        shadowColor: Theme.of(context).shadowColor,
         child: InkWell(
           onTap: data.onPressed,
           child: Padding(
@@ -325,10 +324,10 @@ class _ProjectAction extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
+                    color: context.themeSelection,
                     borderRadius: BorderRadius.circular(AppRadius.card),
                   ),
-                  child: Icon(data.icon, color: AppColors.primary, size: 26),
+                  child: Icon(data.icon, color: context.themePrimary, size: 26),
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -343,16 +342,16 @@ class _ProjectAction extends StatelessWidget {
                       Text(
                         context.l10n.text(data.description),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: context.themeMutedText,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios,
                   size: 15,
-                  color: AppColors.textTertiary,
+                  color: context.themeMutedText,
                 ),
               ],
             ),
@@ -395,24 +394,24 @@ class _InfoTile extends StatelessWidget {
     width: width,
     child: DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.surfaceSubtle,
+        color: context.themeSurface,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.themeBorder),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.primary, size: 20),
+            Icon(icon, color: context.themePrimary, size: 20),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    context.l10n.text(label),
+                    label,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.themeMutedText,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xxs),

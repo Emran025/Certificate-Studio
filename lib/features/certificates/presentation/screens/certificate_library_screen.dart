@@ -5,13 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/database/database_tables.dart';
 import '../../../../core/files/certificate_artifact_store.dart';
 import '../../../../core/security/keys/institution_key_manager.dart';
 import '../../../../shared/themes/app_colors.dart';
 import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
 import '../../../verification/domain/certificate_verification_service.dart';
-import '../../domain/certificate_export_service.dart';
+import '../../data/services/certificate_export_service.dart';
 import '../../data/repositories/certificate_repository_impl.dart';
 import '../../domain/entities/certificate_record.dart';
 import '../../domain/usecases/get_certificates.dart';
@@ -38,13 +39,14 @@ class CertificateLibraryScreen extends StatefulWidget {
 
 class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
   late final CertificateLibraryBloc _certificatesBloc;
-  final CertificateExportService _exporter = CertificateExportService();
+  late final CertificateExportService _exporter;
   String _query = '';
   final Set<String> _selected = {};
 
   @override
   void initState() {
     super.initState();
+    _exporter = CertificateExportService(database: widget.database);
     _certificatesBloc = CertificateLibraryBloc(
       GetCertificates(CertificateRepositoryImpl(widget.database)),
       widget.projectId,
@@ -57,7 +59,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     super.dispose();
   }
 
-  void _refresh() => _certificatesBloc.add(const CertificatesRequested());
+  // void _refresh() => _certificatesBloc.add(const CertificatesRequested());
 
   Future<void> _verify(_LibraryCertificate certificate) async {
     final result = await CertificateVerificationService(
@@ -67,13 +69,13 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     if (!mounted) return;
     await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppDialog(
         title: Row(
           children: [
             Icon(
               result.isValid ? Icons.verified : Icons.error_outline,
               color: result.isValid
-                  ? AppColors.success
+                  ? Theme.of(context).colorScheme.tertiary
                   : Theme.of(context).colorScheme.error,
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -84,17 +86,18 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
             ),
           ],
         ),
-        content: Text(
-          result.isValid
-              ? 'The signature and document hash are valid.${result.studentClass == null ? '' : '\nRecipient: ${result.studentClass}'}${result.course == null ? '' : '\nCourse: ${result.course}'}'
-              : (result.reason ?? 'The certificate could not be verified.'),
-        ),
+        icon: result.isValid ? Icons.verified : Icons.error_outline,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(context.l10n.text('Close')),
           ),
         ],
+        child: Text(
+          result.isValid
+              ? 'The signature and document hash are valid.${result.studentClass == null ? '' : '\nRecipient: ${result.studentClass}'}${result.course == null ? '' : '\nCourse: ${result.course}'}'
+              : (result.reason ?? 'The certificate could not be verified.'),
+        ),
       ),
     );
   }
@@ -126,24 +129,23 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     );
   }
 
-  Future<void> _exportSelected(
-    List<_LibraryCertificate> certificates,
-    String extension,
-  ) async {
+  Future<void> _exportSelected(List<_LibraryCertificate> certificates) async {
     final chosen = certificates
         .where((item) => _selected.contains(item.id))
         .toList();
     if (chosen.isEmpty) return;
-    final field = await _chooseFileNameField(chosen);
-    if (field == null) return;
+    final options = await _chooseExportOptions(chosen);
+    if (options == null) return;
     String? path;
     Object? error;
     try {
       path = await _exporter.exportZip(
         certificates: [for (final item in chosen) item.row],
-        extension: extension,
-        fileName: 'certificates-${DateTime.now().millisecondsSinceEpoch}',
-        fileNameFor: (row) => _fileName(_LibraryCertificate(row, null), field),
+        extensions: options.extensions,
+        style: options.style,
+        fileName: await _projectFileName(chosen),
+        fileNameFor: (row) =>
+            _fileName(_LibraryCertificate(row, null), options.field),
       );
     } catch (exception) {
       error = exception;
@@ -158,20 +160,19 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     );
   }
 
-  Future<void> _exportAll(
-    List<_LibraryCertificate> certificates,
-    String extension,
-  ) async {
-    final field = await _chooseFileNameField(certificates);
-    if (field == null) return;
+  Future<void> _exportAll(List<_LibraryCertificate> certificates) async {
+    final options = await _chooseExportOptions(certificates);
+    if (options == null) return;
     String? path;
     Object? error;
     try {
       path = await _exporter.exportZip(
         certificates: [for (final item in certificates) item.row],
-        extension: extension,
-        fileName: 'certificates-${DateTime.now().millisecondsSinceEpoch}',
-        fileNameFor: (row) => _fileName(_LibraryCertificate(row, null), field),
+        extensions: options.extensions,
+        style: options.style,
+        fileName: await _projectFileName(certificates),
+        fileNameFor: (row) =>
+            _fileName(_LibraryCertificate(row, null), options.field),
       );
     } catch (exception) {
       error = exception;
@@ -194,20 +195,8 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     List<_LibraryCertificate> certificates,
   ) async {
     final fields = <String>{};
-    const technicalFields = {
-      'signature',
-      'public_key',
-      'document_hash',
-      'institution_id',
-      'project_id',
-      'certificate_id',
-    };
     for (final certificate in certificates) {
-      fields.addAll(
-        certificate.data.keys.where(
-          (field) => !technicalFields.contains(field.trim().toLowerCase()),
-        ),
-      );
+      fields.addAll(certificate.data.keys);
     }
     if (fields.isEmpty) fields.add('certificate_id');
     final sortedFields = fields.toList()..sort();
@@ -215,23 +204,9 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     return showDialog<String>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (context, setDialogState) => AppDialog(
           title: Text(context.l10n.text('Choose file name field')),
-          content: DropdownButtonFormField<String>(
-            initialValue: selected,
-            decoration: InputDecoration(
-              labelText: context.l10n.text(
-                'Field used for the exported file name',
-              ),
-            ),
-            items: [
-              for (final field in sortedFields)
-                DropdownMenuItem(value: field, child: Text(field)),
-            ],
-            onChanged: (value) {
-              if (value != null) setDialogState(() => selected = value);
-            },
-          ),
+          icon: Icons.file_present_outlined,
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -242,9 +217,156 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
               child: Text(context.l10n.text('Export')),
             ),
           ],
+          child: DropdownButtonFormField<String>(
+            initialValue: selected,
+            items: [
+              for (final field in sortedFields)
+                DropdownMenuItem(value: field, child: Text(field)),
+            ],
+            onChanged: (value) {
+              if (value != null) setDialogState(() => selected = value);
+            },
+          ),
         ),
       ),
     );
+  }
+
+  Future<_CertificateExportOptions?> _chooseExportOptions(
+    List<_LibraryCertificate> certificates,
+  ) async {
+    final fields = <String>{};
+    for (final certificate in certificates) {
+      fields.addAll(certificate.data.keys);
+    }
+    if (fields.isEmpty) fields.add('certificate_id');
+    final sortedFields = fields.toList()..sort();
+    var field = sortedFields.first;
+    final extensions = <String>{'pdf'};
+    var style = CertificateExportBundleStyle.flat;
+    return showDialog<_CertificateExportOptions>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AppDialog(
+          title: Text(context.l10n.text('Certificate export settings')),
+          icon: Icons.archive_outlined,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.l10n.text('Cancel')),
+            ),
+            FilledButton(
+              onPressed: extensions.isEmpty
+                  ? null
+                  : () => Navigator.pop(
+                      context,
+                      _CertificateExportOptions(
+                        field: field,
+                        extensions: extensions,
+                        style: style,
+                      ),
+                    ),
+              child: Text(context.l10n.text('Export')),
+            ),
+          ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                initialValue: field,
+                decoration: InputDecoration(
+                  labelText: context.l10n.text('Field used for the file name'),
+                ),
+                items: [
+                  for (final value in sortedFields)
+                    DropdownMenuItem(value: value, child: Text(value)),
+                ],
+                onChanged: (value) {
+                  if (value != null) setDialogState(() => field = value);
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(context.l10n.text('PDF')),
+                value: extensions.contains('pdf'),
+                onChanged: (value) => setDialogState(() {
+                  if (value == true) {
+                    extensions.add('pdf');
+                  } else {
+                    extensions.remove('pdf');
+                  }
+                }),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(context.l10n.text('PNG')),
+                value: extensions.contains('png'),
+                onChanged: (value) => setDialogState(() {
+                  if (value == true) {
+                    extensions.add('png');
+                  } else {
+                    extensions.remove('png');
+                  }
+                }),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(context.l10n.text('JPEG')),
+                value: extensions.contains('jpg'),
+                onChanged: (value) => setDialogState(() {
+                  if (value == true) {
+                    extensions.add('jpg');
+                  } else {
+                    extensions.remove('jpg');
+                  }
+                }),
+              ),
+              DropdownButtonFormField<CertificateExportBundleStyle>(
+                initialValue: style,
+                decoration: InputDecoration(
+                  labelText: context.l10n.text('Archive style'),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: CertificateExportBundleStyle.flat,
+                    child: Text(context.l10n.text('All files in one ZIP')),
+                  ),
+                  DropdownMenuItem(
+                    value: CertificateExportBundleStyle.perCertificate,
+                    child: Text(
+                      context.l10n.text(
+                        'ZIP per certificate with signature.txt',
+                      ),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) setDialogState(() => style = value);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<String> _projectFileName(
+    List<_LibraryCertificate> certificates,
+  ) async {
+    final projectId = certificates.first.row['project_id'];
+    if (projectId is String) {
+      final rows = await widget.database.query(
+        DatabaseTables.projects,
+        where: {'id': projectId},
+        columns: ['name'],
+      );
+      if (rows.isNotEmpty && rows.first['name'] is String) {
+        return _sanitizeFilePart(rows.first['name']! as String);
+      }
+    }
+    return 'project';
   }
 
   String _fileName(_LibraryCertificate certificate, [String? field]) {
@@ -255,7 +377,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     final value = selected.trim().isEmpty ? certificate.recipient : selected;
     final recipient = _sanitizeFilePart(value);
     if (field == 'certificate_id') return id;
-    return recipient.isEmpty ? id : '$recipient-$id';
+    return recipient.isEmpty ? id : recipient;
   }
 
   String _sanitizeFilePart(String value) => value
@@ -269,16 +391,6 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(context.l10n.text(widget.title)),
-      actions: [
-        IconButton(
-          onPressed: _refresh,
-          tooltip: context.l10n.text('Refresh'),
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
-    ),
     body: BlocBuilder<CertificateLibraryBloc, CertificateLibraryState>(
       bloc: _certificatesBloc,
       builder: (context, state) {
@@ -302,157 +414,139 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
                   certificate.searchText.contains(_query.trim().toLowerCase()),
             )
             .toList();
-        return Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1180),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              context.l10n.text('Generated certificates'),
-                              style: Theme.of(context).textTheme.headlineMedium,
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            Text(
-                              context.l10n.text(
-                                'Browse, preview, verify, and export the actual generated certificate files.',
-                              ),
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (all.isNotEmpty)
-                        PopupMenuButton<String>(
-                          onSelected: (value) => _exportAll(all, value),
-                          itemBuilder: (_) => [
-                            PopupMenuItem(
-                              value: 'png',
-                              child: Text(
-                                context.l10n.text('Export all PNG files (ZIP)'),
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'pdf',
-                              child: Text(
-                                context.l10n.text('Export all PDF files (ZIP)'),
-                              ),
-                            ),
-                          ],
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryLight,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.md,
-                              vertical: AppSpacing.sm,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.archive_outlined),
-                                const SizedBox(width: AppSpacing.xs),
-                                Text(context.l10n.text('Export all')),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  TextField(
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.search),
-                      hintText: context.l10n.text(
-                        'Search by recipient, certificate ID, or project',
+        return AppPageTable(
+          header: AppPageHeader(
+            title: context.l10n.text('Generated certificates'),
+            subtitle: context.l10n.text(
+              context.l10n.text(
+                'Browse, preview, verify, and export the actual generated certificate files.',
+              ),
+            ),
+            icon: Icons.workspace_premium_outlined,
+            actions: [
+              if (all.isNotEmpty)
+                PopupMenuButton<String>(
+                  onSelected: (_) => _exportAll(all),
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'png',
+                      child: Text(
+                        context.l10n.text('Export all PNG files (ZIP)'),
                       ),
                     ),
-                    onChanged: (value) => setState(() => _query = value),
-                  ),
-                  if (_selected.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    Row(
-                      children: [
-                        Text(context.l10n.text('${_selected.length} selected')),
-                        const SizedBox(width: AppSpacing.md),
-                        OutlinedButton.icon(
-                          onPressed: () => _exportSelected(certificates, 'png'),
-                          icon: const Icon(Icons.image_outlined),
-                          label: Text(context.l10n.text('Export PNG ZIP')),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        OutlinedButton.icon(
-                          onPressed: () => _exportSelected(certificates, 'pdf'),
-                          icon: const Icon(Icons.picture_as_pdf_outlined),
-                          label: Text(context.l10n.text('Export PDF ZIP')),
-                        ),
-                      ],
+                    PopupMenuItem(
+                      value: 'pdf',
+                      child: Text(
+                        context.l10n.text('Export all PDF files (ZIP)'),
+                      ),
                     ),
                   ],
-                  const SizedBox(height: AppSpacing.lg),
-                  Expanded(
-                    child: certificates.isEmpty
-                        ? AppSurfaceCard(
-                            child: Text(
-                              _query.isEmpty
-                                  ? context.l10n.text(
-                                      'No certificates generated yet.',
-                                    )
-                                  : context.l10n.text(
-                                      'No certificates match your search.',
-                                    ),
-                            ),
-                          )
-                        : GridView.builder(
-                            gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
-                                  maxCrossAxisExtent: 430,
-                                  mainAxisExtent: 390,
-                                  crossAxisSpacing: AppSpacing.md,
-                                  mainAxisSpacing: AppSpacing.md,
-                                ),
-                            itemCount: certificates.length,
-                            itemBuilder: (context, index) => _CertificateCard(
-                              certificate: certificates[index],
-                              selected: _selected.contains(
-                                certificates[index].id,
-                              ),
-                              onSelected: (value) => setState(() {
-                                if (value) {
-                                  _selected.add(certificates[index].id);
-                                } else {
-                                  _selected.remove(certificates[index].id);
-                                }
-                              }),
-                              onOpen: () => Navigator.push<void>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => _CertificatePreviewScreen(
-                                    certificate: certificates[index],
-                                    database: widget.database,
-                                    keyStorage: widget.keyStorage,
-                                    exporter: _exporter,
-                                    fileName: _fileName(certificates[index]),
-                                  ),
-                                ),
-                              ),
-                              onVerify: () => _verify(certificates[index]),
-                              onExport: (extension) =>
-                                  _exportSingle(certificates[index], extension),
-                            ),
-                          ),
+                  child: FilledButton.icon(
+                    onPressed: null,
+                    icon: const Icon(Icons.upload_file),
+                    label: Text(context.l10n.text('Export all')),
+                  ),
+                ),
+              if (widget.projectId != null)
+                IconButton(
+                  tooltip: context.l10n.text('Back'),
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: Icon(
+                    context.l10n.text('Back') == "Back"
+                        ? Icons.arrow_back
+                        : Icons.arrow_forward,
+                  ),
+                ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.search),
+                    hintText: context.l10n.text(
+                      'Search by recipient, certificate ID, or project',
+                    ),
+                  ),
+                  onChanged: (value) => setState(() => _query = value),
+                ),
+                if (_selected.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      Text(context.l10n.text('${_selected.length} selected')),
+                      const SizedBox(width: AppSpacing.md),
+                      OutlinedButton.icon(
+                        onPressed: () => _exportSelected(certificates),
+                        icon: const Icon(Icons.image_outlined),
+                        label: Text(context.l10n.text('Export PNG ZIP')),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      OutlinedButton.icon(
+                        onPressed: () => _exportSelected(certificates),
+                        icon: const Icon(Icons.picture_as_pdf_outlined),
+                        label: Text(context.l10n.text('Export PDF ZIP')),
+                      ),
+                    ],
                   ),
                 ],
-              ),
+                const SizedBox(height: AppSpacing.lg),
+                Expanded(
+                  child: certificates.isEmpty
+                      ? AppSurfaceCard(
+                          child: Text(
+                            _query.isEmpty
+                                ? context.l10n.text(
+                                    'No certificates generated yet.',
+                                  )
+                                : context.l10n.text(
+                                    'No certificates match your search.',
+                                  ),
+                          ),
+                        )
+                      : GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 430,
+                                mainAxisExtent: 390,
+                                crossAxisSpacing: AppSpacing.md,
+                                mainAxisSpacing: AppSpacing.md,
+                              ),
+                          itemCount: certificates.length,
+                          itemBuilder: (context, index) => _CertificateCard(
+                            certificate: certificates[index],
+                            selected: _selected.contains(
+                              certificates[index].id,
+                            ),
+                            onSelected: (value) => setState(() {
+                              if (value) {
+                                _selected.add(certificates[index].id);
+                              } else {
+                                _selected.remove(certificates[index].id);
+                              }
+                            }),
+                            onOpen: () => Navigator.push<void>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => _CertificatePreviewScreen(
+                                  certificate: certificates[index],
+                                  database: widget.database,
+                                  keyStorage: widget.keyStorage,
+                                  exporter: _exporter,
+                                  fileName: _fileName(certificates[index]),
+                                ),
+                              ),
+                            ),
+                            onVerify: () => _verify(certificates[index]),
+                            onExport: (extension) =>
+                                _exportSingle(certificates[index], extension),
+                          ),
+                        ),
+                ),
+              ],
             ),
           ),
         );
@@ -478,6 +572,7 @@ class _CertificateCard extends StatelessWidget {
   final ValueChanged<String> onExport;
   @override
   Widget build(BuildContext context) => Card(
+    clipBehavior: Clip.antiAlias,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -529,7 +624,9 @@ class _CertificateCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
-                certificate.id,
+                certificate.secondaryLabel.isEmpty
+                    ? context.l10n.text('Certificate data unavailable')
+                    : certificate.secondaryLabel,
                 style: Theme.of(context).textTheme.bodySmall,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -588,73 +685,100 @@ class _CertificatePreviewScreen extends StatelessWidget {
   final String fileName;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(
-        certificate.recipient.isEmpty
-            ? 'Certificate preview'
+    body: AppPageTable(
+      header: AppPageHeader(
+        title: certificate.recipient.isEmpty
+            ? context.l10n.text('Certificate preview')
             : certificate.recipient,
-      ),
-      actions: [
-        PopupMenuButton<String>(
-          onSelected: (value) async {
-            final path = await exporter.exportSingle(
-              certificate: certificate.row,
-              extension: value,
-              fileName: fileName,
-            );
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    path == null
-                        ? 'File unavailable.'
-                        : 'Certificate exported successfully.',
-                  ),
-                ),
-              );
-            }
-          },
-          itemBuilder: (_) => [
-            PopupMenuItem(
-              value: 'png',
-              child: Text(context.l10n.text('Export PNG')),
-            ),
-            PopupMenuItem(
-              value: 'pdf',
-              child: Text(context.l10n.text('Export PDF')),
-            ),
-          ],
+        subtitle: context.l10n.text(
+          'Preview, verify, and export this generated certificate.',
         ),
-      ],
-    ),
-    body: Row(
-      children: [
-        Expanded(
-          child: InteractiveViewer(
-            minScale: .5,
-            maxScale: 4,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: _ArtifactImage(
-                  reference: certificate.imageReference,
-                  fit: BoxFit.contain,
+        icon: Icons.workspace_premium_outlined,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              final path = await exporter.exportSingle(
+                certificate: certificate.row,
+                extension: value,
+                fileName: fileName,
+              );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      path == null
+                          ? context.l10n.text('File unavailable.')
+                          : context.l10n.text(
+                              'Certificate exported successfully.',
+                            ),
+                    ),
+                  ),
+                );
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'png',
+                child: Text(context.l10n.text('Export PNG')),
+              ),
+              PopupMenuItem(
+                value: 'pdf',
+                child: Text(context.l10n.text('Export PDF')),
+              ),
+            ],
+          ),
+          IconButton(
+            tooltip: context.l10n.text('Back'),
+            onPressed: () => Navigator.of(context).pop(),
+            icon: Icon(
+              context.l10n.text('Back') == "Back"
+                  ? Icons.arrow_back
+                  : Icons.arrow_forward,
+            ),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: InteractiveViewer(
+              minScale: .5,
+              maxScale: 4,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: _ArtifactImage(
+                    reference: certificate.imageReference,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        SizedBox(
-          width: 340,
-          child: _CertificateDetails(
-            certificate: certificate,
-            database: database,
-            keyStorage: keyStorage,
+          SizedBox(
+            width: 340,
+            child: _CertificateDetails(
+              certificate: certificate,
+              database: database,
+              keyStorage: keyStorage,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
+}
+
+class _CertificateExportOptions {
+  const _CertificateExportOptions({
+    required this.field,
+    required this.extensions,
+    required this.style,
+  });
+
+  final String field;
+  final Set<String> extensions;
+  final CertificateExportBundleStyle style;
 }
 
 class _CertificateDetails extends StatelessWidget {
@@ -668,7 +792,7 @@ class _CertificateDetails extends StatelessWidget {
   final KeyStorage keyStorage;
   @override
   Widget build(BuildContext context) => Container(
-    color: AppColors.background,
+    color: context.themeBackground,
     padding: const EdgeInsets.all(AppSpacing.lg),
     child: ListView(
       children: [
@@ -679,19 +803,19 @@ class _CertificateDetails extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
+                  color: context.themeSelection,
                   borderRadius: BorderRadius.circular(AppRadius.card),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.workspace_premium_outlined,
-                  color: AppColors.primary,
+                  color: context.themePrimary,
                   size: 24,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'Certificate details',
+                  context.l10n.text('Certificate details'),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
@@ -705,34 +829,34 @@ class _CertificateDetails extends StatelessWidget {
             children: [
               _Detail(
                 icon: Icons.person_outline,
-                label: 'Recipient',
+                label: context.l10n.text('Recipient'),
                 value: certificate.recipient.isEmpty
-                    ? 'Unavailable'
+                    ? context.l10n.text('Unavailable')
                     : certificate.recipient,
               ),
               _Detail(
                 icon: Icons.verified_outlined,
-                label: 'Status',
-                value: certificate.status,
+                label: context.l10n.text('Status'),
+                value: context.l10n.text(certificate.status),
               ),
               _Detail(
                 icon: Icons.tag_outlined,
-                label: 'Identifier',
+                label: context.l10n.text('Identifier'),
                 value: certificate.id,
               ),
               _Detail(
                 icon: Icons.image_outlined,
-                label: 'PNG',
+                label: context.l10n.text('PNG'),
                 value: certificate.imageReference == null
-                    ? 'Unavailable'
-                    : 'Available',
+                    ? context.l10n.text('Unavailable')
+                    : context.l10n.text('Available'),
               ),
               _Detail(
                 icon: Icons.picture_as_pdf_outlined,
-                label: 'PDF',
+                label: context.l10n.text('PDF'),
                 value: certificate.pdfReference == null
-                    ? 'Unavailable'
-                    : 'Available',
+                    ? context.l10n.text('Unavailable')
+                    : context.l10n.text('Available'),
                 showDivider: false,
               ),
             ],
@@ -746,14 +870,14 @@ class _CertificateDetails extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.shield_outlined,
-                    color: AppColors.primary,
+                    color: context.themePrimary,
                     size: 20,
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
-                    'Security',
+                    context.l10n.text('Security'),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ],
@@ -761,10 +885,10 @@ class _CertificateDetails extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               _Detail(
                 icon: Icons.fingerprint,
-                label: 'Document hash',
+                label: context.l10n.text('Document hash'),
                 value:
                     certificate.row['document_hash']?.toString() ??
-                    'Unavailable',
+                    context.l10n.text('Unavailable'),
                 showDivider: false,
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -779,23 +903,29 @@ class _CertificateDetails extends StatelessWidget {
                     if (context.mounted) {
                       showDialog<void>(
                         context: context,
-                        builder: (_) => AlertDialog(
+                        builder: (_) => AppDialog(
                           title: Text(
                             result.isValid
-                                ? 'Valid signature'
-                                : 'Verification failed',
+                                ? context.l10n.text('Valid signature')
+                                : context.l10n.text('Verification failed'),
                           ),
-                          content: Text(
-                            result.isValid
-                                ? 'The certificate is authentic.'
-                                : result.reason ?? 'Unable to verify.',
-                          ),
+                          icon: result.isValid
+                              ? Icons.verified
+                              : Icons.error_outline,
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
                               child: Text(context.l10n.text('Close')),
                             ),
                           ],
+                          child: Text(
+                            result.isValid
+                                ? context.l10n.text(
+                                    'The certificate is authentic.',
+                                  )
+                                : result.reason ??
+                                      context.l10n.text('Unable to verify.'),
+                          ),
                         ),
                       );
                     }
@@ -833,7 +963,7 @@ class _Detail extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.xxs),
-              child: Icon(icon, size: 18, color: AppColors.primary),
+              child: Icon(icon, size: 18, color: context.themePrimary),
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
@@ -843,7 +973,7 @@ class _Detail extends StatelessWidget {
                   Text(
                     label,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.themeMutedText,
                     ),
                   ),
                   SelectableText(

@@ -57,83 +57,83 @@ class TemplatePickerScreen extends StatelessWidget {
         }
         final projectMode = projectId != null;
         return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              context.l10n.text(
-                projectMode ? 'Certificate template' : 'Templates',
-              ),
+          body: AppPageTable(
+            header: AppPageHeader(
+              title: projectMode
+                  ? context.l10n.text('Choose a certificate template')
+                  : context.l10n.text('Template library'),
+              subtitle: projectMode
+                  ? context.l10n.text(
+                      'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.',
+                    )
+                  : context.l10n.text(
+                      'Browse persisted certificate backgrounds or import a new template.',
+                    ),
+              icon: Icons.image_outlined,
+              actions: [
+                FilledButton.icon(
+                  onPressed: () => _addTemplate(context),
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                  label: Text(context.l10n.text('Add template')),
+                ),
+              ],
             ),
-          ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 920),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.l10n.text(
-                        projectMode
-                            ? 'Choose a certificate template'
-                            : 'Template library',
-                      ),
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      context.l10n.text(
-                        projectMode
-                            ? 'Choose a background image from your device, preview it, and use it as this project’s certificate canvas.'
-                            : 'Browse persisted certificate backgrounds or import a new template.',
-                      ),
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    FilledButton.icon(
-                      onPressed: () => _addTemplate(context),
-                      icon: const Icon(Icons.add_photo_alternate_outlined),
-                      label: Text(context.l10n.text('Add template')),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    if (state.templates.isEmpty)
-                      AppSurfaceCard(
-                        child: Text(
-                          context.l10n.text(
-                            'No templates saved yet. Add a PNG, JPG, or WEBP background image to continue.',
-                          ),
+            child: state.templates.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      child: Text(
+                        context.l10n.text(
+                          'No templates saved yet. Add a PNG, JPG, or WEBP background image to continue.',
                         ),
-                      )
-                    else
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 300,
-                              mainAxisExtent: 280,
-                              crossAxisSpacing: AppSpacing.md,
-                              mainAxisSpacing: AppSpacing.md,
+                      ),
+                    ),
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.all(AppSpacing.xl),
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 300,
+                          mainAxisExtent: 280,
+                          crossAxisSpacing: AppSpacing.md,
+                          mainAxisSpacing: AppSpacing.md,
+                        ),
+                    itemCount: state.templates.length,
+                    itemBuilder: (_, index) {
+                      final template = state.templates[index];
+                      return _TemplateCard(
+                        template: template,
+                        selected: template.id == state.selectedId,
+                        onSelect: () => context.read<TemplatePickerBloc>().add(
+                          TemplateSelected(template.id),
+                        ),
+                        onDelete: () => context.read<TemplatePickerBloc>().add(
+                          TemplateDeleted(template.id),
+                        ),
+                        onEdit: () async {
+                          final draft = await showDialog<_TemplateDraft>(
+                            context: context,
+                            builder: (_) => _TemplateDialog(initial: template),
+                          );
+                          if (draft == null || !context.mounted) return;
+                          context.read<TemplatePickerBloc>().add(
+                            TemplateUpdated(
+                              TemplateAsset(
+                                id: template.id,
+                                name: draft.name,
+                                filePath: draft.path,
+                                width: draft.width,
+                                height: draft.height,
+                                dpi: draft.dpi,
+                                format: draft.format,
+                              ),
                             ),
-                        itemCount: state.templates.length,
-                        itemBuilder: (_, index) {
-                          final template = state.templates[index];
-                          return _TemplateCard(
-                            template: template,
-                            selected: template.id == state.selectedId,
-                            onSelect: () => context
-                                .read<TemplatePickerBloc>()
-                                .add(TemplateSelected(template.id)),
-                            onDelete: () => context
-                                .read<TemplatePickerBloc>()
-                                .add(TemplateDeleted(template.id)),
                           );
                         },
-                      ),
-                  ],
-                ),
-              ),
-            ),
+                        projectMode: projectMode,
+                      );
+                    },
+                  ),
           ),
         );
       },
@@ -147,65 +147,84 @@ class _TemplateCard extends StatelessWidget {
     required this.selected,
     required this.onSelect,
     required this.onDelete,
+    required this.onEdit,
+    required this.projectMode,
   });
   final TemplateAsset template;
   final bool selected;
   final VoidCallback onSelect;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
+  final bool projectMode;
 
   @override
   Widget build(BuildContext context) {
     final path = template.filePath;
     final exists = templateFileExists(path);
     return AppSurfaceCard(
-      padding: const EdgeInsets.all(AppSpacing.sm),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: exists ? templatePreview(path) : const _MissingPreview(),
+            child: exists ? templatePreview(path) : const _MissingPreview(),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.sm,
+              AppSpacing.sm,
+              AppSpacing.sm,
+              AppSpacing.xs,
             ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            template.name,
-            style: Theme.of(context).textTheme.titleMedium,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            '${template.width} × ${template.height} · ${template.format.toUpperCase()}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          if (!exists)
-            Text(
-              context.l10n.text('File not found at saved path'),
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-                fontSize: 11,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  template.name,
+                  style: Theme.of(context).textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  '${template.width} × ${template.height} · ${template.format.toUpperCase()}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                if (!exists)
+                  Text(
+                    context.l10n.text('File not found at saved path'),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontSize: 11,
+                    ),
+                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: projectMode && selected
+                          ? Text(
+                              context.l10n.text('Selected'),
+                              style: TextStyle(color: Colors.green),
+                            )
+                          : projectMode
+                          ? TextButton(
+                              onPressed: onSelect,
+                              child: Text(context.l10n.text('Use template')),
+                            )
+                          : TextButton.icon(
+                              onPressed: onEdit,
+                              icon: const Icon(Icons.edit_outlined),
+                              label: Text(context.l10n.text('Edit template')),
+                            ),
+                    ),
+                    IconButton(
+                      tooltip: context.l10n.text('Delete'),
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          Row(
-            children: [
-              Expanded(
-                child: selected
-                    ? Text(
-                        context.l10n.text('Selected'),
-                        style: TextStyle(color: Colors.green),
-                      )
-                    : TextButton(
-                        onPressed: onSelect,
-                        child: Text(context.l10n.text('Use template')),
-                      ),
-              ),
-              IconButton(
-                tooltip: context.l10n.text('Delete'),
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline),
-              ),
-            ],
           ),
         ],
       ),
@@ -243,7 +262,8 @@ class _TemplateDraft {
 }
 
 class _TemplateDialog extends StatefulWidget {
-  const _TemplateDialog();
+  const _TemplateDialog({this.initial});
+  final TemplateAsset? initial;
   @override
   State<_TemplateDialog> createState() => _TemplateDialogState();
 }
@@ -259,6 +279,20 @@ class _TemplateDialogState extends State<_TemplateDialog> {
   String _format = 'png';
 
   @override
+  void initState() {
+    super.initState();
+    final initial = widget.initial;
+    if (initial != null) {
+      _name.text = initial.name;
+      _path.text = initial.filePath;
+      _width.text = initial.width.toString();
+      _height.text = initial.height.toString();
+      _dpi.text = initial.dpi.toString();
+      _format = initial.format;
+    }
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _path.dispose();
@@ -269,16 +303,46 @@ class _TemplateDialogState extends State<_TemplateDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(context.l10n.text('Add template')),
-    content: SizedBox(
+  Widget build(BuildContext context) => AppDialog(
+    title: Text(
+      context.l10n.text(
+        widget.initial == null ? 'Add template' : 'Edit template',
+      ),
+    ),
+    icon: widget.initial == null
+        ? Icons.add_photo_alternate_outlined
+        : Icons.edit_outlined,
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: Text(context.l10n.text('Cancel')),
+      ),
+      FilledButton(
+        onPressed: () {
+          if (!_formKey.currentState!.validate()) return;
+          Navigator.pop(
+            context,
+            _TemplateDraft(
+              name: _name.text.trim(),
+              path: _path.text.trim(),
+              width: int.parse(_width.text),
+              height: int.parse(_height.text),
+              dpi: double.parse(_dpi.text),
+              format: _format,
+            ),
+          );
+        },
+        child: Text(context.l10n.text('Save')),
+      ),
+    ],
+    child: SizedBox(
       width: 440,
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
           child: Column(
             children: [
-              _field(context, _name, 'Template name'),
+              _field(context, _name, context.l10n.text('Template name')),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -286,7 +350,7 @@ class _TemplateDialogState extends State<_TemplateDialog> {
                     child: _field(
                       context,
                       _path,
-                      'Background image',
+                      context.l10n.text('Background image'),
                       readOnly: true,
                       validator: (value) => validateTemplatePath(value ?? ''),
                     ),
@@ -313,17 +377,34 @@ class _TemplateDialogState extends State<_TemplateDialog> {
               Row(
                 children: [
                   Expanded(
-                    child: _field(context, _width, 'Width', number: true),
+                    child: _field(
+                      context,
+                      _width,
+                      context.l10n.text('Width'),
+                      number: true,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: _field(context, _height, 'Height', number: true),
+                    child: _field(
+                      context,
+                      _height,
+                      context.l10n.text('Height'),
+                      number: true,
+                    ),
                   ),
                 ],
               ),
               Row(
                 children: [
-                  Expanded(child: _field(context, _dpi, 'DPI', number: true)),
+                  Expanded(
+                    child: _field(
+                      context,
+                      _dpi,
+                      context.l10n.text('DPI'),
+                      number: true,
+                    ),
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: DropdownButtonFormField<String>(
@@ -356,29 +437,6 @@ class _TemplateDialogState extends State<_TemplateDialog> {
         ),
       ),
     ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: Text(context.l10n.text('Cancel')),
-      ),
-      FilledButton(
-        onPressed: () {
-          if (!_formKey.currentState!.validate()) return;
-          Navigator.pop(
-            context,
-            _TemplateDraft(
-              name: _name.text.trim(),
-              path: _path.text.trim(),
-              width: int.parse(_width.text),
-              height: int.parse(_height.text),
-              dpi: double.parse(_dpi.text),
-              format: _format,
-            ),
-          );
-        },
-        child: Text(context.l10n.text('Save')),
-      ),
-    ],
   );
 
   Future<void> _chooseBackground() async {
@@ -417,7 +475,7 @@ class _TemplateDialogState extends State<_TemplateDialog> {
       controller: controller,
       keyboardType: number ? TextInputType.number : TextInputType.text,
       readOnly: readOnly,
-      decoration: InputDecoration(labelText: context.l10n.text(label)),
+      decoration: InputDecoration(labelText: label),
       validator:
           validator ??
           (value) => value == null || value.trim().isEmpty

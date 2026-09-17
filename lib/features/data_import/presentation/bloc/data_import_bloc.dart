@@ -26,6 +26,12 @@ final class ExcelImportRequested extends DataImportEvent {
   final Uint8List bytes;
 }
 
+final class TableUpdatedRequested extends DataImportEvent {
+  const TableUpdatedRequested(this.table);
+
+  final ImportedTable table;
+}
+
 final class DataImportErrorReported extends DataImportEvent {
   const DataImportErrorReported(this.message);
 
@@ -54,10 +60,12 @@ class DataImportBloc extends Bloc<DataImportEvent, DataImportState> {
     required this._pasteTable,
     required this._importExcel,
     required this._loadTable,
+    required this._saveTable,
   }) : super(const DataImportState()) {
     on<DataImportRequested>(_onLoad);
     on<PasteTableRequested>(_onPaste);
     on<ExcelImportRequested>(_onExcel);
+    on<TableUpdatedRequested>(_onTableUpdated);
     on<DataImportErrorReported>(
       (event, emit) => emit(
         DataImportState(
@@ -72,6 +80,7 @@ class DataImportBloc extends Bloc<DataImportEvent, DataImportState> {
   final PasteTable _pasteTable;
   final ImportExcel _importExcel;
   final Future<ImportedTable> Function() _loadTable;
+  final Future<ImportedTable> Function(ImportedTable table) _saveTable;
 
   Future<void> _onLoad(
     DataImportRequested event,
@@ -114,6 +123,13 @@ class DataImportBloc extends Bloc<DataImportEvent, DataImportState> {
       emit,
       () => _importExcel(projectId: _projectId, bytes: event.bytes),
     );
+  }
+
+  Future<void> _onTableUpdated(
+    TableUpdatedRequested event,
+    Emitter<DataImportState> emit,
+  ) async {
+    await _save(emit, () => _saveTable(event.table));
   }
 
   final String _projectId;

@@ -6,11 +6,11 @@ import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:printing/printing.dart';
 
-import '../../../core/database/app_database.dart';
-import '../../../core/database/database_tables.dart';
-import '../../../core/files/certificate_artifact_store.dart';
-import '../../../core/security/keys/institution_key_manager.dart';
-import '../../../shared/utils/field_identifier.dart';
+import '../../../../core/database/app_database.dart';
+import '../../../../core/database/database_tables.dart';
+import '../../../../core/files/certificate_artifact_store.dart';
+import '../../../../core/security/keys/institution_key_manager.dart';
+import '../../../../shared/utils/field_identifier.dart';
 import 'template_bytes.dart';
 import 'certificate_artifact_renderer.dart';
 

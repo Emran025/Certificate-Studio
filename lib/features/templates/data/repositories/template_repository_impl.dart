@@ -39,6 +39,18 @@ class TemplateRepositoryImpl implements TemplateRepository {
   }
 
   @override
+  Future<void> update(TemplateAsset template) =>
+      _database.update(DatabaseTables.templates, template.id, {
+        'name': template.name,
+        'file_path': template.filePath,
+        'width': template.width,
+        'height': template.height,
+        'dpi': template.dpi,
+        'format': template.format,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+
+  @override
   Future<void> selectForProject(String projectId, String templateId) =>
       _database.update(DatabaseTables.projects, projectId, {
         'template_id': templateId,

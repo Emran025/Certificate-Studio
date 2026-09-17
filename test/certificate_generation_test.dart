@@ -4,7 +4,7 @@ import 'package:certificate_studio/core/database/app_database.dart';
 import 'package:certificate_studio/core/database/database_tables.dart';
 import 'package:certificate_studio/core/files/certificate_artifact_store.dart';
 import 'package:certificate_studio/core/security/keys/institution_key_manager.dart';
-import 'package:certificate_studio/features/certificate_generation/domain/certificate_generation_service.dart';
+import 'package:certificate_studio/features/certificates/data/services/certificate_generation_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

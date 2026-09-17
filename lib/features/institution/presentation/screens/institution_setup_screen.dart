@@ -99,12 +99,12 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                       width: 52,
                       height: 52,
                       decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
+                        color: context.themeSelection,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.account_balance_outlined,
-                        color: AppColors.primary,
+                        color: context.themePrimary,
                         size: 28,
                       ),
                     ),
@@ -119,7 +119,7 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                         'This information is used to identify your certificates and verification records.',
                       ),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.themeMutedText,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
@@ -161,15 +161,15 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
-                        color: AppColors.infoSurface,
+                        color: context.themeSelection,
                         borderRadius: BorderRadius.circular(AppRadius.card),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.lock_outline,
-                            color: AppColors.info,
+                            color: context.themePrimary,
                             size: 20,
                           ),
                           const SizedBox(width: AppSpacing.sm),
@@ -179,7 +179,11 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                                 'A private institution key will be generated and kept behind secure storage. It is never displayed or written into the project package.',
                               ),
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: AppColors.textPrimary),
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                  ),
                             ),
                           ),
                         ],
@@ -189,9 +193,9 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                       const SizedBox(height: AppSpacing.md),
                       Text(
                         context.l10n.text(_errorMessage!),
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(color: AppColors.error),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context.themeError,
+                        ),
                       ),
                     ],
                     const SizedBox(height: AppSpacing.xl),

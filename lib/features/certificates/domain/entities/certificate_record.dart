@@ -41,18 +41,67 @@ class CertificateRecord {
   }
 
   String get recipient {
-    final raw = student?['data_json'];
-    if (raw is! String) return '';
-    final decoded = jsonDecode(raw);
-    if (decoded is! Map) return '';
-    for (final value in decoded.values) {
-      if (value != null && value.toString().trim().isNotEmpty) {
-        return value.toString();
+    final values = data;
+    const preferred = [
+      'name',
+      'full_name',
+      'student_name',
+      'recipient',
+      'اسم',
+      'الاسم',
+      'اسم الطالب',
+      'اسم المتدرب',
+    ];
+    for (final key in preferred) {
+      final value = valueFor(key);
+      if (value != null && value.trim().isNotEmpty) return value.trim();
+    }
+    for (final entry in values.entries) {
+      final value = entry.value?.toString().trim() ?? '';
+      if (value.isNotEmpty && !_isTechnicalOrNumeric(entry.key, value)) {
+        return value;
       }
     }
-    return '';
+    final className = student?['class_name']?.toString().trim() ?? '';
+    return className;
   }
 
-  String get searchText =>
-      '$id $status ${row['project_id']} $recipient'.toLowerCase();
+  String get secondaryLabel {
+    final entries = data.entries.where((entry) {
+      final value = entry.value?.toString().trim() ?? '';
+      return value.isNotEmpty && entry.value.toString() != recipient;
+    });
+    final entry = entries.firstWhere(
+      (entry) => !_isTechnicalOrNumeric(
+        entry.key,
+        entry.value?.toString() ?? '',
+      ),
+      orElse: () => const MapEntry('', ''),
+    );
+    if (entry.key.isEmpty) return student?['class_name']?.toString() ?? '';
+    return '${entry.key}: ${entry.value}';
+  }
+
+  String get searchText => [
+    id,
+    status,
+    row['project_id'],
+    row['student_id'],
+    recipient,
+    ...data.entries.expand((entry) => [entry.key, entry.value]),
+  ].join(' ').toLowerCase();
+
+  bool _isTechnicalOrNumeric(String key, String value) {
+    final normalized = key.trim().toLowerCase().replaceAll(
+      RegExp(r'[\s_-]+'),
+      '_',
+    );
+    return normalized == 'id' ||
+        normalized.endsWith('_id') ||
+        normalized == 'row_number' ||
+        normalized == 'number' ||
+        normalized == 'no' ||
+        normalized == 'الرقم' ||
+        RegExp(r'^\d+$').hasMatch(value);
+  }
 }

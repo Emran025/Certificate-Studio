@@ -20,6 +20,11 @@ final class TemplateSelected extends TemplatePickerEvent {
   final String id;
 }
 
+final class TemplateUpdated extends TemplatePickerEvent {
+  const TemplateUpdated(this.template);
+  final TemplateAsset template;
+}
+
 final class TemplateDeleted extends TemplatePickerEvent {
   const TemplateDeleted(this.id);
   final String id;
@@ -47,6 +52,7 @@ class TemplatePickerBloc
     on<TemplatesRequested>(_load);
     on<TemplateAdded>(_add);
     on<TemplateSelected>(_select);
+    on<TemplateUpdated>(_update);
     on<TemplateDeleted>(_delete);
   }
   final TemplateRepository _repository;
@@ -98,6 +104,7 @@ class TemplatePickerBloc
     if (_projectId != null) {
       await _repository.selectForProject(_projectId, event.id);
     }
+
     emit(
       TemplatePickerState(
         status: TemplatePickerStatus.loaded,
@@ -105,6 +112,13 @@ class TemplatePickerBloc
         selectedId: event.id,
       ),
     );
+  }
+
+  Future<void> _update(
+    TemplateUpdated event,
+    Emitter<TemplatePickerState> emit,
+  ) async {
+    await _perform(emit, () => _repository.update(event.template));
   }
 
   Future<void> _delete(

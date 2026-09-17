@@ -95,20 +95,20 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(AppSpacing.xxl),
-                      color: AppColors.primaryLight,
+                      color: context.themeSelection,
                       child: Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(AppSpacing.sm),
                             decoration: BoxDecoration(
-                              color: AppColors.primary,
+                              color: context.themePrimary,
                               borderRadius: BorderRadius.circular(
                                 AppRadius.card,
                               ),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.workspace_premium_outlined,
-                              color: AppColors.textOnPrimary,
+                              color: context.themeOnPrimary,
                               size: 24,
                             ),
                           ),
@@ -129,9 +129,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                                     'Set up the context for this certificate-issuing project. You can configure templates and data next.',
                                   ),
                                   style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: AppColors.textSecondary,
-                                      ),
+                                      ?.copyWith(color: context.themeMutedText),
                                 ),
                               ],
                             ),
@@ -197,11 +195,11 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           const SizedBox(height: AppSpacing.xs),
                           DecoratedBox(
                             decoration: BoxDecoration(
-                              color: AppColors.surfaceSubtle,
+                              color: context.themeSurface,
                               borderRadius: BorderRadius.circular(
                                 AppRadius.card,
                               ),
-                              border: Border.all(color: AppColors.divider),
+                              border: Border.all(color: context.themeBorder),
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(AppSpacing.xs),
@@ -240,7 +238,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                             Text(
                               context.l10n.text(_errorMessage!),
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: AppColors.error),
+                                  ?.copyWith(color: context.themeError),
                             ),
                           ],
                           const SizedBox(height: AppSpacing.xl),

@@ -10,7 +10,7 @@ void main() {
           File(path).readAsStringSync().replaceAll('\r\n', '\n');
 
       final source = readSource(
-        'lib/features/certificate_generation/domain/certificate_artifact_renderer.dart',
+        'lib/features/certificates/data/services/certificate_artifact_renderer.dart',
       );
 
       expect(source, isNot(contains('ArabicReshaper.instance.reshape')));
@@ -27,13 +27,10 @@ void main() {
 
       final pdfOptions = readSource('packages/pdf/lib/src/pdf/options.dart');
       expect(pdfOptions, contains('defaultValue: true'));
-      expect(
-        readSource('pubspec.yaml'),
-        contains('path: packages/pdf'),
-      );
+      expect(readSource('pubspec.yaml'), contains('path: packages/pdf'));
 
       final designer = readSource(
-        'lib/features/certificate_designer/presentation/screens/certificate_designer_screen.dart',
+        'lib/features/certificates/presentation/screens/certificate_designer_screen.dart',
       );
       expect(designer, contains('FontLoader(family)'));
       expect(designer, contains("row['font_bytes']"));

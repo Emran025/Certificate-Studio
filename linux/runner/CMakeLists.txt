@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.13)
 project(runner LANGUAGES CXX)
 
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/app_icon.png"
+  "${CMAKE_CURRENT_BINARY_DIR}/app_icon.png"
+  COPYONLY
+)
+
 # Define the application target. To change its name, change BINARY_NAME in the
 # top-level CMakeLists.txt, not the value here, or `flutter run` will no longer
 # work.
@@ -18,6 +24,7 @@ apply_standard_settings(${BINARY_NAME})
 
 # Add preprocessor definitions for the application ID.
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
+add_definitions(-DAPP_ICON_PATH="${CMAKE_CURRENT_BINARY_DIR}/app_icon.png")
 
 # Add dependency libraries. Add any application-specific dependencies here.
 target_link_libraries(${BINARY_NAME} PRIVATE flutter)

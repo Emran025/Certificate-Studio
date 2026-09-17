@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 
@@ -8,18 +9,18 @@ Future<String?> saveExportBytes({
   required String extension,
   required List<int> bytes,
 }) async {
-  // Do not pass bytes to saveFile on native platforms. Some file_picker
-  // versions return the selected path without writing the supplied bytes.
-  final path = await FilePicker.saveFile(
+  final uri = await FilePicker.saveFile(
     dialogTitle: dialogTitle,
     fileName: fileName,
     type: FileType.custom,
     allowedExtensions: [extension],
+    bytes: Uint8List.fromList(bytes),
   );
-  if (path == null || path.isEmpty) return null;
+  if (uri == null) return null;
+  if (uri.scheme != 'file') return uri.toString();
 
+  final path = uri.toFilePath();
   final file = File(path);
-  await file.writeAsBytes(bytes, flush: true);
   if (!await file.exists() || await file.length() != bytes.length) {
     throw FileSystemException('The exported file was not written.', path);
   }

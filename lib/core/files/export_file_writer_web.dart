@@ -9,11 +9,12 @@ Future<String?> saveExportBytes({
   required List<int> bytes,
 }) {
   // On web, FilePicker owns the browser download and must receive a typed byte list.
-  return FilePicker.saveFile(
+  final uri = await FilePicker.saveFile(
     dialogTitle: dialogTitle,
     fileName: fileName,
     type: FileType.custom,
     allowedExtensions: [extension],
     bytes: Uint8List.fromList(bytes),
   );
+  return uri?.toString();
 }

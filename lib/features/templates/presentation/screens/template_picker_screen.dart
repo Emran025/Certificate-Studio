@@ -78,7 +78,11 @@ class TemplatePickerScreen extends StatelessWidget {
                   IconButton(
                     tooltip: context.l10n.text('back'),
                     onPressed: onBack ?? () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back),
+                    icon: Icon(
+                      Directionality.of(context) == TextDirection.rtl
+                          ? Icons.arrow_forward
+                          : Icons.arrow_back,
+                    ),
                   ),
                 FilledButton.icon(
                   onPressed: () => _addTemplate(context),

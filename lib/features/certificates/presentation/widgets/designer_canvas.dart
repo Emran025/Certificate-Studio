@@ -64,6 +64,8 @@ class _Canvas extends StatelessWidget {
                 selected: field.id == selectedId,
                 previewText: field.qr
                     ? 'QR'
+                    : field.text.isNotEmpty
+                    ? field.text
                     : '${previewData[field.source] ?? field.source}',
                 fontFamilies: fontFamilies,
                 onSelect: () => onSelect(field.id),

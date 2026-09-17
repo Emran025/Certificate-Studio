@@ -36,7 +36,7 @@ class _PropertiesPanel extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: AppSpacing.md),
-          if (!selected.qr)
+          if (!selected.qr && selected.text.isEmpty)
             DropdownButtonFormField<String>(
               initialValue: columns.contains(selected.source)
                   ? selected.source
@@ -58,6 +58,16 @@ class _PropertiesPanel extends StatelessWidget {
                   );
                 }
               },
+            ),
+          if (!selected.qr && selected.text.isNotEmpty)
+            TextFormField(
+              key: ValueKey('${selected.id}-text'),
+              initialValue: selected.text,
+              maxLines: 3,
+              decoration: InputDecoration(
+                labelText: context.l10n.text('Static text'),
+              ),
+              onChanged: (value) => onChanged(selected.copyWith(text: value)),
             ),
           const SizedBox(height: AppSpacing.sm),
           Text(

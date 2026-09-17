@@ -321,15 +321,7 @@ class _CompactWorkspaceHeader extends StatelessWidget {
               icon: const Icon(Icons.menu),
             ),
             const SizedBox(width: AppSpacing.xs),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.input),
-              child: Image.asset(
-                'assets/images/certificate_studio_logo.png',
-                width: 32,
-                height: 32,
-                fit: BoxFit.cover,
-              ),
-            ),
+            const AppBrandLogo(size: 32),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
@@ -383,15 +375,7 @@ class _WorkspaceNavigation extends StatelessWidget {
         children: [
           Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  'assets/images/certificate_studio_logo.png',
-                  width: 36,
-                  height: 36,
-                  fit: BoxFit.cover,
-                ),
-              ),
+              const AppBrandLogo(size: 36, borderRadius: 10),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(

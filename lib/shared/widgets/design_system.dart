@@ -3,6 +3,56 @@ import 'package:flutter/material.dart';
 import '../themes/app_colors.dart';
 import '../themes/app_spacing.dart';
 
+class AppBrandLogo extends StatelessWidget {
+  const AppBrandLogo({super.key, required this.size, this.borderRadius});
+
+  final double size;
+  final double? borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = borderRadius ?? AppRadius.input;
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: ColorFiltered(
+        colorFilter: ColorFilter.matrix([
+          primary.r,
+          0,
+          0,
+          0,
+          0,
+
+          primary.g,
+          0,
+          0,
+          0,
+          0,
+
+          primary.b,
+          0,
+          0,
+          0,
+          0,
+
+          0,
+          0,
+          0,
+          1,
+          0,
+        ]),
+        child: Image.asset(
+          'assets/images/certificate_studio_logo.png',
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+}
+
 class AppPrimaryButton extends StatelessWidget {
   const AppPrimaryButton({
     super.key,

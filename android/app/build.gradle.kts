@@ -6,10 +6,10 @@ plugins {
 
 android {
     namespace = "com.example.certificate_studio"
-    // file_picker 10.2.0 and androidx.core 1.15.0 require API 35 at compile time.
+    // Current AndroidX/Flutter plugins require API 36 at compile time.
     // Keep this independent from targetSdk: this only makes newer APIs available
     // to the compiler and does not opt the app into new runtime behavior.
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

@@ -451,12 +451,9 @@ class _TemplateDialogState extends State<_TemplateDialog> {
   );
 
   Future<void> _chooseBackground() async {
-    final result = await FilePicker.platform.pickFiles(
+    final file = await FilePicker.pickFile(
       type: FileType.image,
-      allowMultiple: false,
-      withData: false,
     );
-    final file = result?.files.single;
     final path = file?.path;
     if (path == null || path.isEmpty || !mounted) return;
     setState(() {

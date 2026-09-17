@@ -47,11 +47,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
   Future<void> _pickCertificate() async {
     // Use FileType.any instead of an image-only picker on web/desktop. The
     // extension is validated here so PDF certificates are selectable too.
-    final picked = await FilePicker.platform.pickFiles(
+    final picked = await FilePicker.pickFiles(
       type: FileType.any,
-      withData: true,
     );
-    final file = picked?.files.single;
+    final file = picked.isEmpty ? null : picked.first;
     if (file == null) return;
     final extension = file.name.split('.').last.toLowerCase();
     const supportedExtensions = {'pdf', 'png', 'jpg', 'jpeg'};
@@ -69,8 +68,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       }
       return;
     }
-    final bytes = file.bytes;
-    if (bytes == null) return;
+    final bytes = await file.readAsBytes();
     _verificationBloc.add(VerifyCertificateFile(bytes, file.name));
   }
 

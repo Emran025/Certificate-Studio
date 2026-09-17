@@ -86,14 +86,14 @@ class _FontsLibraryScreenState extends State<FontsLibraryScreen> {
   }
 
   Future<void> _import() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['ttf', 'otf'],
-      withData: true,
     );
-    final file = result?.files.single;
-    final bytes = file?.bytes;
-    if (file == null || bytes == null || bytes.isEmpty) return;
+    final file = result.isEmpty ? null : result.first;
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    if (bytes.isEmpty) return;
     final name = file.name.replaceFirst(RegExp(r'\.[^.]+$'), '');
     final format = file.extension?.toLowerCase() ?? 'ttf';
     if (!mounted) return;

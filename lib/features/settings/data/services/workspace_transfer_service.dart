@@ -87,7 +87,7 @@ class WorkspaceTransferService {
     }
     final file = await _pickFile(['cszp']);
     if (file == null) return false;
-    final archive = ZipDecoder().decodeBytes(file.bytes!);
+    final archive = ZipDecoder().decodeBytes(await file.readAsBytes());
     final entries = <String, List<int>>{
       for (final entry in archive.files)
         if (entry.isFile) entry.name: entry.content,
@@ -157,7 +157,7 @@ class WorkspaceTransferService {
   Future<int> importSignatures() async {
     final file = await _pickFile(['json']);
     if (file == null) return 0;
-    final decoded = jsonDecode(utf8.decode(file.bytes!));
+    final decoded = jsonDecode(utf8.decode(await file.readAsBytes()));
     if (decoded is! Map || decoded['format'] != 'cstudio-signatures-v1') {
       throw const FormatException('Unsupported signature settings file.');
     }
@@ -270,10 +270,10 @@ class WorkspaceTransferService {
     if (file == null) return null;
     final extension = (file.extension ?? '').toLowerCase();
     if (extension == 'json') {
-      return _importLegacyJson(institutionId, file.bytes!);
+      return _importLegacyJson(institutionId, await file.readAsBytes());
     }
 
-    final archive = ZipDecoder().decodeBytes(file.bytes!);
+    final archive = ZipDecoder().decodeBytes(await file.readAsBytes());
     final entries = <String, List<int>>{
       for (final entry in archive.files)
         if (entry.isFile) entry.name: entry.content,
@@ -439,13 +439,10 @@ class WorkspaceTransferService {
   }
 
   Future<PlatformFile?> _pickFile(List<String> extensions) async {
-    final result = await FilePicker.platform.pickFiles(
+    final file = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: extensions,
-      withData: true,
     );
-    final file = result?.files.single;
-    if (file?.bytes == null) return null;
     return file;
   }
 

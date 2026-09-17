@@ -10,7 +10,7 @@ Future<String?> saveExportBytes({
 }) async {
   // Do not pass bytes to saveFile on native platforms. Some file_picker
   // versions return the selected path without writing the supplied bytes.
-  final path = await FilePicker.platform.saveFile(
+  final path = await FilePicker.saveFile(
     dialogTitle: dialogTitle,
     fileName: fileName,
     type: FileType.custom,

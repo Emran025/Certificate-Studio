@@ -69,15 +69,14 @@ class _DataImportScreenState extends State<DataImportScreen> {
   }
 
   Future<void> _pickExcelFile() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['xlsx'],
-      withData: true,
     );
-    final file = result?.files.single;
+    final file = result.isEmpty ? null : result.first;
     if (file == null) return;
-    final bytes = file.bytes;
-    if (bytes == null || bytes.isEmpty) {
+    final bytes = await file.readAsBytes();
+    if (bytes.isEmpty) {
       _bloc.add(
         const DataImportErrorReported(
           'The selected workbook could not be read.',

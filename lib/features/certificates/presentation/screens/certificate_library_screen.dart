@@ -219,6 +219,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
           ],
           child: DropdownButtonFormField<String>(
             initialValue: selected,
+            isExpanded: true,
             items: [
               for (final field in sortedFields)
                 DropdownMenuItem(value: field, child: Text(field)),
@@ -274,6 +275,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
             children: [
               DropdownButtonFormField<String>(
                 initialValue: field,
+                isExpanded: true,
                 decoration: InputDecoration(
                   labelText: context.l10n.text('Field used for the file name'),
                 ),
@@ -324,6 +326,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
               ),
               DropdownButtonFormField<CertificateExportBundleStyle>(
                 initialValue: style,
+                isExpanded: true,
                 decoration: InputDecoration(
                   labelText: context.l10n.text('Archive style'),
                 ),
@@ -738,32 +741,56 @@ class _CertificatePreviewScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: InteractiveViewer(
-              minScale: .5,
-              maxScale: 4,
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: _ArtifactImage(
-                    reference: certificate.imageReference,
-                    fit: BoxFit.contain,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < AppBreakpoints.tablet;
+          final image = InteractiveViewer(
+            minScale: .5,
+            maxScale: 4,
+            child: compact
+                ? SizedBox(
+                    width: constraints.maxWidth,
+                    height: 320,
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: _ArtifactImage(
+                        reference: certificate.imageReference,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  )
+                : SizedBox.expand(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: _ArtifactImage(
+                        reference: certificate.imageReference,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 340,
-            child: _CertificateDetails(
-              certificate: certificate,
-              database: database,
-              keyStorage: keyStorage,
-            ),
-          ),
-        ],
+          );
+          final details = _CertificateDetails(
+            certificate: certificate,
+            database: database,
+            keyStorage: keyStorage,
+          );
+
+          if (compact) {
+            return Column(
+              children: [
+                Expanded(child: image),
+                SizedBox(height: 390, width: double.infinity, child: details),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(child: image),
+              SizedBox(width: 340, child: details),
+            ],
+          );
+        },
       ),
     ),
   );

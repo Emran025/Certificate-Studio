@@ -170,47 +170,88 @@ class AppPageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (icon != null) ...[
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: context.themeSelection,
-                borderRadius: BorderRadius.circular(AppRadius.input),
+      padding: EdgeInsets.all(
+        AppBreakpoints.isMobile(context) ? AppSpacing.sm : AppSpacing.lg,
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < AppBreakpoints.tablet;
+          final theme = Theme.of(context);
+          final titleBlock = Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (icon != null) ...[
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: context.themeSelection,
+                    borderRadius: BorderRadius.circular(AppRadius.input),
+                  ),
+                  child: Icon(icon, color: context.themePrimary, size: 24),
+                ),
+                const SizedBox(width: AppSpacing.md),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: narrow
+                          ? theme.textTheme.headlineSmall
+                          : theme.textTheme.headlineMedium,
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        subtitle!,
+                        style: narrow
+                            ? theme.textTheme.bodyMedium
+                            : theme.textTheme.bodyLarge,
+                      ),
+                    ],
+                  ],
+                ),
               ),
-              child: Icon(icon, color: context.themePrimary, size: 24),
-            ),
-            const SizedBox(width: AppSpacing.md),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            ],
+          );
+          final actionBlock = actions == null || actions!.isEmpty
+              ? null
+              : Wrap(
+                  alignment: WrapAlignment.end,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.xs,
+                  children: actions!,
+                );
+
+          if (narrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(title, style: Theme.of(context).textTheme.headlineMedium),
-                if (subtitle != null) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(subtitle!, style: Theme.of(context).textTheme.bodyLarge),
+                titleBlock,
+                if (actionBlock != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: actionBlock,
+                  ),
                 ],
               ],
-            ),
-          ),
-          if (actions != null) ...[
-            const SizedBox(width: AppSpacing.md),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (var index = 0; index < actions!.length; index++) ...[
-                  if (index > 0) const SizedBox(width: AppSpacing.sm),
-                  actions![index],
-                ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: titleBlock),
+              if (actionBlock != null) ...[
+                const SizedBox(width: AppSpacing.md),
+                Flexible(child: actionBlock),
               ],
-            ),
-          ],
-        ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -239,6 +280,11 @@ class AppDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final compact = screenWidth < AppBreakpoints.tablet;
+    final horizontalInset = compact ? AppSpacing.sm : AppSpacing.lg;
+    final dialogWidth = width ?? 600;
+    final maxDialogWidth = screenWidth - horizontalInset * 2;
     final isDark = theme.brightness == Brightness.dark;
     final headerColor = Color.alphaBlend(
       (isDark ? Colors.black : Colors.black).withValues(
@@ -249,19 +295,22 @@ class AppDialog extends StatelessWidget {
     final titleStyle = theme.textTheme.titleMedium?.copyWith(
       color: isDark ? Colors.white : theme.colorScheme.onSurface,
       fontWeight: FontWeight.w700,
+      fontSize: compact ? 16 : null,
     );
 
     return Dialog(
       clipBehavior: Clip.antiAlias,
-      insetPadding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.lg,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: horizontalInset,
+        vertical: compact ? AppSpacing.sm : AppSpacing.lg,
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          minWidth: width == null ? 280 : 0,
-          maxWidth: width ?? 600,
-          maxHeight: MediaQuery.sizeOf(context).height - AppSpacing.xl * 2,
+          minWidth: compact ? 0 : (width == null ? 280 : 0),
+          maxWidth: dialogWidth < maxDialogWidth ? dialogWidth : maxDialogWidth,
+          maxHeight:
+              MediaQuery.sizeOf(context).height -
+              (compact ? AppSpacing.lg * 2 : AppSpacing.xl * 2),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -273,9 +322,9 @@ class AppDialog extends StatelessWidget {
                 border: Border(bottom: BorderSide(color: context.themeBorder)),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.md,
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? AppSpacing.sm : AppSpacing.lg,
+                  vertical: compact ? AppSpacing.sm : AppSpacing.md,
                 ),
                 child: Row(
                   children: [
@@ -291,7 +340,9 @@ class AppDialog extends StatelessWidget {
                           if (subtitle != null) ...[
                             const SizedBox(height: AppSpacing.xxs),
                             DefaultTextStyle(
-                              style: theme.textTheme.bodySmall!,
+                              style: (compact
+                                  ? theme.textTheme.labelSmall
+                                  : theme.textTheme.bodySmall)!,
                               child: subtitle!,
                             ),
                           ],
@@ -314,26 +365,25 @@ class AppDialog extends StatelessWidget {
             Flexible(
               fit: FlexFit.loose,
               child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                padding: EdgeInsets.all(
+                  compact ? AppSpacing.sm : AppSpacing.lg,
+                ),
                 child: child,
               ),
             ),
             if (actions != null && actions!.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
+                padding: EdgeInsets.fromLTRB(
+                  compact ? AppSpacing.sm : AppSpacing.lg,
                   0,
-                  AppSpacing.lg,
-                  AppSpacing.md,
+                  compact ? AppSpacing.sm : AppSpacing.lg,
+                  compact ? AppSpacing.sm : AppSpacing.md,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    for (var index = 0; index < actions!.length; index++) ...[
-                      if (index > 0) const SizedBox(width: AppSpacing.sm),
-                      actions![index],
-                    ],
-                  ],
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.xs,
+                  children: [...actions!],
                 ),
               ),
           ],

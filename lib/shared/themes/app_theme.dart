@@ -166,6 +166,11 @@ abstract final class AppTheme {
         height: 1.3,
         fontWeight: FontWeight.w600,
       ),
+      headlineSmall: TextStyle(
+        fontSize: 18,
+        height: 1.3,
+        fontWeight: FontWeight.w600,
+      ),
       titleLarge: TextStyle(
         fontSize: 18,
         height: 1.35,

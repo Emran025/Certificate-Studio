@@ -89,48 +89,59 @@ class TemplatePickerScreen extends StatelessWidget {
                       ),
                     ),
                   )
-                : GridView.builder(
-                    padding: const EdgeInsets.all(AppSpacing.xl),
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 300,
-                          mainAxisExtent: 280,
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact =
+                          constraints.maxWidth < AppBreakpoints.tablet;
+                      final columns = compact
+                          ? 1
+                          : (constraints.maxWidth / 300).floor().clamp(1, 4);
+                      return GridView.builder(
+                        padding: EdgeInsets.all(
+                          compact ? AppSpacing.sm : AppSpacing.xl,
+                        ),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          mainAxisExtent: compact ? 360 : 280,
                           crossAxisSpacing: AppSpacing.md,
                           mainAxisSpacing: AppSpacing.md,
                         ),
-                    itemCount: state.templates.length,
-                    itemBuilder: (_, index) {
-                      final template = state.templates[index];
-                      return _TemplateCard(
-                        template: template,
-                        selected: template.id == state.selectedId,
-                        onSelect: () => context.read<TemplatePickerBloc>().add(
-                          TemplateSelected(template.id),
-                        ),
-                        onDelete: () => context.read<TemplatePickerBloc>().add(
-                          TemplateDeleted(template.id),
-                        ),
-                        onEdit: () async {
-                          final draft = await showDialog<_TemplateDraft>(
-                            context: context,
-                            builder: (_) => _TemplateDialog(initial: template),
-                          );
-                          if (draft == null || !context.mounted) return;
-                          context.read<TemplatePickerBloc>().add(
-                            TemplateUpdated(
-                              TemplateAsset(
-                                id: template.id,
-                                name: draft.name,
-                                filePath: draft.path,
-                                width: draft.width,
-                                height: draft.height,
-                                dpi: draft.dpi,
-                                format: draft.format,
-                              ),
-                            ),
+                        itemCount: state.templates.length,
+                        itemBuilder: (_, index) {
+                          final template = state.templates[index];
+                          return _TemplateCard(
+                            template: template,
+                            selected: template.id == state.selectedId,
+                            onSelect: () => context
+                                .read<TemplatePickerBloc>()
+                                .add(TemplateSelected(template.id)),
+                            onDelete: () => context
+                                .read<TemplatePickerBloc>()
+                                .add(TemplateDeleted(template.id)),
+                            onEdit: () async {
+                              final draft = await showDialog<_TemplateDraft>(
+                                context: context,
+                                builder: (_) =>
+                                    _TemplateDialog(initial: template),
+                              );
+                              if (draft == null || !context.mounted) return;
+                              context.read<TemplatePickerBloc>().add(
+                                TemplateUpdated(
+                                  TemplateAsset(
+                                    id: template.id,
+                                    name: draft.name,
+                                    filePath: draft.path,
+                                    width: draft.width,
+                                    height: draft.height,
+                                    dpi: draft.dpi,
+                                    format: draft.format,
+                                  ),
+                                ),
+                              );
+                            },
+                            projectMode: projectMode,
                           );
                         },
-                        projectMode: projectMode,
                       );
                     },
                   ),

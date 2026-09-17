@@ -17,9 +17,11 @@ class TemplatePickerScreen extends StatelessWidget {
     super.key,
     required this.database,
     this.projectId,
+    this.onBack,
   });
   final AppDatabase database;
   final String? projectId;
+  final VoidCallback? onBack;
 
   Future<void> _addTemplate(BuildContext context) async {
     final bloc = context.read<TemplatePickerBloc>();
@@ -72,6 +74,12 @@ class TemplatePickerScreen extends StatelessWidget {
                     ),
               icon: Icons.image_outlined,
               actions: [
+                if (projectMode)
+                  IconButton(
+                    tooltip: context.l10n.text('back'),
+                    onPressed: onBack ?? () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.arrow_back),
+                  ),
                 FilledButton.icon(
                   onPressed: () => _addTemplate(context),
                   icon: const Icon(Icons.add_photo_alternate_outlined),

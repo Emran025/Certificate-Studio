@@ -243,11 +243,15 @@ class AppPageHeader extends StatelessWidget {
           }
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(child: titleBlock),
               if (actionBlock != null) ...[
                 const SizedBox(width: AppSpacing.md),
-                Flexible(child: actionBlock),
+                Align(
+                  alignment: AlignmentDirectional.topEnd,
+                  child: actionBlock,
+                ),
               ],
             ],
           );

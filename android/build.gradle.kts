@@ -35,18 +35,21 @@ subprojects {
             }
         }
     }
-    afterEvaluate {
-        // Some Flutter plugins assign compileSdk during their own evaluation,
-        // after the Android plugin callback above. Apply the project-wide
-        // policy last so modules such as file_picker cannot fall back to API 34.
-        extensions.findByType<LibraryExtension>()?.compileSdk = 36
-    }
     tasks.withType<JavaCompile>().configureEach {
         sourceCompatibility = JavaVersion.VERSION_17.toString()
         targetCompatibility = JavaVersion.VERSION_17.toString()
     }
     tasks.withType<KotlinCompile>().configureEach {
         compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
+    }
+}
+
+gradle.projectsEvaluated {
+    // Some Flutter plugins assign compileSdk during their own evaluation.
+    // Apply the policy after every project has been evaluated so modules such
+    // as file_picker cannot fall back to API 34.
+    subprojects.forEach { project ->
+        project.extensions.findByType<LibraryExtension>()?.compileSdk = 36
     }
 }
 

@@ -25,6 +25,10 @@ subprojects {
 
     plugins.withId("com.android.library") {
         extensions.configure<LibraryExtension> {
+            // Flutter plugins may declare an older default compileSdk than the
+            // AndroidX dependencies they expose. Keep every library module on
+            // the same API level as the application module.
+            compileSdk = 36
             compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_17
                 targetCompatibility = JavaVersion.VERSION_17

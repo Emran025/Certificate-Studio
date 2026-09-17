@@ -528,6 +528,10 @@ class CertificateArtifactRenderer {
           pageWidth /
           imageWidth,
     );
+    // The designer uses 10 logical canvas pixels of horizontal padding. Keep
+    // the same geometry in PDF points instead of applying a fixed 10pt inset,
+    // which becomes disproportionately large for high-DPI templates.
+    final fieldPadding = 10 / containScale * pageWidth / imageWidth;
     return pw.Positioned(
       left: x,
       top: y,
@@ -535,7 +539,7 @@ class CertificateArtifactRenderer {
         width: width,
         height: height,
         child: pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 10),
+          padding: pw.EdgeInsets.symmetric(horizontal: fieldPadding),
           child: pw.Align(
             alignment: boxAlignment,
             child: pw.Directionality(
@@ -559,6 +563,10 @@ class CertificateArtifactRenderer {
     Map<String, dynamic> values,
     Map<String, Object?> field,
   ) {
+    final style = _jsonMap(field['style_json']);
+    if (style['kind'] == 'static') {
+      return style['text']?.toString() ?? '';
+    }
     final className = field['class_name'] as String?;
     final source = field['source'] as String?;
     final sourceValue = _valueForKey(values, source);

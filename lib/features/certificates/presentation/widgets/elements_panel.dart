@@ -6,6 +6,7 @@ class _ElementsPanel extends StatelessWidget {
     required this.fields,
     required this.selectedId,
     required this.onAdd,
+    required this.onAddStaticText,
     required this.onAddQr,
     required this.onSelect,
   });
@@ -13,6 +14,7 @@ class _ElementsPanel extends StatelessWidget {
   final List<_DesignerField> fields;
   final String? selectedId;
   final VoidCallback onAdd;
+  final VoidCallback onAddStaticText;
   final VoidCallback onAddQr;
   final ValueChanged<String> onSelect;
   @override
@@ -36,6 +38,15 @@ class _ElementsPanel extends StatelessWidget {
             onPressed: columns.isEmpty ? null : onAdd,
             icon: const Icon(Icons.add),
             label: Text(context.l10n.text('Data field')),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: onAddStaticText,
+            icon: const Icon(Icons.title),
+            label: Text(context.l10n.text('Static text')),
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -72,7 +83,13 @@ class _ElementsPanel extends StatelessWidget {
                       field.qr ? Icons.qr_code_2 : Icons.text_fields,
                       size: 18,
                     ),
-                    title: Text(field.qr ? 'Verification QR' : field.source),
+                    title: Text(
+                      field.qr
+                          ? 'Verification QR'
+                          : field.text.isNotEmpty
+                          ? field.text
+                          : field.source,
+                    ),
                     subtitle: Text(
                       '${field.width.round()} × ${field.height.round()}',
                     ),

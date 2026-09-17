@@ -19,6 +19,9 @@ class AppLocalizations {
 
   String text(String key, [Map<String, String> args = const {}]) {
     if (isArabic) {
+      if (key == 'Static text') return 'نص ثابت';
+      if (key == 'Text') return 'النص';
+      if (key == 'Add') return 'إضافة';
       if (key == 'signed' || key == 'Signed') return 'موقّعة';
       if (key == 'draft' || key == 'Draft') return 'مسودة';
       if (key.endsWith(' selected')) {

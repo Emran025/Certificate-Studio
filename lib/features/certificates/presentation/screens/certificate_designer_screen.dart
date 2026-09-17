@@ -96,6 +96,10 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
   }
 
   Future<void> _load() async {
+    final layouts = await widget.database.query(
+      DatabaseTables.certificateLayouts,
+      where: {'project_id': widget.projectId},
+    );
     final rows = await widget.database.query(
       DatabaseTables.certificateFields,
       where: {'project_id': widget.projectId},
@@ -110,6 +114,11 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
     );
     final projectTemplateId = projects.firstOrNull?['template_id'] as String?;
     final projectSettings = _decodeMap(projects.firstOrNull?['settings_json']);
+    final layoutSettings = _decodeMap(layouts.firstOrNull?['settings_json']);
+    final savedZoom = _number(
+      layoutSettings['zoom'],
+      _zoom,
+    ).clamp(.4, 2.2).toDouble();
     final projectFontId = projectSettings['font_id']?.toString();
     final projectFonts = projectFontId == null
         ? const <Map<String, Object?>>[]
@@ -155,6 +164,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
         _projectFontFamily,
       }.toList();
       _fields = rows.map(_DesignerField.fromRow).toList();
+      _zoom = savedZoom;
       _undoStack
         ..clear()
         ..add(List<_DesignerField>.from(_fields));
@@ -228,6 +238,55 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
     setState(() => _selectedId = null);
   }
 
+  Future<void> _addStaticText() async {
+    final controller = TextEditingController();
+    final text = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.l10n.text('Static text')),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 3,
+          decoration: InputDecoration(labelText: context.l10n.text('Text')),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.l10n.text('Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: Text(context.l10n.text('Add')),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (text == null || text.isEmpty || !mounted) return;
+    final id = 'static-${DateTime.now().microsecondsSinceEpoch}';
+    final field = _DesignerField(
+      id: id,
+      className: '__static_text__',
+      source: '',
+      text: text,
+      x: ((_canvasWidth - 420) / 2).clamp(0, _canvasWidth - 120).toDouble(),
+      y: (100 + (_fields.length * 70)).clamp(0, _canvasHeight - 64).toDouble(),
+      width: 420.clamp(120, _canvasWidth).toDouble(),
+      height: 64.clamp(40, _canvasHeight).toDouble(),
+      fontSize: 28,
+      color: '#20332B',
+      fontFamily: _projectFontFamily,
+    );
+    await widget.database.insert(
+      DatabaseTables.certificateFields,
+      field.toRow(widget.projectId, DateTime.now().toUtc().toIso8601String()),
+    );
+    if (!mounted) return;
+    _updateFields([..._fields, field]);
+    setState(() => _selectedId = id);
+  }
+
   Future<void> _addQrField() async {
     final id = 'qr-${DateTime.now().microsecondsSinceEpoch}';
     const size = 220.0;
@@ -293,6 +352,14 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
     _isPopping = true;
     await _save();
     if (mounted) Navigator.of(context).pop();
+  }
+
+  void _changeZoom(double value) {
+    setState(() {
+      _zoom = value.clamp(.4, 2.2).toDouble();
+      _hasUnsavedChanges = true;
+      _saveLabel = 'Unsaved changes';
+    });
   }
 
   void _moveField(String id, Offset delta) {
@@ -410,6 +477,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
       fields: _fields,
       selectedId: _selectedId,
       onAdd: _addField,
+      onAddStaticText: _addStaticText,
       onAddQr: _addQrField,
       onSelect: (id) {
         setState(() => _selectedId = id);
@@ -497,69 +565,77 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
                       child: SafeArea(child: propertiesPanel),
                     )
                   : null,
-              appBar: AppBar(
-                leading: usePanelDrawers
-                    ? Builder(
+              body: AppPageTable(
+                header: AppPageHeader(
+                  title: context.l10n.text('Design · ${widget.projectName}'),
+                  subtitle: context.l10n.text(
+                    'Place fields on the certificate canvas.',
+                  ),
+                  icon: Icons.design_services_outlined,
+                  actions: [
+                    if (usePanelDrawers)
+                      Builder(
                         builder: (context) => IconButton(
                           tooltip: context.l10n.text('Elements'),
                           icon: const Icon(Icons.layers_outlined),
                           onPressed: () => Scaffold.of(context).openDrawer(),
                         ),
-                      )
-                    : null,
-                title: Text(
-                  context.l10n.text('Design · ${widget.projectName}'),
-                ),
-                actions: [
-                  if (!compactToolbar)
+                      ),
+                    if (!compactToolbar)
+                      Text(
+                        _saveLabel,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    if (usePanelDrawers)
+                      Builder(
+                        builder: (context) => IconButton(
+                          tooltip: context.l10n.text('Field properties'),
+                          icon: const Icon(Icons.tune),
+                          onPressed: () => Scaffold.of(context).openEndDrawer(),
+                        ),
+                      ),
+                    IconButton(
+                      tooltip: context.l10n.text('Zoom out'),
+                      onPressed: () => _changeZoom(_zoom - .1),
+                      icon: const Icon(Icons.remove),
+                    ),
                     Text(
-                      _saveLabel,
-                      style: Theme.of(context).textTheme.bodySmall,
+                      '${(_zoom * 100).round()}%',
+                      style: Theme.of(context).textTheme.labelMedium,
                     ),
-                  if (usePanelDrawers)
-                    Builder(
-                      builder: (context) => IconButton(
-                        tooltip: context.l10n.text('Field properties'),
-                        icon: const Icon(Icons.tune),
-                        onPressed: () => Scaffold.of(context).openEndDrawer(),
+                    IconButton(
+                      tooltip: context.l10n.text('Zoom in'),
+                      onPressed: () => _changeZoom(_zoom + .1),
+                      icon: const Icon(Icons.add),
+                    ),
+                    IconButton(
+                      tooltip: context.l10n.text('back'),
+                      onPressed: _saveBeforeExit,
+                      icon: Icon(
+                        Directionality.of(context) == TextDirection.rtl
+                            ? Icons.arrow_forward
+                            : Icons.arrow_back,
                       ),
                     ),
-                  const SizedBox(width: AppSpacing.sm),
-                  IconButton(
-                    tooltip: context.l10n.text('Zoom out'),
-                    onPressed: () =>
-                        setState(() => _zoom = (_zoom - .1).clamp(.4, 2.2)),
-                    icon: const Icon(Icons.remove),
-                  ),
-                  Text(
-                    '${(_zoom * 100).round()}%',
-                    style: Theme.of(context).textTheme.labelMedium,
-                  ),
-                  IconButton(
-                    tooltip: context.l10n.text('Zoom in'),
-                    onPressed: () =>
-                        setState(() => _zoom = (_zoom + .1).clamp(.4, 2.2)),
-                    icon: const Icon(Icons.add),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                ],
-              ),
-              body: Row(
-                children: [
-                  if (!usePanelDrawers)
-                    SizedBox(width: 230, child: elementsPanel),
-                  Expanded(
-                    child: Container(
-                      color: context.themeBackground,
-                      padding: EdgeInsets.all(
-                        compactToolbar ? AppSpacing.sm : AppSpacing.lg,
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    if (!usePanelDrawers)
+                      SizedBox(width: 230, child: elementsPanel),
+                    Expanded(
+                      child: Container(
+                        color: context.themeBackground,
+                        padding: EdgeInsets.all(
+                          compactToolbar ? AppSpacing.sm : AppSpacing.lg,
+                        ),
+                        child: canvas,
                       ),
-                      child: canvas,
                     ),
-                  ),
-                  if (!usePanelDrawers)
-                    SizedBox(width: 300, child: propertiesPanel),
-                ],
+                    if (!usePanelDrawers)
+                      SizedBox(width: 300, child: propertiesPanel),
+                  ],
+                ),
               ),
             ),
           ),
@@ -587,6 +663,7 @@ class _DesignerField {
     required this.height,
     required this.fontSize,
     required this.color,
+    this.text = '',
     this.alignment = 'left',
     this.direction = 'ltr',
     this.fontFamily = 'Cairo',
@@ -603,6 +680,7 @@ class _DesignerField {
   final double height;
   final double fontSize;
   final String color;
+  final String text;
   final String alignment;
   final String direction;
   final String fontFamily;
@@ -624,6 +702,7 @@ class _DesignerField {
       id: row['id']! as String,
       className: canonicalFieldClassId(row['class_name']! as String),
       source: (row['source'] as String?) ?? '',
+      text: (style['text'] as String?) ?? '',
       x: _number(position['x'], 100),
       y: _number(position['y'], 100),
       width: _number(position['width'], 420),
@@ -650,7 +729,8 @@ class _DesignerField {
       'height': height,
     }),
     'style_json': jsonEncode({
-      'kind': qr ? 'qr' : 'text',
+      'kind': qr ? 'qr' : (text.isNotEmpty ? 'static' : 'text'),
+      'text': text,
       'font_size': fontSize,
       'color': color,
       'alignment': alignment,
@@ -666,6 +746,7 @@ class _DesignerField {
   _DesignerField copyWith({
     String? className,
     String? source,
+    String? text,
     double? x,
     double? y,
     double? width,
@@ -682,6 +763,7 @@ class _DesignerField {
     id: id,
     className: className ?? this.className,
     source: source ?? this.source,
+    text: text ?? this.text,
     x: x ?? this.x,
     y: y ?? this.y,
     width: width ?? this.width,

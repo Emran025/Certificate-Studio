@@ -7,7 +7,7 @@ Future<String?> saveExportBytes({
   required String fileName,
   required String extension,
   required List<int> bytes,
-}) {
+}) async {
   // On web, FilePicker owns the browser download and must receive a typed byte list.
   final uri = await FilePicker.saveFile(
     dialogTitle: dialogTitle,

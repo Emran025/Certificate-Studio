@@ -27,7 +27,7 @@ class CertificateVerificationResult {
     required this.status,
     this.certificateId,
     this.recipient,
-    this.studentClass,
+    this.recordClass,
     this.institution,
     this.course,
     this.issueDate,
@@ -40,7 +40,7 @@ class CertificateVerificationResult {
   final CertificateVerificationStatus status;
   final String? certificateId;
   final String? recipient;
-  final String? studentClass;
+  final String? recordClass;
   final String? institution;
   final String? course;
   final String? issueDate;
@@ -67,7 +67,7 @@ class CertificateVerificationService {
     'institution_id',
     'project_id',
     'certificate_id',
-    'student_id',
+    'record_id',
     'public_key',
     'document_hash',
     'document_data',
@@ -109,8 +109,9 @@ class CertificateVerificationService {
             'The certificate public key is unavailable on this device.',
           );
         }
-        publicKey = (await CertificateKeyPair.fromSeed(_hexDecode(stored)))
-            .publicKey;
+        publicKey = (await CertificateKeyPair.fromSeed(
+          _hexDecode(stored),
+        )).publicKey;
       }
       return await _verifyRecord(record, document, publicKey);
     } catch (error) {
@@ -140,7 +141,8 @@ class CertificateVerificationService {
           }
           return _result(
             CertificateVerificationStatus.verificationDataMissing,
-            reason: 'QR extraction failed and no embedded verification record was found in the image.',
+            reason:
+                'QR extraction failed and no embedded verification record was found in the image.',
           );
         }
         final hydratedQrRecord = await _hydrateQrRecord(qrRecord);
@@ -213,9 +215,9 @@ class CertificateVerificationService {
   }
 
   Future<CertificateVerificationResult> _verifyEmbedded(
-    _ExtractedCertificate extracted,
-    {required String extension}
-  ) async {
+    _ExtractedCertificate extracted, {
+    required String extension,
+  }) async {
     final record = extracted.record;
     final publicKey = _embeddedPublicKey(record);
     if (publicKey == null) {
@@ -231,7 +233,8 @@ class CertificateVerificationService {
         : record['artifact_hash'];
     if (expectedArtifactHash is String &&
         expectedArtifactHash.isNotEmpty &&
-        expectedArtifactHash != await sha256Base64Url(extracted.artifactBytes)) {
+        expectedArtifactHash !=
+            await sha256Base64Url(extracted.artifactBytes)) {
       return _fromRecord(
         record,
         CertificateVerificationStatus.integrityCompromised,
@@ -248,9 +251,13 @@ class CertificateVerificationService {
       );
       var publicKey = _embeddedPublicKey(record);
       if (publicKey == null && record['project_id'] is String) {
-        final stored = await keyStorage.read('project.${record['project_id']}.key');
+        final stored = await keyStorage.read(
+          'project.${record['project_id']}.key',
+        );
         if (stored != null) {
-          publicKey = (await CertificateKeyPair.fromSeed(_hexDecode(stored))).publicKey;
+          publicKey = (await CertificateKeyPair.fromSeed(
+            _hexDecode(stored),
+          )).publicKey;
         }
       }
       if (publicKey == null) {
@@ -307,17 +314,18 @@ class CertificateVerificationService {
     if (fields is Map) {
       return canonicalJsonBytes({
         'project_id': record['project_id'],
-        'student_id': record['student_id'],
+        'record_id': record['record_id'],
         'fields': Map<String, dynamic>.from(fields),
       });
     }
     final dynamicFields = <String, dynamic>{
       for (final entry in record.entries)
-        if (!_verificationMetadataKeys.contains(entry.key)) entry.key: entry.value,
+        if (!_verificationMetadataKeys.contains(entry.key))
+          entry.key: entry.value,
     };
     return canonicalJsonBytes({
       'project_id': record['project_id'],
-      'student_id': record['student_id'],
+      'record_id': record['record_id'],
       'fields': dynamicFields,
     });
   }
@@ -341,9 +349,10 @@ class CertificateVerificationService {
           fields['recipient']?.toString() ??
           fields['name']?.toString() ??
           (displayValues.isEmpty ? null : displayValues.first),
-      studentClass: fields['student_class']?.toString(),
+      recordClass: fields['record_class']?.toString(),
       institution: record['institution_id']?.toString(),
-      course: fields['course_name']?.toString() ??
+      course:
+          fields['course_name']?.toString() ??
           fields['course']?.toString() ??
           (displayValues.length > 1 ? displayValues[1] : null),
       issueDate: fields['issue_date']?.toString(),
@@ -358,7 +367,7 @@ class CertificateVerificationService {
     CertificateVerificationStatus status, {
     String? certificateId,
     String? recipient,
-    String? studentClass,
+    String? recordClass,
     String? institution,
     String? course,
     String? issueDate,
@@ -370,7 +379,7 @@ class CertificateVerificationService {
     status: status,
     certificateId: certificateId,
     recipient: recipient,
-    studentClass: studentClass,
+    recordClass: recordClass,
     institution: institution,
     course: course,
     issueDate: issueDate,
@@ -386,7 +395,7 @@ class CertificateVerificationService {
     status: result.status,
     certificateId: result.certificateId,
     recipient: result.recipient,
-    studentClass: result.studentClass,
+    recordClass: result.recordClass,
     institution: result.institution,
     course: result.course,
     issueDate: result.issueDate,
@@ -402,8 +411,9 @@ class CertificateVerificationService {
     const marker = 'CSTUDIO_RECORD_V1:';
     final markerIndex = text.lastIndexOf(marker);
     if (markerIndex < 0) return null;
-    final match = RegExp(r'CSTUDIO_RECORD_V1:([A-Za-z0-9_-]+)')
-        .firstMatch(text.substring(markerIndex));
+    final match = RegExp(
+      r'CSTUDIO_RECORD_V1:([A-Za-z0-9_-]+)',
+    ).firstMatch(text.substring(markerIndex));
     if (match == null) return null;
     final value = jsonDecode(
       utf8.decode(base64Url.decode(base64Url.normalize(match.group(1)!))),
@@ -422,7 +432,10 @@ class CertificateVerificationService {
 
   Future<Map<String, dynamic>?> _extractQrFromPdf(List<int> bytes) async {
     try {
-      await for (final page in Printing.raster(Uint8List.fromList(bytes), dpi: 300)) {
+      await for (final page in Printing.raster(
+        Uint8List.fromList(bytes),
+        dpi: 300,
+      )) {
         final png = await page.toPng();
         final record = await _extractQrRecord(png);
         if (record != null) return record;
@@ -455,22 +468,37 @@ class CertificateVerificationService {
       // A certificate QR is often small relative to the page. Decode
       // overlapping tiles as well as the full page so text and background
       // detail cannot prevent the detector from finding its finder patterns.
-      final tileWidth = (decoded.width * .55).round().clamp(96, decoded.width).toInt();
-      final tileHeight = (decoded.height * .55).round().clamp(96, decoded.height).toInt();
-      final xStep = ((decoded.width - tileWidth) / 2).round().clamp(1, decoded.width).toInt();
-      final yStep = ((decoded.height - tileHeight) / 2).round().clamp(1, decoded.height).toInt();
+      final tileWidth = (decoded.width * .55)
+          .round()
+          .clamp(96, decoded.width)
+          .toInt();
+      final tileHeight = (decoded.height * .55)
+          .round()
+          .clamp(96, decoded.height)
+          .toInt();
+      final xStep = ((decoded.width - tileWidth) / 2)
+          .round()
+          .clamp(1, decoded.width)
+          .toInt();
+      final yStep = ((decoded.height - tileHeight) / 2)
+          .round()
+          .clamp(1, decoded.height)
+          .toInt();
       for (var y = 0; y < decoded.height; y += yStep) {
         for (var x = 0; x < decoded.width; x += xStep) {
           final left = x.clamp(0, decoded.width - tileWidth).toInt();
           final top = y.clamp(0, decoded.height - tileHeight).toInt();
-          variants.add(img.copyCrop(
-            grayscale,
-            x: left,
-            y: top,
-            width: tileWidth,
-            height: tileHeight,
-          ));
-          if (x + tileWidth >= decoded.width && y + tileHeight >= decoded.height) {
+          variants.add(
+            img.copyCrop(
+              grayscale,
+              x: left,
+              y: top,
+              width: tileWidth,
+              height: tileHeight,
+            ),
+          );
+          if (x + tileWidth >= decoded.width &&
+              y + tileHeight >= decoded.height) {
             break;
           }
         }
@@ -480,7 +508,9 @@ class CertificateVerificationService {
         // zxing2's RGBLuminanceSource expects ARGB values from an RGBA byte
         // stream. Passing BGRA here reverses the color channels and makes the
         // detector unreliable even for QR codes generated by this app.
-        final rgba = variant.convert(numChannels: 4).getBytes(order: img.ChannelOrder.rgba);
+        final rgba = variant
+            .convert(numChannels: 4)
+            .getBytes(order: img.ChannelOrder.rgba);
         final source = RGBLuminanceSource(
           variant.width,
           variant.height,
@@ -528,16 +558,25 @@ class CertificateVerificationService {
     final full = _decode(rows.first['payload_json']);
     if (full['document_hash'] != qrRecord['document_hash'] ||
         full['signature'] != qrRecord['signature']) {
-      throw const FormatException('QR payload does not match the local certificate record');
+      throw const FormatException(
+        'QR payload does not match the local certificate record',
+      );
     }
     final qrValues = qrRecord['_qr_first_values'];
     final fullFields = full['fields'];
     if (qrValues is List && fullFields is Map) {
-      final expected = fullFields.values.take(2).map((value) => '$value').toList();
+      final expected = fullFields.values
+          .take(2)
+          .map((value) => '$value')
+          .toList();
       if (qrValues.length != expected.length ||
-          !List.generate(expected.length, (index) => qrValues[index] == expected[index])
-              .every((matches) => matches)) {
-        throw const FormatException('QR field values do not match the certificate record');
+          !List.generate(
+            expected.length,
+            (index) => qrValues[index] == expected[index],
+          ).every((matches) => matches)) {
+        throw const FormatException(
+          'QR field values do not match the certificate record',
+        );
       }
     }
     return full;

@@ -84,7 +84,7 @@ def test_certificate_record_signs_hash_and_rejects_tampering():
     document = b"rendered PNG or PDF bytes"
     record = create_record({
         "institution_id": "institution-1", "project_id": "project-1", "certificate_id": "A001",
-        "student_class": "A001", "course": "Flutter", "issue_date": "2026-09-12",
+        "record_class": "A001", "course": "Flutter", "issue_date": "2026-09-12",
     }, document, pair.private_key)
     assert verify_record(record, document, pair.public_key)
     assert not verify_record(record, document + b"tamper", pair.public_key)

@@ -218,8 +218,8 @@ class WorkspaceTransferService {
       DatabaseTables.signatures,
       where: {'project_id': projectId},
     );
-    final students = await _database.query(
-      DatabaseTables.students,
+    final records = await _database.query(
+      DatabaseTables.records,
       where: {'project_id': projectId},
     );
     final archive = Archive()
@@ -256,8 +256,8 @@ class WorkspaceTransferService {
       ..addFile(
         ArchiveFile(
           _dataRowsName,
-          utf8.encode(_studentsToCsv(students)).length,
-          utf8.encode(_studentsToCsv(students)),
+          utf8.encode(_recordsToCsv(records)).length,
+          utf8.encode(_recordsToCsv(records)),
         ),
       );
 
@@ -351,7 +351,7 @@ class WorkspaceTransferService {
       projectId,
     );
     final csv = entries[_dataRowsName];
-    if (csv != null) await _replaceStudentsFromCsv(projectId, utf8.decode(csv));
+    if (csv != null) await _replaceRecordsFromCsv(projectId, utf8.decode(csv));
     return projectId;
   }
 
@@ -378,7 +378,7 @@ class WorkspaceTransferService {
     await _database.upsert(DatabaseTables.projects, project);
     for (final table in [
       DatabaseTables.signatures,
-      DatabaseTables.students,
+      DatabaseTables.records,
       DatabaseTables.certificateFields,
       DatabaseTables.certificateLayouts,
     ]) {
@@ -390,7 +390,7 @@ class WorkspaceTransferService {
   Future<void> _clearProjectData(String projectId) async {
     for (final table in [
       DatabaseTables.signatures,
-      DatabaseTables.students,
+      DatabaseTables.records,
       DatabaseTables.certificateFields,
       DatabaseTables.certificateLayouts,
     ]) {
@@ -413,15 +413,15 @@ class WorkspaceTransferService {
     }
   }
 
-  Future<void> _replaceStudentsFromCsv(String projectId, String csv) async {
+  Future<void> _replaceRecordsFromCsv(String projectId, String csv) async {
     final rows = _csvToRows(csv);
-    await _database.deleteWhere(DatabaseTables.students, {
+    await _database.deleteWhere(DatabaseTables.records, {
       'project_id': projectId,
     });
     for (var index = 0; index < rows.length; index++) {
       final values = rows[index];
-      await _database.insert(DatabaseTables.students, {
-        'id': 'student-${DateTime.now().microsecondsSinceEpoch}-$index',
+      await _database.insert(DatabaseTables.records, {
+        'id': 'record-${DateTime.now().microsecondsSinceEpoch}-$index',
         'project_id': projectId,
         'class_name': _className(values, index),
         'data_json': jsonEncode(values),
@@ -436,7 +436,7 @@ class WorkspaceTransferService {
     for (final key in [
       'class',
       'class_name',
-      'student_class',
+      'record_class',
       'الصف',
       'الفصل',
       'الشعبة',
@@ -521,11 +521,11 @@ class WorkspaceTransferService {
       int.parse(value.substring(index, index + 2), radix: 16),
   ];
 
-  String _studentsToCsv(List<Map<String, Object?>> students) {
+  String _recordsToCsv(List<Map<String, Object?>> records) {
     final maps = <Map<String, String>>[];
     final columns = <String>[];
-    for (final student in students) {
-      final raw = student['data_json'];
+    for (final record in records) {
+      final raw = record['data_json'];
       if (raw is! String) continue;
       final decoded = jsonDecode(raw);
       if (decoded is! Map) continue;

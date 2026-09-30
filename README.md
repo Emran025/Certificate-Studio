@@ -59,7 +59,7 @@ A project may contain:
 * Project information
 * Institution information
 * Certificate template
-* Recipient/student data
+* Recipient/record data
 * Data-column mappings
 * Certificate fields
 * Field positions and dimensions
@@ -241,7 +241,7 @@ Certificate fields can be connected directly to imported recipient data.
 For example, an Excel file may contain:
 
 ```text
-Student Name
+Record Name
 Course
 Grade
 Date
@@ -252,7 +252,7 @@ Phone
 The user can place:
 
 ```text
-Student Name
+Record Name
 ```
 
 on the certificate.
@@ -293,7 +293,7 @@ Users can:
 Example:
 
 ```text
-| Student Name | Course       | Grade | Date       |
+| Record Name | Course       | Grade | Date       |
 |--------------|--------------|-------|------------|
 | Ahmed Ali    | Flutter      | A+    | 2026-09-01 |
 | Mohammed Ali | Laravel      | A     | 2026-09-01 |
@@ -311,7 +311,7 @@ The mapping layer connects imported data with certificate fields.
 For example:
 
 ```text
-Student Name  → Recipient Name
+Record Name  → Recipient Name
 Course        → Course Title
 Grade         → Final Grade
 Date          → Completion Date
@@ -637,15 +637,15 @@ Certificate filenames can be generated dynamically.
 Examples:
 
 ```text
-{student_name}.pdf
+{record_name}.pdf
 ```
 
 ```text
-{student_name}_{course}.pdf
+{record_name}_{course}.pdf
 ```
 
 ```text
-{course}_{student_name}.pdf
+{course}_{record_name}.pdf
 ```
 
 The filename engine resolves placeholders from project data.
@@ -661,7 +661,7 @@ Certificate Studio supports several export scenarios.
 ### Individual export
 
 ```text
-Student Certificate
+Record Certificate
  ├── PDF
  └── Image
 ```
@@ -670,15 +670,15 @@ Student Certificate
 
 ```text
 Certificates
- ├── Student A
+ ├── Record A
  │    ├── certificate.pdf
  │    └── certificate.png
  │
- ├── Student B
+ ├── Record B
  │    ├── certificate.pdf
  │    └── certificate.png
  │
- └── Student C
+ └── Record C
       ├── certificate.pdf
       └── certificate.png
 ```
@@ -1216,7 +1216,7 @@ lib/
 │   ├── export/
 │   ├── project_package/
 │   ├── verification/
-│   ├── students/
+│   ├── records/
 │   ├── sharing/
 │   └── settings/
 ├── routes/
@@ -1422,11 +1422,11 @@ A typical institution workflow can be:
 
 2. Select an existing certificate template.
 
-3. Import an Excel spreadsheet containing 42 students.
+3. Import an Excel spreadsheet containing 42 records.
 
 4. Validate the imported data.
 
-5. Add the Student Name field to the certificate.
+5. Add the Record Name field to the certificate.
 
 6. Add Course, Grade, and Completion Date fields.
 
@@ -1436,7 +1436,7 @@ A typical institution workflow can be:
 
 9. Add a verification QR code.
 
-10. Preview several students.
+10. Preview several records.
 
 11. Run pre-generation validation.
 
@@ -1640,7 +1640,7 @@ When data is imported, the application shows an immediate preview:
 ```text
 Imported successfully
 
-42 students
+42 records
 5 columns
 0 invalid rows
 
@@ -1742,9 +1742,9 @@ Select an element to edit its properties.
 
 Data Field selected:
 ```text
-Field: Student Name
+Field: Record Name
 
-Source:  Student Name (Excel column)
+Source:  Record Name (Excel column)
 
 Font:    Cairo
 Size:    32
@@ -1800,7 +1800,7 @@ Add Data Field
 
 Available columns:
 
-● Student Name
+● Record Name
 ○ Course
 ○ Grade
 ○ Date
@@ -1810,14 +1810,14 @@ Available columns:
 [ Add Field ]
 ```
 
-The user selects "Student Name" and clicks Add Field. A box appears on the canvas at a default position, already connected to the Student Name column. The preview inside the box shows the first student's name.
+The user selects "Record Name" and clicks Add Field. A box appears on the canvas at a default position, already connected to the Record Name column. The preview inside the box shows the first record's name.
 
 The user drags the box to the correct position and adjusts size as needed.
 
 Internally:
 ```text
 field.type = data
-field.source = student_name_column
+field.source = record_name_column
 ```
 
 No placeholder syntax is visible to the user at any point.
@@ -1831,7 +1831,7 @@ The user can scroll through recipients:
 ```text
 Preview
 
-Student: [ Ahmed Ali  ▼ ]
+Record: [ Ahmed Ali  ▼ ]
 
         < Previous    1 / 42    Next >
 
@@ -1862,7 +1862,7 @@ The Generate section configures and triggers batch certificate production.
 The user sets:
 
 - Output formats (PDF / High-resolution image / both)
-- Filename pattern (e.g., {student_name}_{course})
+- Filename pattern (e.g., {record_name}_{course})
 - Export organization (individual files / per-recipient folders / ZIP)
 
 Before generation, the application runs a pre-generation validation:
@@ -1871,13 +1871,13 @@ Before generation, the application runs a pre-generation validation:
 Pre-generation Check
 
 ✓ Template exists
-✓ 42 students loaded
+✓ 42 records loaded
 ✓ All required fields mapped
 ✓ Fonts available
 ✓ Signature available
 ✓ Security keys valid
 
-⚠ 3 students have missing phone numbers
+⚠ 3 records have missing phone numbers
   Phone is not required for generation.
 
 [ Generate 42 Certificates ]

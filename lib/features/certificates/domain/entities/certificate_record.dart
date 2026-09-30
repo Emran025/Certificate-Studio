@@ -1,17 +1,17 @@
 import 'dart:convert';
 
 class CertificateRecord {
-  CertificateRecord(this.row, this.student);
+  CertificateRecord(this.row, this.record);
   final Map<String, Object?> row;
-  final Map<String, Object?>? student;
+  final Map<String, Object?>? record;
   String get id => row['id']?.toString() ?? '';
   String get status => row['status']?.toString() ?? 'unknown';
   String? get imageReference => row['image_path'] as String?;
   String? get pdfReference => row['file_path'] as String?;
   Map<String, dynamic> get data {
-    final rawStudent = student?['data_json'];
-    if (rawStudent is String) {
-      final decoded = jsonDecode(rawStudent);
+    final rawRecord = record?['data_json'];
+    if (rawRecord is String) {
+      final decoded = jsonDecode(rawRecord);
       if (decoded is Map) return Map<String, dynamic>.from(decoded);
     }
     final rawDocument = row['document_json'];
@@ -45,7 +45,7 @@ class CertificateRecord {
     const preferred = [
       'name',
       'full_name',
-      'student_name',
+      'record_name',
       'recipient',
       'اسم',
       'الاسم',
@@ -62,7 +62,7 @@ class CertificateRecord {
         return value;
       }
     }
-    final className = student?['class_name']?.toString().trim() ?? '';
+    final className = record?['class_name']?.toString().trim() ?? '';
     return className;
   }
 
@@ -72,13 +72,11 @@ class CertificateRecord {
       return value.isNotEmpty && entry.value.toString() != recipient;
     });
     final entry = entries.firstWhere(
-      (entry) => !_isTechnicalOrNumeric(
-        entry.key,
-        entry.value?.toString() ?? '',
-      ),
+      (entry) =>
+          !_isTechnicalOrNumeric(entry.key, entry.value?.toString() ?? ''),
       orElse: () => const MapEntry('', ''),
     );
-    if (entry.key.isEmpty) return student?['class_name']?.toString() ?? '';
+    if (entry.key.isEmpty) return record?['class_name']?.toString() ?? '';
     return '${entry.key}: ${entry.value}';
   }
 
@@ -86,7 +84,7 @@ class CertificateRecord {
     id,
     status,
     row['project_id'],
-    row['student_id'],
+    row['record_id'],
     recipient,
     ...data.entries.expand((entry) => [entry.key, entry.value]),
   ].join(' ').toLowerCase();

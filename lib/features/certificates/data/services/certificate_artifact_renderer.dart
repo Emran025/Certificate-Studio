@@ -31,7 +31,7 @@ class CertificateArtifactRenderer {
 
   /// Prepares the immutable background once per generation job. Rendering a
   /// certificate must remain pixel-compatible, but decoding and enhancing the
-  /// same template for every student is unnecessary work.
+  /// same template for every record is unnecessary work.
   static PdfBackgroundAssets? preparePdfBackground(
     List<int>? templateBytes,
     Map<String, Object?> template,

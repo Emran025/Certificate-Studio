@@ -20,8 +20,8 @@ void main() {
         await database.open();
         final storage = InMemoryKeyStorage();
         final artifacts = InMemoryCertificateArtifactStore();
-        await database.insert(DatabaseTables.students, {
-          'id': 'student-1',
+        await database.insert(DatabaseTables.records, {
+          'id': 'record-1',
           'project_id': 'project-1',
           'class_name': 'A001',
           'data_json': jsonEncode({'name': 'Ahmed Ali', 'course': 'Flutter'}),
@@ -111,47 +111,40 @@ void main() {
     test(
       'applies persisted column mappings to generated certificate fields',
       () async {
-          final database = InMemoryAppDatabase();
-          await database.open();
-          await database.insert(DatabaseTables.students, {
-            'id': 'student-mapped',
-            'project_id': 'project-mapped',
-            'class_name': 'fallback',
-            'data_json': jsonEncode({
-              'اسم الطالب': 'سارة',
-              'الدورة': 'Flutter',
-            }),
-            'row_number': 1,
-            'created_at': DateTime.now().toUtc().toIso8601String(),
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          });
-          await database.insert(DatabaseTables.settings, {
-            'key': 'mapping:project-mapped',
-            'value_json': jsonEncode({
-              'اسم المستلم': 'recipient',
-              'الدورة': 'course',
-            }),
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          });
+        final database = InMemoryAppDatabase();
+        await database.open();
+        await database.insert(DatabaseTables.records, {
+          'id': 'record-mapped',
+          'project_id': 'project-mapped',
+          'class_name': 'fallback',
+          'data_json': jsonEncode({'اسم الطالب': 'سارة', 'الدورة': 'Flutter'}),
+          'row_number': 1,
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        });
+        await database.insert(DatabaseTables.settings, {
+          'key': 'mapping:project-mapped',
+          'value_json': jsonEncode({
+            'اسم المستلم': 'recipient',
+            'الدورة': 'course',
+          }),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        });
 
-          final result =
-              await CertificateGenerationService(
-                database,
-                InMemoryKeyStorage(),
-              ).generate(
-                projectId: 'project-mapped',
-                institutionId: 'institution-1',
-              );
+        final result = await CertificateGenerationService(
+          database,
+          InMemoryKeyStorage(),
+        ).generate(projectId: 'project-mapped', institutionId: 'institution-1');
 
-          expect(result.status, 'completed');
-          final certificate = (await database.query(
-            DatabaseTables.certificates,
-          )).single;
-          final document =
-              jsonDecode(certificate['document_json']! as String) as Map;
-          final fields = document['fields'] as Map;
-          expect(fields['recipient'], 'سارة');
-          expect(fields['course'], 'Flutter');
+        expect(result.status, 'completed');
+        final certificate = (await database.query(
+          DatabaseTables.certificates,
+        )).single;
+        final document =
+            jsonDecode(certificate['document_json']! as String) as Map;
+        final fields = document['fields'] as Map;
+        expect(fields['recipient'], 'سارة');
+        expect(fields['course'], 'Flutter');
       },
     );
   }

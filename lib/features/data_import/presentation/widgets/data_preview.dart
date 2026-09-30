@@ -93,7 +93,7 @@ class DataPreview extends StatelessWidget {
         : {...table.rows[rowIndex]};
     final values = await showDialog<Map<String, String>>(
       context: context,
-      builder: (_) => _StudentEditor(
+      builder: (_) => _RecordEditor(
         columns: table.columns,
         profiles: _profiles,
         initialValues: initial,
@@ -203,7 +203,7 @@ class DataPreview extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(AppSpacing.sm),
             child: Text(
-              context.l10n.text('Editable student rows'),
+              context.l10n.text('Editable record rows'),
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
@@ -216,7 +216,7 @@ class DataPreview extends StatelessWidget {
                   itemCount: table.rows.take(50).length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(height: AppSpacing.sm),
-                  itemBuilder: (context, index) => _MobileStudentCard(
+                  itemBuilder: (context, index) => _MobileRecordCard(
                     row: table.rows[index],
                     columns: table.columns,
                     rowNumber: index + 1,
@@ -268,7 +268,7 @@ class DataPreview extends StatelessWidget {
                               visualDensity: VisualDensity.compact,
                             ),
                             IconButton(
-                              tooltip: context.l10n.text('Add student row'),
+                              tooltip: context.l10n.text('Add record row'),
                               onPressed: disabled
                                   ? null
                                   : () => _editRow(context, null),
@@ -296,9 +296,7 @@ class DataPreview extends StatelessWidget {
                               ),
                             DataCell(
                               IconButton(
-                                tooltip: context.l10n.text(
-                                  'Delete student row',
-                                ),
+                                tooltip: context.l10n.text('Delete record row'),
                                 onPressed: disabled
                                     ? null
                                     : () => _deleteRow(index),
@@ -320,8 +318,8 @@ class DataPreview extends StatelessWidget {
   );
 }
 
-class _MobileStudentCard extends StatelessWidget {
-  const _MobileStudentCard({
+class _MobileRecordCard extends StatelessWidget {
+  const _MobileRecordCard({
     required this.row,
     required this.columns,
     required this.rowNumber,
@@ -358,7 +356,7 @@ class _MobileStudentCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    context.l10n.text('Student row {number}', {
+                    context.l10n.text('Record row {number}', {
                       'number': '$rowNumber',
                     }),
                     style: TextStyle(
@@ -368,13 +366,13 @@ class _MobileStudentCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: context.l10n.text('Edit student'),
+                  tooltip: context.l10n.text('Edit record'),
                   onPressed: disabled ? null : onEdit,
                   icon: const Icon(Icons.edit_outlined, size: 18),
                   visualDensity: VisualDensity.compact,
                 ),
                 IconButton(
-                  tooltip: context.l10n.text('Delete student row'),
+                  tooltip: context.l10n.text('Delete record row'),
                   onPressed: disabled ? null : onDelete,
                   icon: const Icon(Icons.delete_outline, size: 18),
                   visualDensity: VisualDensity.compact,
@@ -390,7 +388,7 @@ class _MobileStudentCard extends StatelessWidget {
             child: Column(
               children: [
                 for (var index = 0; index < columns.length; index++) ...[
-                  _MobileStudentField(
+                  _MobileRecordField(
                     column: columns[index],
                     value: row[columns[index]] ?? '',
                     disabled: disabled,
@@ -408,8 +406,8 @@ class _MobileStudentCard extends StatelessWidget {
   }
 }
 
-class _MobileStudentField extends StatelessWidget {
-  const _MobileStudentField({
+class _MobileRecordField extends StatelessWidget {
+  const _MobileRecordField({
     required this.column,
     required this.value,
     required this.disabled,
@@ -508,8 +506,8 @@ class _ColumnHeader extends StatelessWidget {
   );
 }
 
-class _StudentEditor extends StatefulWidget {
-  const _StudentEditor({
+class _RecordEditor extends StatefulWidget {
+  const _RecordEditor({
     required this.columns,
     required this.profiles,
     required this.initialValues,
@@ -520,10 +518,10 @@ class _StudentEditor extends StatefulWidget {
   final Map<String, String> initialValues;
 
   @override
-  State<_StudentEditor> createState() => _StudentEditorState();
+  State<_RecordEditor> createState() => _RecordEditorState();
 }
 
-class _StudentEditorState extends State<_StudentEditor> {
+class _RecordEditorState extends State<_RecordEditor> {
   late final Map<String, TextEditingController> _controllers;
   late final Map<String, String?> _choices;
 
@@ -592,7 +590,7 @@ class _StudentEditorState extends State<_StudentEditor> {
     final isPortrait = size.height >= size.width;
 
     return AppDialog(
-      title: Text(context.l10n.text('Edit student')),
+      title: Text(context.l10n.text('Edit record')),
       icon: Icons.edit_outlined,
       width: isPortrait ? size.width * .8 : size.width * .65,
       actions: [

@@ -10,9 +10,9 @@ date: 2026-09-12
 | --- | --- | --- |
 | Home / Workspace | Main entry point showing recent projects and quick actions. | Project List, New/Import buttons, Sidebar |
 | New Project Wizard | Step-by-step setup for a new certificate project. | Setup Forms, Next/Back actions |
-| Data Import | Interface for importing and mapping student data. | Excel Drop Zone, Data Table Preview |
+| Data Import | Interface for importing and mapping record data. | Excel Drop Zone, Data Table Preview |
 | Certificate Designer | Core editing interface for certificate layouts. | Canvas, Properties Panel, Elements List |
-| Preview Mode | Paginated preview of certificates before generation. | Certificate View, Student Dropdown |
+| Preview Mode | Paginated preview of certificates before generation. | Certificate View, Record Dropdown |
 | Generation Job | Progress tracker for batch certificate generation. | Progress Bar, Status List |
 | Certificate Library | Archive of all generated certificates. | Data Grid, Filters, Export Options |
 | Verification | Independent tool to verify generated certificates. | Upload Zone, QR Scanner, Result View |
@@ -202,7 +202,7 @@ QR
 والتجربة يجب أن تكون ممتازة جدًا.
 
 ```text
-Add Student Data
+Add Record Data
 
 ┌───────────────────────────────────────────────────┐
 │                                                   │
@@ -218,7 +218,7 @@ Add Student Data
 إذا لصق المستخدم جدول Excel:
 
 ```text
-Student Name | Course | Grade | Date | Phone
+Record Name | Course | Grade | Date | Phone
 Ahmed Ali    | Flutter| A     | ...  | 77...
 Mohammed ... | Flutter| A+    | ...  | 77...
 ```
@@ -230,7 +230,7 @@ Mohammed ... | Flutter| A+    | ...  | 77...
 ```text
 Imported successfully
 
-42 students
+42 records
 5 columns
 0 invalid rows
 ```
@@ -255,7 +255,7 @@ Imported successfully
 
 ```text
 ┌────┬──────────────┬──────────┬───────┬────────────┐
-│ #  │ Student Name │ Course   │ Grade │ Phone      │
+│ #  │ Record Name │ Course   │ Grade │ Phone      │
 ├────┼──────────────┼──────────┼───────┼────────────┤
 │ 1  │ Ahmed Ali    │ Flutter  │ A     │ 777...     │
 │ 2  │ Mohammed     │ Flutter  │ A+    │ 778...     │
@@ -306,7 +306,7 @@ Imported successfully
 │ ─────────     │                              │               │
 │ QR            │                              │               │
 │ Signature     │                              │               │
-│ Student Name  │                              │               │
+│ Record Name  │                              │               │
 │ Background    │                              │               │
 └───────────────┴──────────────────────────────┴───────────────┘
 ```
@@ -326,7 +326,7 @@ Layer
 
 ---
 
-# 8. لا تجعل المستخدم يكتب `{student_name}` يدويًا
+# 8. لا تجعل المستخدم يكتب `{record_name}` يدويًا
 
 هذه نقطة UX مهمة جدًا.
 
@@ -334,7 +334,7 @@ Layer
 
 ```text
 Text:
-{student_name}
+{record_name}
 ```
 
 نعطيه:
@@ -346,7 +346,7 @@ Add Data Field
 
 Available columns:
 
-○ Student Name
+○ Record Name
 ○ Course
 ○ Grade
 ○ Date
@@ -358,7 +358,7 @@ Available columns:
 
 عندما يضغط:
 
-> Student Name
+> Record Name
 
 ينشأ Box تلقائيًا.
 
@@ -366,7 +366,7 @@ Available columns:
 
 ```text
 field.type = data
-field.source = student_name
+field.source = record_name
 ```
 
 وهكذا المستخدم لا يحتاج معرفة الـ mapping الداخلي.
@@ -388,7 +388,7 @@ field.source = student_name
 ثم اختيار:
 
 ```text
-Student Name
+Record Name
 ```
 
 ### الطريقة الثانية — Drag & Drop
@@ -398,7 +398,7 @@ Student Name
 ```text
 DATA
 
-Student Name
+Record Name
 Course
 Grade
 Date
@@ -408,7 +408,7 @@ Phone
 يسحب:
 
 ```text
-Student Name
+Record Name
 ```
 
 إلى الشهادة.
@@ -433,7 +433,7 @@ Student Name
 FIELD
 
 Source
-Student Name
+Record Name
 
 Appearance
 
@@ -543,7 +543,7 @@ Y: 860 px
  │          │               │
  │          │               │
  │     ┌────────────┐       │
- │     │ Student    │       │
+ │     │ Record    │       │
  │     └────────────┘       │
  │          │               │
  ───────────────────────────
@@ -558,7 +558,7 @@ Y: 860 px
 ```text
 Preview
 
-Student:
+Record:
 [ Ahmed Ali ▼ ]
 
 < Previous      1 / 42      Next >
@@ -766,7 +766,7 @@ Project Key
 ```text
 Generate Certificates
 
-42 students
+42 records
 
 Output:
 
@@ -776,7 +776,7 @@ Output:
 
 Filename:
 
-[ {student_name}_{course} ]
+[ {record_name}_{course} ]
 
 Export:
 ○ Individual files
@@ -842,7 +842,7 @@ Filter:
 [ All ] [ Valid ] [ Errors ]
 
 ┌────────────────────────────────────────────┐
-│ Certificate ID    Student       Status     │
+│ Certificate ID    Record       Status     │
 ├────────────────────────────────────────────┤
 │ CERT-00001       Ahmed Ali      ✓ Ready    │
 │ CERT-00002       Mohammed       ✓ Ready    │
@@ -1221,7 +1221,7 @@ Programming Course 2026
 │ Project Overview                         │
 │                                          │
 │ Template             ✓ Configured        │
-│ Student Data         ✓ 42 records        │
+│ Record Data         ✓ 42 records        │
 │ Field Mapping        ✓ Complete          │
 │ Design               ✓ Complete          │
 │ Security             ✓ Enabled           │
@@ -1290,13 +1290,13 @@ Project readiness
 Pre-generation Check
 
 ✓ Template exists
-✓ 42 students loaded
+✓ 42 records loaded
 ✓ All required fields mapped
 ✓ Fonts available
 ✓ Signature available
 ✓ Security keys valid
 
-⚠ 3 students have missing phone numbers
+⚠ 3 records have missing phone numbers
 
 Phone is not required for certificate generation.
 
@@ -1306,7 +1306,7 @@ Phone is not required for certificate generation.
 أما إذا:
 
 ```text
-✕ 2 students missing Student Name
+✕ 2 records missing Record Name
 ```
 
 فـ Generate يكون:
@@ -1679,7 +1679,7 @@ You're ready.
 | Projects              | `features/projects`                 |
 | Template Library      | `features/templates`                |
 | Font Library          | `features/fonts`                    |
-| Student Data          | `features/data_import` + `students` |
+| Record Data          | `features/data_import` + `records` |
 | Mapping               | `features/field_mapping`            |
 | Designer              | `features/certificate_designer`     |
 | Signature             | `features/signatures`               |
@@ -1885,5 +1885,5 @@ Project → Design → Font → Save
 ### Drag-and-Drop Zones
 * **Home Screen:** Drop `.cstudio` project files to import.
 * **Designer Canvas:** Drop image files to use as template/background or insert shapes/logos.
-* **Data Import:** Drop `.xlsx` or `.csv` files to load students.
+* **Data Import:** Drop `.xlsx` or `.csv` files to load records.
 * **Verification:** Drop certificate `.pdf` or image files to verify.

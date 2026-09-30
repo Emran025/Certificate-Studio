@@ -25,7 +25,7 @@ date: 2026-09-12
 | Offline | 3 | Offline-first operations |
 | Sharing | 2 | PDF/Image sharing |
 | WhatsApp | 2 | Direct WhatsApp sharing |
-| Export | 3 | ZIP export by student/class |
+| Export | 3 | ZIP export by record/class |
 | Settings | 4 | System and institution settings |
 | Cross-platform | 5 | Multi-platform support |
 
@@ -163,7 +163,7 @@ format
 مثلاً:
 
 ```text
-Class: student_name
+Class: record_name
 X: 450
 Y: 300
 Width: 900
@@ -286,7 +286,7 @@ Fonts
 ```text
 Excel Column        Certificate Class
 --------------------------------------
-name          →     student_name
+name          →     record_name
 course        →     course_name
 grade         →     grade
 date          →     issue_date
@@ -298,7 +298,7 @@ phone         →     phone
 مثلاً مؤسسة تستخدم:
 
 ```text
-Student Name
+Record Name
 ```
 
 وأخرى:
@@ -310,13 +310,13 @@ Student Name
 وثالثة:
 
 ```text
-student
+record
 ```
 
 كلها يمكن ربطها بالـ:
 
 ```text
-student_name
+record_name
 ```
 
 ---
@@ -405,7 +405,7 @@ A003.pdf
 أو:
 
 ```text
-{student_name}_{class}.pdf
+{record_name}_{class}.pdf
 ```
 
 فتصبح:
@@ -610,7 +610,7 @@ hash_data(data)
     "institution_id": "...",
     "project_id": "...",
     "certificate_id": "...",
-    "student_class": "A001",
+    "record_class": "A001",
     "course": "Flutter",
     "issue_date": "2026-09-12",
     "document_hash": "...",
@@ -709,7 +709,7 @@ XXXX University
 Course:
 Flutter Advanced
 
-Student:
+Record:
 Ahmed Ali
 
 Certificate ID:
@@ -758,7 +758,7 @@ Certificates
 
 تظهر قائمة الطلاب:
 
-| Class | Student    | Course  | Status    |
+| Class | Record    | Course  | Status    |
 | ----- | ---------- | ------- | --------- |
 | A001  | Ahmed Ali  | Flutter | Generated |
 | A002  | Mohammed   | Flutter | Generated |
@@ -847,7 +847,7 @@ Send Certificate
 يتم:
 
 ```text
-Student
+Record
    ↓
 phone
    ↓
@@ -874,7 +874,7 @@ projects
 templates
 fonts
 signatures
-students
+records
 certificate_fields
 certificate_layouts
 certificates
@@ -918,7 +918,7 @@ color
 و:
 
 ```text
-students
+records
 --------
 id
 project_id
@@ -1092,7 +1092,7 @@ certificate_studio/
 Generate
      ↓
       ┌───────────────┐
-      │ 100 Students  │
+      │ 100 Records  │
       └───────┬───────┘
               ↓
        100 Certificates
@@ -1282,7 +1282,7 @@ PDF / PNG
 - **Security:** Security audits must confirm that institution and project keys are never stored in plaintext on the file system or database.
 ## Glossary
 
-- **Box / Class:** A visual element on the certificate template linked to data (e.g., student name).
+- **Box / Class:** A visual element on the certificate template linked to data (e.g., record name).
 - **Institution Key:** The master cryptographic key used by an institution to sign and secure its certificates.
 - **Project Key:** A derived key specific to a single course or batch of certificates.
 - **Certificate Verification Record:** A structured dataset embedded in the certificate to prove its authenticity.

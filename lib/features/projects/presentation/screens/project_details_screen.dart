@@ -125,7 +125,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                         ),
                         _ProjectActionData(
                           icon: Icons.table_chart_outlined,
-                          title: context.l10n.text('Student data'),
+                          title: context.l10n.text('Record data'),
                           description: context.l10n.text(
                             'Import or paste recipient data.',
                           ),

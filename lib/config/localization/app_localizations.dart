@@ -121,8 +121,8 @@ class AppLocalizations {
     'Your workspace': 'Your workspace',
     'Create project': 'Create project',
     'Create your first project': 'Create your first project',
-    'Start with project information, then add a template and student data.':
-        'Start with project information, then add a template and student data.',
+    'Start with project information, then add a template and record data.':
+        'Start with project information, then add a template and record data.',
     'No projects have been created yet.': 'No projects have been created yet.',
     'Offline ready': 'Offline ready',
     'Draft': 'Draft',
@@ -148,7 +148,7 @@ class AppLocalizations {
     'Export project': 'Export project',
     'Export the background, font, data, and field positions.':
         'Export the background, font, data, and field positions.',
-    'Student data': 'Student data',
+    'Record data': 'Record data',
     'Export all PNG files (ZIP)': 'Export all PNG files (ZIP)',
     'Export all PDF files (ZIP)': 'Export all PDF files (ZIP)',
     'Generated certificates': 'Generated certificates',
@@ -237,7 +237,7 @@ class AppLocalizations {
     'Verification QR': 'Verification QR',
     'Set up your institution': 'Set up your institution',
     'Continue to workspace': 'Continue to workspace',
-    'Add student data': 'Add student data',
+    'Add record data': 'Add record data',
     'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.':
         'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.',
     'Paste table data': 'Paste table data',
@@ -254,14 +254,14 @@ class AppLocalizations {
     'Field name must be unique and not empty.':
         'Field name must be unique and not empty.',
     'At least one field is required.': 'At least one field is required.',
-    'Edit student': 'Edit student',
-    'Student row {number}': 'Student row {number}',
+    'Edit record': 'Edit record',
+    'Record row {number}': 'Record row {number}',
     'Detected fixed values': 'Choose one of the detected values',
     'Value must be between {min} and {max}.':
         'Value must be between {min} and {max}.',
-    'Editable student rows': 'Editable student rows',
-    'Add student row': 'Add student row',
-    'Delete student row': 'Delete student row',
+    'Editable record rows': 'Editable record rows',
+    'Add record row': 'Add record row',
+    'Delete record row': 'Delete record row',
     'Edit value': 'Edit value',
     'Row actions': 'Row actions',
     'No recipient data yet. Import a table to continue to certificate design.':
@@ -310,7 +310,7 @@ class AppLocalizations {
     'yourWorkspace': 'Your workspace',
     'createFirstProject': 'Create your first project',
     'firstProjectDescription':
-        'Start with project information, then add a template and student data.',
+        'Start with project information, then add a template and record data.',
     'createProject': 'Create project',
     'failedLoadProjects': 'Failed to load projects. Please try again.',
     'verifyCertificate': 'Verify certificate',
@@ -433,7 +433,7 @@ class AppLocalizations {
     'Your workspace': 'مساحة عملك',
     'Create project': 'إنشاء مشروع',
     'Create your first project': 'أنشئ مشروعك الأول',
-    'Start with project information, then add a template and student data.':
+    'Start with project information, then add a template and record data.':
         'ابدأ بمعلومات المشروع، ثم أضف قالبًا وبيانات الطلاب.',
     'No projects have been created yet.': 'لم يتم إنشاء أي مشاريع بعد.',
     'Offline ready': 'جاهز للعمل دون اتصال',
@@ -547,7 +547,7 @@ class AppLocalizations {
     'Verification QR': 'رمز QR للتحقق',
     'Set up your institution': 'إعداد المؤسسة',
     'Continue to workspace': 'المتابعة إلى مساحة العمل',
-    'Add student data': 'إضافة بيانات الطلاب',
+    'Add record data': 'إضافة بيانات الطلاب',
     'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.':
         'استورد ملف ‎.xlsx أو الصق جدولًا. سيصبح الصف الأول أسماء الأعمدة.',
     'Paste table data': 'لصق بيانات الجدول',
@@ -564,14 +564,14 @@ class AppLocalizations {
     'Field name must be unique and not empty.':
         'يجب أن يكون اسم الحقل غير فارغ وفريدًا.',
     'At least one field is required.': 'يجب الإبقاء على حقل واحد على الأقل.',
-    'Edit student': 'تعديل بيانات الطالب',
-    'Student row {number}': 'صف الطالب {number}',
+    'Edit record': 'تعديل بيانات الطالب',
+    'Record row {number}': 'صف الطالب {number}',
     'Detected fixed values': 'اختر إحدى القيم المكتشفة',
     'Value must be between {min} and {max}.':
         'يجب أن تكون القيمة بين {min} و {max}.',
-    'Editable student rows': 'صفوف الطلاب القابلة للتعديل',
-    'Add student row': 'إضافة صف طالب',
-    'Delete student row': 'حذف صف الطالب',
+    'Editable record rows': 'صفوف الطلاب القابلة للتعديل',
+    'Add record row': 'إضافة صف طالب',
+    'Delete record row': 'حذف صف الطالب',
     'Edit value': 'تعديل القيمة',
     'Row actions': 'إجراءات الصف',
     'No recipient data yet. Import a table to continue to certificate design.':
@@ -679,7 +679,7 @@ class AppLocalizations {
     'Redo': 'إعادة',
     'Refresh': 'تحديث',
     'Save design': 'حفظ التصميم',
-    'Student data': 'بيانات الطلاب',
+    'Record data': 'بيانات الطلاب',
     'Template': 'القالب',
     'Text alignment': 'محاذاة النص',
     'Text color (#RRGGBB)': 'لون النص (#RRGGBB)',

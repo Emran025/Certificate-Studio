@@ -17,7 +17,7 @@ The database design must support:
 * Multiple certificate projects
 * Reusable templates
 * Reusable fonts
-* Recipient/student data
+* Recipient/record data
 * Certificate field definitions
 * Field-to-data mappings
 * Certificate layouts
@@ -787,7 +787,7 @@ source_type:
     recipient_column
 
 source_key:
-    student_name
+    record_name
 ```
 
 The mapping layer must remain independent from the Excel implementation.
@@ -860,7 +860,7 @@ updated_at
 Examples:
 
 ```text
-student_name
+record_name
 course
 grade
 date

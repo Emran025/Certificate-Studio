@@ -15,12 +15,12 @@ class CertificateRepositoryImpl implements CertificateRepository {
     );
     final records = <CertificateRecord>[];
     for (final row in rows.reversed) {
-      final students = await _database.query(
-        DatabaseTables.students,
-        where: {'id': row['student_id']},
+      final recordS = await _database.query(
+        DatabaseTables.records,
+        where: {'id': row['record_id']},
       );
       records.add(
-        CertificateRecord(row, students.isEmpty ? null : students.first),
+        CertificateRecord(row, recordS.isEmpty ? null : recordS.first),
       );
     }
     return records;

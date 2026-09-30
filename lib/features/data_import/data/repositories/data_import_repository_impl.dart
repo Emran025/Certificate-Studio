@@ -64,27 +64,35 @@ class DataImportRepositoryImpl implements DataImportRepository {
   }
 
   @override
-  Future<ImportedTable> saveForProject(String projectId, ImportedTable table) async {
+  Future<ImportedTable> saveForProject(
+    String projectId,
+    ImportedTable table,
+  ) async {
     _database.beginBatch();
     try {
-    await _database.deleteWhere(DatabaseTables.students, {'project_id': projectId});
-    for (var index = 0; index < table.rows.length; index++) {
-      final values = table.rows[index];
-      final classSource = values.entries
-          .where((entry) => _isClassColumn(entry.key))
-          .map((entry) => entry.value.trim())
-          .firstWhere((value) => value.isNotEmpty, orElse: () => '${index + 1}');
-      final className = classSource;
-      await _database.insert(DatabaseTables.students, {
-        'id': 'student-${DateTime.now().microsecondsSinceEpoch}-$index',
+      await _database.deleteWhere(DatabaseTables.records, {
         'project_id': projectId,
-        'class_name': className,
-        'data_json': jsonEncode(values),
-        'row_number': index + 1,
-        'created_at': DateTime.now().toUtc().toIso8601String(),
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
-    }
+      for (var index = 0; index < table.rows.length; index++) {
+        final values = table.rows[index];
+        final classSource = values.entries
+            .where((entry) => _isClassColumn(entry.key))
+            .map((entry) => entry.value.trim())
+            .firstWhere(
+              (value) => value.isNotEmpty,
+              orElse: () => '${index + 1}',
+            );
+        final className = classSource;
+        await _database.insert(DatabaseTables.records, {
+          'id': 'record-${DateTime.now().microsecondsSinceEpoch}-$index',
+          'project_id': projectId,
+          'class_name': className,
+          'data_json': jsonEncode(values),
+          'row_number': index + 1,
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        });
+      }
     } finally {
       await _database.endBatch();
     }
@@ -94,7 +102,7 @@ class DataImportRepositoryImpl implements DataImportRepository {
   @override
   Future<ImportedTable> getForProject(String projectId) async {
     final rows = await _database.query(
-      DatabaseTables.students,
+      DatabaseTables.records,
       where: {'project_id': projectId},
       columns: ['data_json'],
     );
@@ -104,7 +112,11 @@ class DataImportRepositoryImpl implements DataImportRepository {
       if (raw is String) {
         final decoded = jsonDecode(raw);
         if (decoded is Map) {
-          maps.add(decoded.map((key, value) => MapEntry(key.toString(), value.toString())));
+          maps.add(
+            decoded.map(
+              (key, value) => MapEntry(key.toString(), value.toString()),
+            ),
+          );
         }
       }
     }
@@ -120,7 +132,9 @@ class DataImportRepositoryImpl implements DataImportRepository {
   List<String> _uniqueHeaders(List<String> headers) {
     final result = <String>[];
     for (var index = 0; index < headers.length; index++) {
-      final base = headers[index].trim().isEmpty ? 'Column ${index + 1}' : headers[index].trim();
+      final base = headers[index].trim().isEmpty
+          ? 'Column ${index + 1}'
+          : headers[index].trim();
       var candidate = base;
       var suffix = 2;
       while (result.contains(candidate)) {
@@ -136,7 +150,7 @@ class DataImportRepositoryImpl implements DataImportRepository {
     final id = canonicalFieldClassId(header);
     return id == 'class' ||
         id == 'class_name' ||
-        id == 'student_class' ||
+        id == 'record_class' ||
         id == 'الصف' ||
         id == 'الفصل' ||
         id == 'الشعبة';

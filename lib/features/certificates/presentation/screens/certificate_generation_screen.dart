@@ -42,11 +42,11 @@ class _CertificateGenerationScreenState
       _result = null;
       _completed = 0;
     });
-    final students = await widget.database.query(
-      DatabaseTables.students,
+    final records = await widget.database.query(
+      DatabaseTables.records,
       where: {'project_id': widget.projectId},
     );
-    setState(() => _total = students.length);
+    setState(() => _total = records.length);
     try {
       final result =
           await CertificateGenerationService(

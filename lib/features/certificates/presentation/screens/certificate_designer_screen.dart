@@ -104,8 +104,8 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
       DatabaseTables.certificateFields,
       where: {'project_id': widget.projectId},
     );
-    final students = await widget.database.query(
-      DatabaseTables.students,
+    final records = await widget.database.query(
+      DatabaseTables.records,
       where: {'project_id': widget.projectId},
     );
     final projects = await widget.database.query(
@@ -136,7 +136,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
           );
     final columns = <String>{};
     Map<String, dynamic> preview = {};
-    for (final row in students) {
+    for (final row in records) {
       final raw = row['data_json'];
       if (raw is String) {
         final decoded = jsonDecode(raw);

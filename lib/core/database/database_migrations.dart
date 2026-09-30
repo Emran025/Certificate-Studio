@@ -1,7 +1,11 @@
 import 'database_tables.dart';
 
 class DatabaseMigration {
-  const DatabaseMigration({required this.fromVersion, required this.toVersion, required this.statements});
+  const DatabaseMigration({
+    required this.fromVersion,
+    required this.toVersion,
+    required this.statements,
+  });
 
   final int fromVersion;
   final int toVersion;
@@ -39,7 +43,7 @@ abstract final class DatabaseMigrations {
         '''CREATE TABLE generation_items (
           id TEXT PRIMARY KEY,
           job_id TEXT NOT NULL,
-          student_id TEXT NOT NULL,
+          record_id TEXT NOT NULL,
           certificate_id TEXT,
           status TEXT NOT NULL,
           error_message TEXT,
@@ -54,22 +58,24 @@ abstract final class DatabaseMigrations {
         'CREATE INDEX IF NOT EXISTS idx_projects_template ON projects (template_id)',
         'CREATE INDEX IF NOT EXISTS idx_certificate_fields_project ON certificate_fields (project_id)',
         'CREATE INDEX IF NOT EXISTS idx_signatures_project ON signatures (project_id)',
-        'CREATE INDEX IF NOT EXISTS idx_generation_items_student ON generation_items (student_id)',
+        'CREATE INDEX IF NOT EXISTS idx_generation_items_record ON generation_items (record_id)',
         'CREATE INDEX IF NOT EXISTS idx_verification_records_project ON verification_records (project_id)',
       ],
     ),
     DatabaseMigration(
       fromVersion: 3,
       toVersion: 4,
-      statements: [
-        'ALTER TABLE fonts ADD COLUMN font_bytes BLOB',
-      ],
+      statements: ['ALTER TABLE fonts ADD COLUMN font_bytes BLOB'],
     ),
   ];
 
   static List<String> statementsForUpgrade(int currentVersion) {
     if (currentVersion < 0 || currentVersion > latestVersion) {
-      throw ArgumentError.value(currentVersion, 'currentVersion', 'Unsupported database version.');
+      throw ArgumentError.value(
+        currentVersion,
+        'currentVersion',
+        'Unsupported database version.',
+      );
     }
 
     // A fresh database uses the complete current schema. Existing databases
@@ -80,7 +86,8 @@ abstract final class DatabaseMigrations {
 
     return [
       for (final migration in migrations)
-        if (migration.fromVersion >= currentVersion && migration.toVersion <= latestVersion)
+        if (migration.fromVersion >= currentVersion &&
+            migration.toVersion <= latestVersion)
           ...migration.statements,
     ];
   }

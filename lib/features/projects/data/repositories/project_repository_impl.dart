@@ -96,7 +96,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
       for (final table in [
         DatabaseTables.certificateFields,
         DatabaseTables.certificateLayouts,
-        DatabaseTables.students,
+        DatabaseTables.records,
         DatabaseTables.signatures,
       ]) {
         await _database.deleteWhere(table, {'project_id': id});

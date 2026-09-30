@@ -95,7 +95,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
         ],
         child: Text(
           result.isValid
-              ? 'The signature and document hash are valid.${result.studentClass == null ? '' : '\nRecipient: ${result.studentClass}'}${result.course == null ? '' : '\nCourse: ${result.course}'}'
+              ? 'The signature and document hash are valid.${result.recordClass == null ? '' : '\nRecipient: ${result.recordClass}'}${result.course == null ? '' : '\nCourse: ${result.course}'}'
               : (result.reason ?? 'The certificate could not be verified.'),
         ),
       ),

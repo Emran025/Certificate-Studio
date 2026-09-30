@@ -51,20 +51,15 @@ class CertificateGenerationService {
     required String institutionId,
     void Function(int completed, int total)? onProgress,
   }) async {
-    final students = await database.query(
-      DatabaseTables.students,
+    final records = await database.query(
+      DatabaseTables.records,
       where: {'project_id': projectId},
       columns: ['id', 'class_name', 'data_json'],
     );
     final fields = await database.query(
       DatabaseTables.certificateFields,
       where: {'project_id': projectId},
-      columns: [
-        'class_name',
-        'source',
-        'position_json',
-        'style_json',
-      ],
+      columns: ['class_name', 'source', 'position_json', 'style_json'],
     );
     final projects = await database.query(
       DatabaseTables.projects,
@@ -102,17 +97,17 @@ class CertificateGenerationService {
     await database.insert(DatabaseTables.generationJobs, {
       'id': jobId,
       'project_id': projectId,
-      'status': students.isEmpty ? 'empty' : 'running',
-      'total_count': students.length,
+      'status': records.isEmpty ? 'empty' : 'running',
+      'total_count': records.length,
       'completed_count': 0,
       'failed_count': 0,
       'started_at': startedAt,
-      'completed_at': students.isEmpty ? startedAt : null,
-      'error_message': students.isEmpty
+      'completed_at': records.isEmpty ? startedAt : null,
+      'error_message': records.isEmpty
           ? 'No recipient data was imported.'
           : null,
     });
-    if (students.isEmpty) {
+    if (records.isEmpty) {
       return CertificateGenerationResult(
         jobId: jobId,
         status: 'empty',
@@ -128,135 +123,135 @@ class CertificateGenerationService {
     final errors = <String>[];
     var generated = 0;
     final keyPair = await _keyPair(projectId);
-    for (var index = 0; index < students.length; index++) {
+    for (var index = 0; index < records.length; index++) {
       await _yieldToUi();
-      final student = students[index];
-      final studentId = student['id']! as String;
+      final record = records[index];
+      final recordId = record['id']! as String;
       final itemId = '$jobId-item-$index';
       final completed = index + 1;
       try {
-      await database.insert(DatabaseTables.generationItems, {
-        'id': itemId,
-        'job_id': jobId,
-        'student_id': studentId,
-        'status': 'running',
-      });
-        try {
-        final data = _decodeData(student['data_json']);
-        final values = <String, dynamic>{
-          'student_class':
-              _mappedValue(data, mapping, 'student_class') ??
-              student['class_name'] ??
-              '${index + 1}',
-          'issue_date': issueDate,
-          ...data,
-        };
-        for (final entry in mapping.entries) {
-          final value = _valueForKey(data, entry.key);
-          if (value != null && entry.value != 'custom') {
-            values[entry.value] = value;
-          }
-        }
-        for (final field in fields) {
-          final source = field['source'] as String?;
-          final rawClassName = field['class_name'] as String?;
-          final className = canonicalFieldClassId(
-            rawClassName?.trim().isNotEmpty == true
-                ? rawClassName!
-                : source ?? '',
-          );
-          if (source != null && source.trim().isNotEmpty) {
-            final value = _valueForKey(data, source) ?? '';
-            values[className] = value;
-            values[source] = value;
-          }
-        }
-        final certificateId = 'certificate-$projectId-$studentId';
-        final document = canonicalJsonBytes({
-          'project_id': projectId,
-          'student_id': studentId,
-          'fields': values,
+        await database.insert(DatabaseTables.generationItems, {
+          'id': itemId,
+          'job_id': jobId,
+          'record_id': recordId,
+          'status': 'running',
         });
-        // Sign the unsigned verification record exactly once. Signing an
-        // already signed record makes verification fail after regeneration.
-        final signedRecord = await createVerificationRecord(
-          {
+        try {
+          final data = _decodeData(record['data_json']);
+          final values = <String, dynamic>{
+            'record_class':
+                _mappedValue(data, mapping, 'record_class') ??
+                record['class_name'] ??
+                '${index + 1}',
+            'issue_date': issueDate,
+            ...data,
+          };
+          for (final entry in mapping.entries) {
+            final value = _valueForKey(data, entry.key);
+            if (value != null && entry.value != 'custom') {
+              values[entry.value] = value;
+            }
+          }
+          for (final field in fields) {
+            final source = field['source'] as String?;
+            final rawClassName = field['class_name'] as String?;
+            final className = canonicalFieldClassId(
+              rawClassName?.trim().isNotEmpty == true
+                  ? rawClassName!
+                  : source ?? '',
+            );
+            if (source != null && source.trim().isNotEmpty) {
+              final value = _valueForKey(data, source) ?? '';
+              values[className] = value;
+              values[source] = value;
+            }
+          }
+          final certificateId = 'certificate-$projectId-$recordId';
+          final document = canonicalJsonBytes({
+            'project_id': projectId,
+            'record_id': recordId,
+            'fields': values,
+          });
+          // Sign the unsigned verification record exactly once. Signing an
+          // already signed record makes verification fail after regeneration.
+          final signedRecord = await createVerificationRecord(
+            {
+              'institution_id': institutionId,
+              'project_id': projectId,
+              'certificate_id': certificateId,
+              'record_id': recordId,
+              'public_key': keyPair.publicRecord(),
+              'fields': values,
+            },
+            document,
+            keyPair.privateKey,
+          );
+          // The QR payload is rendered into the artifact itself. Including an
+          // artifact hash inside that payload would create a circular hash, so
+          // the signed document record is intentionally the QR source of truth.
+          final pdfBytes = await _renderPdfInIsolate(
+            values,
+            fields,
+            signedRecord['document_hash'] as String,
+            signedRecord,
+            templateBytes,
+            template,
+          );
+          final pngBytes = CertificateArtifactRenderer.appendEmbeddedRecord(
+            await _rasterizePdf(pdfBytes),
+            signedRecord,
+          );
+          final savedArtifacts = await Future.wait([
+            artifactStore.save(
+              certificateId: certificateId,
+              extension: 'pdf',
+              bytes: pdfBytes,
+            ),
+            artifactStore.save(
+              certificateId: certificateId,
+              extension: 'png',
+              bytes: pngBytes,
+            ),
+          ]);
+          final pdfPath = savedArtifacts[0];
+          final imagePath = savedArtifacts[1];
+          final now = DateTime.now().toUtc().toIso8601String();
+          final certificateValues = {
+            'id': certificateId,
+            'project_id': projectId,
+            'record_id': recordId,
+            'file_path': pdfPath,
+            'image_path': imagePath,
+            'document_json': utf8.decode(document),
+            'status': 'signed',
+            'document_hash': signedRecord['document_hash'],
+            'created_at': now,
+            'updated_at': now,
+          };
+          // Keep rendering and artifact I/O outside the SQLCipher transaction;
+          // only the related certificate records are committed atomically.
+          database.beginBatch();
+          await database.upsert(DatabaseTables.certificates, certificateValues);
+          final verificationId = 'verification-$certificateId';
+          final verificationValues = {
+            'id': verificationId,
+            'certificate_id': certificateId,
             'institution_id': institutionId,
             'project_id': projectId,
+            'payload_json': jsonEncode(signedRecord),
+            'signature': signedRecord['signature'],
+            'created_at': now,
+          };
+          await database.upsert(
+            DatabaseTables.verificationRecords,
+            verificationValues,
+          );
+          await database.update(DatabaseTables.generationItems, itemId, {
             'certificate_id': certificateId,
-            'student_id': studentId,
-            'public_key': keyPair.publicRecord(),
-            'fields': values,
-          },
-          document,
-          keyPair.privateKey,
-        );
-        // The QR payload is rendered into the artifact itself. Including an
-        // artifact hash inside that payload would create a circular hash, so
-        // the signed document record is intentionally the QR source of truth.
-        final pdfBytes = await _renderPdfInIsolate(
-          values,
-          fields,
-          signedRecord['document_hash'] as String,
-          signedRecord,
-          templateBytes,
-          template,
-        );
-        final pngBytes = CertificateArtifactRenderer.appendEmbeddedRecord(
-          await _rasterizePdf(pdfBytes),
-          signedRecord,
-        );
-        final savedArtifacts = await Future.wait([
-          artifactStore.save(
-            certificateId: certificateId,
-            extension: 'pdf',
-            bytes: pdfBytes,
-          ),
-          artifactStore.save(
-            certificateId: certificateId,
-            extension: 'png',
-            bytes: pngBytes,
-          ),
-        ]);
-        final pdfPath = savedArtifacts[0];
-        final imagePath = savedArtifacts[1];
-        final now = DateTime.now().toUtc().toIso8601String();
-        final certificateValues = {
-          'id': certificateId,
-          'project_id': projectId,
-          'student_id': studentId,
-          'file_path': pdfPath,
-          'image_path': imagePath,
-          'document_json': utf8.decode(document),
-          'status': 'signed',
-          'document_hash': signedRecord['document_hash'],
-          'created_at': now,
-          'updated_at': now,
-        };
-        // Keep rendering and artifact I/O outside the SQLCipher transaction;
-        // only the related certificate records are committed atomically.
-        database.beginBatch();
-        await database.upsert(DatabaseTables.certificates, certificateValues);
-        final verificationId = 'verification-$certificateId';
-        final verificationValues = {
-          'id': verificationId,
-          'certificate_id': certificateId,
-          'institution_id': institutionId,
-          'project_id': projectId,
-          'payload_json': jsonEncode(signedRecord),
-          'signature': signedRecord['signature'],
-          'created_at': now,
-        };
-        await database.upsert(
-          DatabaseTables.verificationRecords,
-          verificationValues,
-        );
-        await database.update(DatabaseTables.generationItems, itemId, {
-          'certificate_id': certificateId,
-          'status': 'completed',
-          'completed_at': now,
-        });
-        generated++;
+            'status': 'completed',
+            'completed_at': now,
+          });
+          generated++;
         } catch (error) {
           final message = 'Row ${index + 1}: $error';
           errors.add(message);
@@ -276,10 +271,10 @@ class CertificateGenerationService {
       } finally {
         await database.endBatch();
       }
-      onProgress?.call(completed, students.length);
+      onProgress?.call(completed, records.length);
       await _yieldToUi();
     }
-    final status = generated == students.length
+    final status = generated == records.length
         ? 'completed'
         : generated == 0
         ? 'failed'
@@ -292,9 +287,9 @@ class CertificateGenerationService {
     return CertificateGenerationResult(
       jobId: jobId,
       status: status,
-      total: students.length,
+      total: records.length,
       generated: generated,
-      failed: students.length - generated,
+      failed: records.length - generated,
       errors: errors,
     );
   }
@@ -308,7 +303,8 @@ class CertificateGenerationService {
     Map<String, Object?> template,
   ) async {
     final fontBytes = await _loadArabicFontBytes();
-    final fontBytesByFamily = await (_projectFontBytes ??= _loadProjectFontBytes(fontBytes));
+    final fontBytesByFamily = await (_projectFontBytes ??=
+        _loadProjectFontBytes(fontBytes));
     final worker = _pdfWorker ??= await _PdfRenderWorker.start(
       fontBytesByFamily: fontBytesByFamily,
       templateBytes: templateBytes,
@@ -351,9 +347,9 @@ class CertificateGenerationService {
 
   Future<List<int>?> _cachedTemplateBytes(String path) async {
     if (path.isEmpty) return null;
-    return (_templateBytesCache[path] ??= readTemplateBytes(path)).then(
-      (bytes) => bytes == null ? null : List<int>.unmodifiable(bytes),
-    );
+    return (_templateBytesCache[path] ??= readTemplateBytes(
+      path,
+    )).then((bytes) => bytes == null ? null : List<int>.unmodifiable(bytes));
   }
 
   Future<List<int>> _rasterizePdf(List<int> pdfBytes) async {
@@ -447,16 +443,13 @@ class _PdfRenderWorker {
   }) async {
     final handshake = ReceivePort();
     final responsePort = ReceivePort();
-    await Isolate.spawn(
-      _pdfRenderWorkerEntry,
-      <String, Object?>{
-        'reply': handshake.sendPort,
-        'responses': responsePort.sendPort,
-        'fonts': fontBytesByFamily,
-        'templateBytes': templateBytes,
-        'template': template,
-      },
-    );
+    await Isolate.spawn(_pdfRenderWorkerEntry, <String, Object?>{
+      'reply': handshake.sendPort,
+      'responses': responsePort.sendPort,
+      'fonts': fontBytesByFamily,
+      'templateBytes': templateBytes,
+      'template': template,
+    });
     final sendPort = await handshake.first as SendPort;
     final worker = _PdfRenderWorker._(sendPort);
     responsePort.listen(worker._handleResponse);

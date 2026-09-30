@@ -4,7 +4,7 @@ abstract final class DatabaseTables {
   static const templates = 'templates';
   static const fonts = 'fonts';
   static const signatures = 'signatures';
-  static const students = 'students';
+  static const records = 'records';
   static const certificateFields = 'certificate_fields';
   static const certificateLayouts = 'certificate_layouts';
   static const certificates = 'certificates';
@@ -19,7 +19,7 @@ abstract final class DatabaseTables {
     templates,
     fonts,
     signatures,
-    students,
+    records,
     certificateFields,
     certificateLayouts,
     certificates,
@@ -100,7 +100,7 @@ abstract final class DatabaseSchema {
       updated_at TEXT NOT NULL,
       FOREIGN KEY (project_id) REFERENCES projects (id)
     )''',
-    '''CREATE TABLE students (
+    '''CREATE TABLE records (
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL,
       class_name TEXT NOT NULL,
@@ -134,7 +134,7 @@ abstract final class DatabaseSchema {
     '''CREATE TABLE certificates (
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL,
-      student_id TEXT NOT NULL,
+      record_id TEXT NOT NULL,
       file_path TEXT,
       image_path TEXT,
       document_json TEXT,
@@ -143,7 +143,7 @@ abstract final class DatabaseSchema {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       FOREIGN KEY (project_id) REFERENCES projects (id),
-      FOREIGN KEY (student_id) REFERENCES students (id)
+      FOREIGN KEY (record_id) REFERENCES records (id)
     )''',
     '''CREATE TABLE generation_jobs (
       id TEXT PRIMARY KEY,
@@ -160,13 +160,13 @@ abstract final class DatabaseSchema {
     '''CREATE TABLE generation_items (
       id TEXT PRIMARY KEY,
       job_id TEXT NOT NULL,
-      student_id TEXT NOT NULL,
+      record_id TEXT NOT NULL,
       certificate_id TEXT,
       status TEXT NOT NULL,
       error_message TEXT,
       completed_at TEXT,
       FOREIGN KEY (job_id) REFERENCES generation_jobs (id),
-      FOREIGN KEY (student_id) REFERENCES students (id)
+      FOREIGN KEY (record_id) REFERENCES records (id)
     )''',
     '''CREATE TABLE verification_records (
       id TEXT PRIMARY KEY,
@@ -188,14 +188,14 @@ abstract final class DatabaseSchema {
   static const indexes = <String>[
     'CREATE INDEX idx_projects_institution ON projects (institution_id)',
     'CREATE INDEX idx_projects_template ON projects (template_id)',
-    'CREATE INDEX idx_students_project ON students (project_id)',
+    'CREATE INDEX idx_records_project ON records (project_id)',
     'CREATE INDEX idx_certificate_fields_project ON certificate_fields (project_id)',
     'CREATE INDEX idx_signatures_project ON signatures (project_id)',
     'CREATE INDEX idx_certificates_project ON certificates (project_id)',
     'CREATE INDEX idx_certificates_status ON certificates (status)',
     'CREATE INDEX idx_generation_jobs_project ON generation_jobs (project_id)',
     'CREATE INDEX idx_generation_items_job ON generation_items (job_id)',
-    'CREATE INDEX idx_generation_items_student ON generation_items (student_id)',
+    'CREATE INDEX idx_generation_items_record ON generation_items (record_id)',
     'CREATE INDEX idx_verification_records_project ON verification_records (project_id)',
   ];
 }

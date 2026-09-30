@@ -103,7 +103,7 @@ class _DataImportScreenState extends State<DataImportScreen> {
             ? const Center(child: CircularProgressIndicator())
             : AppPageTable(
                 header: AppPageHeader(
-                  title: context.l10n.text('Add student data'),
+                  title: context.l10n.text('Add record data'),
                   subtitle: context.l10n.text(
                     'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.',
                   ),

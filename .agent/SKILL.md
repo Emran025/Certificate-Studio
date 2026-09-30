@@ -17,19 +17,20 @@ writing code, or suggesting changes.
 
 ## 1. Project Identity
 
-| Property | Value |
-|---|---|
-| **Name** | Certificate Studio |
-| **Type** | Cross-platform Flutter application |
-| **Architecture** | Modular Clean Architecture + BLoC |
-| **Primary Targets** | Windows Desktop, Android, Linux, macOS, iOS, Web |
-| **Core Principle** | Offline-first — internet is optional, never required |
-| **Language** | Dart (Flutter), with a Python reference package for cryptography |
-| **State Management** | BLoC / Cubit |
-| **Database** | SQLCipher (encrypted local database) |
-| **Version** | 1.0.0 (active development) |
+| Property             | Value                                                            |
+| -------------------- | ---------------------------------------------------------------- |
+| **Name**             | Certificate Studio                                               |
+| **Type**             | Cross-platform Flutter application                               |
+| **Architecture**     | Modular Clean Architecture + BLoC                                |
+| **Primary Targets**  | Windows Desktop, Android, Linux, macOS, iOS, Web                 |
+| **Core Principle**   | Offline-first — internet is optional, never required             |
+| **Language**         | Dart (Flutter), with a Python reference package for cryptography |
+| **State Management** | BLoC / Cubit                                                     |
+| **Database**         | SQLCipher (encrypted local database)                             |
+| **Version**          | 1.0.0 (active development)                                       |
 
 **One-line mission:**
+
 > Design once. Generate many. Verify with confidence.
 
 ---
@@ -74,14 +75,16 @@ The agent must understand these domain concepts deeply.
 The **Project** is the central unit of the application.
 
 A project is an isolated workspace for one certificate-issuing event:
+
 - "Flutter Advanced Course 2026"
 - "English Training Program"
 - "Graduation Ceremony"
 
 Each project owns:
+
 - Template (certificate background image)
 - Field layout (positions of dynamic text/image elements)
-- Recipient data (students / participants)
+- Recipient data (records / participants)
 - Data column to field mapping
 - Fonts
 - Signatures and stamps
@@ -97,6 +100,7 @@ A project export (.cstudio / .certproject) does NOT include generated certificat
 A Box is a positioned, styled region on the certificate canvas.
 
 Properties:
+
 - class_name (internal identifier / mapping key)
 - source (data column it maps to)
 - x, y, width, height (position and size)
@@ -112,6 +116,7 @@ Properties:
 ### 3.3 Data Import
 
 Recipient data comes from:
+
 - Excel files (.xlsx)
 - Pasted spreadsheet tables (clipboard)
 
@@ -122,8 +127,8 @@ Column headers are mapped to field class names through the **Mapping** step.
 
 Excel columns are not fixed. A mapping connects:
 
-"Student Name" (Excel column) => student_name (field class)
-"اسم الطالب"  (Excel column) => student_name (field class)
+"Record Name" (Excel column) => record_name (field class)
+"اسم الطالب" (Excel column) => record_name (field class)
 
 This makes the system institution-agnostic.
 
@@ -132,12 +137,13 @@ This makes the system institution-agnostic.
 Three-level key hierarchy:
 
 Institution Key (Master)
-    down
+down
 Project Key (Derived / Independent)
-    down
+down
 Certificate Signature
 
 **Important distinction:**
+
 - **Encryption** = protecting data confidentiality
 - **Hash** = detecting content changes (integrity)
 - **Digital Signature** = proving the issuer identity (authenticity)
@@ -146,14 +152,14 @@ The three are **separate** operations. Encryption alone does NOT prove authentic
 
 Certificate verification record:
 {
-  "institution_id": "...",
-  "project_id": "...",
-  "certificate_id": "...",
-  "student_class": "A001",
-  "course": "Flutter",
-  "issue_date": "2026-09-12",
-  "document_hash": "...",
-  "signature": "..."
+"institution_id": "...",
+"project_id": "...",
+"certificate_id": "...",
+"record_class": "A001",
+"course": "Flutter",
+"issue_date": "2026-09-12",
+"document_hash": "...",
+"signature": "..."
 }
 
 ### 3.6 QR Code
@@ -173,15 +179,15 @@ project/
 |-- database.json
 |-- template.png
 |-- fonts/
-|   |-- Cairo.ttf
+| |-- Cairo.ttf
 |-- signatures/
-|   |-- director.png
+| |-- director.png
 |-- configuration/
-|   |-- fields.json
-|   |-- export.json
-|   |-- verification.json
+| |-- fields.json
+| |-- export.json
+| |-- verification.json
 |-- keys/
-    |-- project.key
+|-- project.key
 
 Generated certificate images/PDFs are intentionally excluded.
 
@@ -193,44 +199,44 @@ Generated certificate images/PDFs are intentionally excluded.
 
 lib/
 |-- config/
-|   |-- di/           # Dependency injection (injectable)
-|   |-- env/          # Environment configuration
-|   |-- localization/ # i18n (AR + EN)
+| |-- di/ # Dependency injection (injectable)
+| |-- env/ # Environment configuration
+| |-- localization/ # i18n (AR + EN)
 |
 |-- core/
-|   |-- database/     # SQLCipher abstraction
-|   |-- entities/     # Shared base entities
-|   |-- error/        # Exceptions and Failures
-|   |-- files/        # File picker, file system, sharing
-|   |-- image/        # Image processing
-|   |-- logging/      # App logger
-|   |-- platform/     # Platform capability abstractions
-|   |-- security/     # keys/, hashing/, signing/, encryption/
-|   |-- services/     # Clipboard, PDF, QR
-|   |-- utils/        # Constants, extensions, helpers
-|   |-- validators/   # Certificate, file, project validators
+| |-- database/ # SQLCipher abstraction
+| |-- entities/ # Shared base entities
+| |-- error/ # Exceptions and Failures
+| |-- files/ # File picker, file system, sharing
+| |-- image/ # Image processing
+| |-- logging/ # App logger
+| |-- platform/ # Platform capability abstractions
+| |-- security/ # keys/, hashing/, signing/, encryption/
+| |-- services/ # Clipboard, PDF, QR
+| |-- utils/ # Constants, extensions, helpers
+| |-- validators/ # Certificate, file, project validators
 |
-|-- features/         # Each feature: data/ + domain/ + presentation/
-|   |-- app/
-|   |-- institution/
-|   |-- projects/
-|   |-- templates/
-|   |-- certificate_designer/
-|   |-- fonts/
-|   |-- data_import/
-|   |-- field_mapping/
-|   |-- signatures/
-|   |-- certificate_generation/
-|   |-- certificates/
-|   |-- export/
-|   |-- project_package/
-|   |-- verification/
-|   |-- students/
-|   |-- sharing/
-|   |-- settings/
+|-- features/ # Each feature: data/ + domain/ + presentation/
+| |-- app/
+| |-- institution/
+| |-- projects/
+| |-- templates/
+| |-- certificate_designer/
+| |-- fonts/
+| |-- data_import/
+| |-- field_mapping/
+| |-- signatures/
+| |-- certificate_generation/
+| |-- certificates/
+| |-- export/
+| |-- project_package/
+| |-- verification/
+| |-- records/
+| |-- sharing/
+| |-- settings/
 |
-|-- routes/           # App router + route names
-|-- shared/           # Extensions, themes, common widgets
+|-- routes/ # App router + route names
+|-- shared/ # Extensions, themes, common widgets
 
 ### 4.2 Feature Layer Structure
 
@@ -238,36 +244,36 @@ Every feature follows Clean Architecture:
 
 features/<feature_name>/
 |-- data/
-|   |-- datasources/    # Local data sources (SQLCipher)
-|   |-- models/         # Data Transfer Objects (JSON serializable)
-|   |-- repositories/   # Repository implementations
+| |-- datasources/ # Local data sources (SQLCipher)
+| |-- models/ # Data Transfer Objects (JSON serializable)
+| |-- repositories/ # Repository implementations
 |-- domain/
-|   |-- entities/       # Pure domain models (no JSON, no DB)
-|   |-- repositories/   # Abstract repository interfaces
-|   |-- usecases/       # Single-responsibility use cases
+| |-- entities/ # Pure domain models (no JSON, no DB)
+| |-- repositories/ # Abstract repository interfaces
+| |-- usecases/ # Single-responsibility use cases
 |-- presentation/
-    |-- bloc/           # BLoC/Cubit + Events + States
-    |-- screens/        # Full screen widgets
-    |-- widgets/        # Reusable UI components
+|-- bloc/ # BLoC/Cubit + Events + States
+|-- screens/ # Full screen widgets
+|-- widgets/ # Reusable UI components
 
 ### 4.3 Internal Packages
 
 packages/
-|-- certificate_core/       # Shared domain primitives
-|-- certificate_crypto/     # Keys, hashing, signing, encryption
-|-- certificate_renderer/   # PDF and high-resolution image rendering
-|-- certificate_excel/      # Excel + clipboard parsing
-|-- certificate_verifier/   # Certificate verification logic
-|-- certificate_project/    # Project package creation/import/export
+|-- certificate_core/ # Shared domain primitives
+|-- certificate_crypto/ # Keys, hashing, signing, encryption
+|-- certificate_renderer/ # PDF and high-resolution image rendering
+|-- certificate_excel/ # Excel + clipboard parsing
+|-- certificate_verifier/ # Certificate verification logic
+|-- certificate_project/ # Project package creation/import/export
 
 ### 4.4 Python Reference Package
 
 python/
 |-- certificate_crypto/
-    |-- src/
-    |-- tests/
-    |-- pyproject.toml
-    |-- README.md
+|-- src/
+|-- tests/
+|-- pyproject.toml
+|-- README.md
 
 The Flutter app does NOT depend on a Python runtime at user devices.
 Python is the **canonical reference implementation** for cryptographic protocols.
@@ -278,12 +284,13 @@ Both Python and Dart implementations must produce compatible results.
 ## 5. Database Schema (SQLCipher)
 
 Tables:
+
 - institutions
 - projects
 - templates
 - fonts
 - signatures
-- students
+- records
 - certificate_fields
 - certificate_layouts
 - certificates
@@ -291,6 +298,7 @@ Tables:
 - settings
 
 Key design:
+
 - SQLCipher stores metadata and relationships
 - Large files (templates, fonts, signatures, certificates) live on the filesystem
 - File paths are stored in the DB, not file contents
@@ -301,19 +309,19 @@ Web platform uses IndexedDB or SQLCipher WASM (behind the LocalDatabase abstract
 
 ## 6. Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Application | Flutter / Dart |
-| Architecture | Modular Clean Architecture |
-| State Management | BLoC / Cubit |
-| DI | injectable + get_it |
-| Local DB | SQLCipher |
-| Rendering | certificate_renderer (custom) |
-| Cryptography | certificate_crypto (Dart + Python reference) |
-| Excel Parsing | certificate_excel |
-| Project Packaging | certificate_project |
-| Verification | certificate_verifier |
-| Localization | Flutter ARB (AR + EN) |
+| Layer             | Technology                                   |
+| ----------------- | -------------------------------------------- |
+| Application       | Flutter / Dart                               |
+| Architecture      | Modular Clean Architecture                   |
+| State Management  | BLoC / Cubit                                 |
+| DI                | injectable + get_it                          |
+| Local DB          | SQLCipher                                    |
+| Rendering         | certificate_renderer (custom)                |
+| Cryptography      | certificate_crypto (Dart + Python reference) |
+| Excel Parsing     | certificate_excel                            |
+| Project Packaging | certificate_project                          |
+| Verification      | certificate_verifier                         |
+| Localization      | Flutter ARB (AR + EN)                        |
 
 ---
 
@@ -322,36 +330,37 @@ Web platform uses IndexedDB or SQLCipher WASM (behind the LocalDatabase abstract
 ### 7.1 Main User Journey
 
 First Launch
-    down
+down
 Institution Setup Wizard
-    down
+down
 Home Screen (Projects)
-    down
+down
 New Project Wizard
-  Step 1: Project Information
-  Step 2: Certificate Template
-  Step 3: Data Source (Excel)
-    down
+Step 1: Project Information
+Step 2: Certificate Template
+Step 3: Data Source (Excel)
+down
 Project Workspace
-  |-- Overview / Dashboard
-  |-- Data (Manage students)
-  |-- Design (Certificate Designer)
-  |-- Preview (per-student preview)
-  |-- Generate (batch generation)
-  |-- Certificates (library)
-  |-- Export
-    down
+|-- Overview / Dashboard
+|-- Data (Manage records)
+|-- Design (Certificate Designer)
+|-- Preview (per-record preview)
+|-- Generate (batch generation)
+|-- Certificates (library)
+|-- Export
+down
 Verify Certificate (independent feature)
 
 ### 7.2 Certificate Designer UX
 
 The Designer is the most important screen.
 Layout:
+
 - Left panel: Elements (Data Field, Text, Image, Signature, QR Code) + Layers
 - Center: Certificate Canvas with zoom/grid/rulers/snap
 - Right panel: Contextual Properties (changes based on selected element)
 
-**Key UX rule:** Users never type {student_name} manually.
+**Key UX rule:** Users never type {record_name} manually.
 They click "Add Data Field" => select column from list => box appears automatically.
 
 ### 7.3 Platform Responsive Layout
@@ -386,7 +395,7 @@ Project
 
 ## 8. Key UX Design Rules
 
-1. **Never expose internal placeholder syntax** to users (no {student_name})
+1. **Never expose internal placeholder syntax** to users (no {record_name})
 2. **Never show cryptographic details** to regular users (Ed25519, SHA-512, etc.)
 3. **Contextual Properties Panel** — show only what is relevant to the selected element
 4. **Wizard only for creation** — after creation, project workspace allows free navigation
@@ -405,13 +414,13 @@ Project
 
 ### 9.1 Naming
 
-| Type | Convention | Example |
-|---|---|---|
-| Files | snake_case | certificate_field.dart |
-| Classes | PascalCase | CertificateField |
-| Variables | camelCase | fieldPosition |
-| Constants | kCamelCase | kDefaultFontSize |
-| BLoC Events | PascalCase + Event suffix | AddCertificateFieldEvent |
+| Type        | Convention                | Example                        |
+| ----------- | ------------------------- | ------------------------------ |
+| Files       | snake_case                | certificate_field.dart         |
+| Classes     | PascalCase                | CertificateField               |
+| Variables   | camelCase                 | fieldPosition                  |
+| Constants   | kCamelCase                | kDefaultFontSize               |
+| BLoC Events | PascalCase + Event suffix | AddCertificateFieldEvent       |
 | BLoC States | PascalCase + State suffix | CertificateDesignerLoadedState |
 
 ### 9.2 Use Case Rule
@@ -419,12 +428,12 @@ Project
 Each use case = one file = one public class with a single call() method.
 
 class AddCertificateField {
-  final CertificateDesignerRepository _repository;
-  AddCertificateField(this._repository);
+final CertificateDesignerRepository \_repository;
+AddCertificateField(this.\_repository);
 
-  Future<Either<Failure, CertificateField>> call(AddCertificateFieldParams params) {
-    return _repository.addField(params);
-  }
+Future<Either<Failure, CertificateField>> call(AddCertificateFieldParams params) {
+return \_repository.addField(params);
+}
 }
 
 ### 9.3 Repository Pattern
@@ -470,19 +479,19 @@ The domain layer never knows which platform it is running on.
 ## 11. Certificate Lifecycle
 
 Draft
-  down
+down
 Configured (template + data + mapping + design)
-  down
+down
 Validated (pre-generation check passes)
-  down
+down
 Generated (PDF + PNG created)
-  down
+down
 Signed (hash computed, digital signature applied)
-  down
+down
 Stored (certificate library)
-  down
+down
 Exported / Shared
-  down
+down
 Verified
 
 ---
@@ -491,19 +500,19 @@ Verified
 
 These operations MUST work without internet:
 
-Institution setup         yes
-Project creation          yes
-Template management       yes
-Font management           yes
-Excel import              yes
-Data mapping              yes
-Certificate design        yes
-Certificate generation    yes
-Cryptographic signing     yes
-Local verification        yes
-Project export / import   yes
-Certificate library       yes
-File sharing (system)     yes
+Institution setup yes
+Project creation yes
+Template management yes
+Font management yes
+Excel import yes
+Data mapping yes
+Certificate design yes
+Certificate generation yes
+Cryptographic signing yes
+Local verification yes
+Project export / import yes
+Certificate library yes
+File sharing (system) yes
 
 Internet is ONLY needed for:
 WhatsApp sharing (opens app)
@@ -528,11 +537,13 @@ When asked to implement a feature:
 9. **Write actionable errors** — no raw exceptions in the UI
 
 When asked about security:
+
 - Always separate Hash, Digital Signature, and Encryption
 - Never expose key material in UI
 - Always use the established three-level key hierarchy
 
 When asked about the Designer:
+
 - Fields are Boxes with the full properties defined in section 3.2
 - Users pick columns from a list, never type placeholders
 - Undo/Redo is mandatory
@@ -542,13 +553,13 @@ When asked about the Designer:
 
 ## 14. Key Files to Reference
 
-| Purpose | File |
-|---|---|
-| Requirements | .agent/srs.md |
-| Code structure | .agent/structure.md |
-| UX design | .agent/uiux.md |
-| Full project readme | README.md |
-| Flutter dependencies | pubspec.yaml |
+| Purpose              | File                |
+| -------------------- | ------------------- |
+| Requirements         | .agent/srs.md       |
+| Code structure       | .agent/structure.md |
+| UX design            | .agent/uiux.md      |
+| Full project readme  | README.md           |
+| Flutter dependencies | pubspec.yaml        |
 
 ---
 
@@ -557,14 +568,15 @@ When asked about the Designer:
 > A certificate should be treated as a **structured, reproducible, and
 > verifiable digital artifact**, not simply as an image generated from a template.
 
-Certificate
-=
+# Certificate
+
 Visual Representation
-+ Structured Data
-+ Issuer Identity
-+ Integrity (Hash)
-+ Verification Information (Signature + QR)
+
+- Structured Data
+- Issuer Identity
+- Integrity (Hash)
+- Verification Information (Signature + QR)
 
 ---
 
-*Certificate Studio — Design once. Generate many. Verify with confidence.*
+_Certificate Studio — Design once. Generate many. Verify with confidence._

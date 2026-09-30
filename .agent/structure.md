@@ -693,48 +693,48 @@ lib/
 │   │               verification_details.dart
 │   │               verification_error.dart
 │   │
-│   ├───students
+│   ├───records
 │   │   ├───data
 │   │   │   ├───datasources
-│   │   │   │       student_local_data_source.dart
-│   │   │   │       student_local_data_source_impl.dart
+│   │   │   │       record_local_data_source.dart
+│   │   │   │       record_local_data_source_impl.dart
 │   │   │   │
 │   │   │   ├───models
-│   │   │   │       student_model.dart
-│   │   │   │       student_data_model.dart
+│   │   │   │       record_model.dart
+│   │   │   │       record_data_model.dart
 │   │   │   │
 │   │   │   └───repositories
-│   │   │           student_repository_impl.dart
+│   │   │           record_repository_impl.dart
 │   │   │
 │   │   ├───domain
 │   │   │   ├───entities
-│   │   │   │       student.dart
-│   │   │   │       student_data.dart
+│   │   │   │       record.dart
+│   │   │   │       record_data.dart
 │   │   │   │
 │   │   │   ├───repositories
-│   │   │   │       student_repository.dart
+│   │   │   │       record_repository.dart
 │   │   │   │
 │   │   │   └───usecases
-│   │   │           add_student.dart
-│   │   │           update_student.dart
-│   │   │           delete_student.dart
-│   │   │           get_students.dart
-│   │   │           get_student.dart
+│   │   │           add_record.dart
+│   │   │           update_record.dart
+│   │   │           delete_record.dart
+│   │   │           get_records.dart
+│   │   │           get_record.dart
 │   │   │
 │   │   └───presentation
 │   │       ├───bloc
-│   │       │       students_bloc.dart
-│   │       │       students_event.dart
-│   │       │       students_state.dart
+│   │       │       records_bloc.dart
+│   │       │       records_event.dart
+│   │       │       records_state.dart
 │   │       │
 │   │       ├───screens
-│   │       │       students_screen.dart
-│   │       │       student_details_screen.dart
+│   │       │       records_screen.dart
+│   │       │       record_details_screen.dart
 │   │       │
 │   │       └───widgets
-│   │               student_card.dart
-│   │               student_data_table.dart
-│   │               student_actions.dart
+│   │               record_card.dart
+│   │               record_data_table.dart
+│   │               record_actions.dart
 │   │
 │   ├───sharing
 │   │   ├───data

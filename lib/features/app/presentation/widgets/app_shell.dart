@@ -743,7 +743,7 @@ class _EmptyProjects extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
                   context.l10n.text(
-                    'Start with project information, then add a template and student data.',
+                    'Start with project information, then add a template and record data.',
                   ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context.themeMutedText,

@@ -1,38 +1,30 @@
-import 'dart:convert';
-
 class CertificateRecord {
-  CertificateRecord(this.row, this.record);
-  final Map<String, Object?> row;
-  final Map<String, Object?>? record;
-  String get id => row['id']?.toString() ?? '';
-  String get status => row['status']?.toString() ?? 'unknown';
-  String? get imageReference => row['image_path'] as String?;
-  String? get pdfReference => row['file_path'] as String?;
-  Map<String, dynamic> get data {
-    final rawRecord = record?['data_json'];
-    if (rawRecord is String) {
-      final decoded = jsonDecode(rawRecord);
-      if (decoded is Map) return Map<String, dynamic>.from(decoded);
-    }
-    final rawDocument = row['document_json'];
-    if (rawDocument is String) {
-      final decoded = jsonDecode(rawDocument);
-      final fields = decoded is Map ? decoded['fields'] : null;
-      if (fields is Map) return Map<String, dynamic>.from(fields);
-    }
-    return {};
-  }
+  const CertificateRecord({
+    required this.id,
+    required this.status,
+    this.projectId,
+    this.recordId,
+    this.className,
+    this.imageReference,
+    this.pdfReference,
+    required this.data,
+  });
+
+  final String id;
+  final String status;
+  final String? projectId;
+  final String? recordId;
+  final String? className;
+  final String? imageReference;
+  final String? pdfReference;
+  final Map<String, dynamic> data;
 
   String? valueFor(String field) {
     final exact = data[field];
     if (exact != null) return exact.toString();
-    final normalized = field.trim().toLowerCase().replaceAll(
-      RegExp(r'\s+'),
-      '_',
-    );
+    final normalized = field.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '_');
     for (final entry in data.entries) {
-      if (entry.key.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '_') ==
-              normalized &&
+      if (entry.key.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '_') == normalized &&
           entry.value != null) {
         return entry.value.toString();
       }
@@ -41,29 +33,19 @@ class CertificateRecord {
   }
 
   String get recipient {
-    final values = data;
     const preferred = [
-      'name',
-      'full_name',
-      'record_name',
-      'recipient',
-      'اسم',
-      'الاسم',
-      'اسم الطالب',
-      'اسم المتدرب',
+      'name', 'full_name', 'record_name', 'recipient',
+      'اسم', 'الاسم', 'اسم الطالب', 'اسم المتدرب',
     ];
     for (final key in preferred) {
       final value = valueFor(key);
       if (value != null && value.trim().isNotEmpty) return value.trim();
     }
-    for (final entry in values.entries) {
+    for (final entry in data.entries) {
       final value = entry.value?.toString().trim() ?? '';
-      if (value.isNotEmpty && !_isTechnicalOrNumeric(entry.key, value)) {
-        return value;
-      }
+      if (value.isNotEmpty && !_isTechnicalOrNumeric(entry.key, value)) return value;
     }
-    final className = record?['class_name']?.toString().trim() ?? '';
-    return className;
+    return className?.trim() ?? '';
   }
 
   String get secondaryLabel {
@@ -72,34 +54,26 @@ class CertificateRecord {
       return value.isNotEmpty && entry.value.toString() != recipient;
     });
     final entry = entries.firstWhere(
-      (entry) =>
-          !_isTechnicalOrNumeric(entry.key, entry.value?.toString() ?? ''),
+      (entry) => !_isTechnicalOrNumeric(entry.key, entry.value?.toString() ?? ''),
       orElse: () => const MapEntry('', ''),
     );
-    if (entry.key.isEmpty) return record?['class_name']?.toString() ?? '';
-    return '${entry.key}: ${entry.value}';
+    return entry.key.isEmpty ? className ?? '' : '${entry.key}: ${entry.value}';
   }
 
   String get searchText => [
-    id,
-    status,
-    row['project_id'],
-    row['record_id'],
-    recipient,
-    ...data.entries.expand((entry) => [entry.key, entry.value]),
-  ].join(' ').toLowerCase();
+        id,
+        status,
+        projectId,
+        recordId,
+        className,
+        recipient,
+        ...data.entries.expand((entry) => [entry.key, entry.value]),
+      ].join(' ').toLowerCase();
 
   bool _isTechnicalOrNumeric(String key, String value) {
-    final normalized = key.trim().toLowerCase().replaceAll(
-      RegExp(r'[\s_-]+'),
-      '_',
-    );
-    return normalized == 'id' ||
-        normalized.endsWith('_id') ||
-        normalized == 'row_number' ||
-        normalized == 'number' ||
-        normalized == 'no' ||
-        normalized == 'الرقم' ||
-        RegExp(r'^\d+$').hasMatch(value);
+    final normalized = key.trim().toLowerCase().replaceAll(RegExp(r'[\s_-]+'), '_');
+    return normalized == 'id' || normalized.endsWith('_id') ||
+        normalized == 'row_number' || normalized == 'number' ||
+        normalized == 'no' || normalized == 'الرقم' || RegExp(r'^\d+$').hasMatch(value);
   }
 }

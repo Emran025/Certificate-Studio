@@ -2,6 +2,7 @@ import 'dart:convert';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
 import '../../domain/entities/font_asset.dart';
+import '../models/font_asset_model.dart';
 import '../../domain/repositories/font_repository.dart';
 
 class FontRepositoryImpl implements FontRepository {
@@ -12,13 +13,7 @@ class FontRepositoryImpl implements FontRepository {
   Future<List<FontAsset>> getAll() async =>
       (await _database.query(DatabaseTables.fonts))
           .map(
-            (row) => FontAsset(
-              id: row['id']! as String,
-              name: row['name']! as String,
-              family: row['family']! as String,
-              filePath: row['file_path']! as String,
-              format: row['format']! as String,
-            ),
+            (row) => FontAssetModel.fromRow(row),
           )
           .toList(growable: false);
 
@@ -37,16 +32,16 @@ class FontRepositoryImpl implements FontRepository {
   @override
   Future<FontAsset> add(FontAsset font, List<int> bytes) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    await _database.insert(DatabaseTables.fonts, {
-      'id': font.id,
-      'name': font.name,
-      'family': font.family,
-      'file_path': font.filePath,
-      'format': font.format,
-      'font_bytes': bytes,
-      'created_at': now,
-      'updated_at': now,
-    });
+    await _database.insert(
+      DatabaseTables.fonts,
+      FontAssetModel(
+        id: font.id,
+        name: font.name,
+        family: font.family,
+        filePath: font.filePath,
+        format: font.format,
+      ).toRow(bytes: bytes, now: now),
+    );
     return font;
   }
 

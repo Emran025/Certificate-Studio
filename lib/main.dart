@@ -48,11 +48,11 @@ class _CertificateStudioAppState extends State<CertificateStudioApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.withAccent(
         brightness: Brightness.light,
-        accentColor: _settings.accentColor,
+        accentColor: Color(_settings.accentColorValue),
       ),
       darkTheme: AppTheme.withAccent(
         brightness: Brightness.dark,
-        accentColor: _settings.accentColor,
+        accentColor: Color(_settings.accentColorValue),
       ),
       themeMode: _settings.themeMode == AppThemeMode.dark
           ? ThemeMode.dark

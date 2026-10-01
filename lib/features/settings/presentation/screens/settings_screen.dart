@@ -71,7 +71,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final color = await showDialog<Color>(
       context: context,
       builder: (context) => _ColorPickerDialog(
-        initialColor: _settings.accentColor,
+        initialColor: Color(_settings.accentColorValue),
         title: label('اختيار اللون الرئيسي', 'Choose brand color'),
         closeLabel: label('إلغاء', 'Cancel'),
         applyLabel: label('تطبيق', 'Apply'),
@@ -177,7 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                               icon: Icon(
                                 Icons.colorize,
-                                color: _settings.accentColor,
+                                color: Color(_settings.accentColorValue),
                                 size: 30,
                               ),
                             ),

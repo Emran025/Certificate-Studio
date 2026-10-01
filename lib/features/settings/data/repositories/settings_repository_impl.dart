@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
 import '../../domain/entities/app_settings.dart';
+import '../models/app_settings_model.dart';
 import '../../domain/repositories/settings_repository.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
@@ -19,7 +20,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
     );
     if (rows.isEmpty) return const AppSettings();
     final value = jsonDecode(rows.first['value_json']! as String);
-    return AppSettings.fromJson(Map<String, Object?>.from(value as Map));
+    return AppSettingsModel.fromJson(Map<String, Object?>.from(value as Map));
   }
 
   @override
@@ -28,7 +29,11 @@ class SettingsRepositoryImpl implements SettingsRepository {
       DatabaseTables.settings,
       {
         'key': _appSettingsKey,
-        'value_json': jsonEncode(settings.toJson()),
+        'value_json': jsonEncode(AppSettingsModel(
+          themeMode: settings.themeMode,
+          accentColorValue: settings.accentColorValue,
+          languageCode: settings.languageCode,
+        ).toJson()),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       },
       conflictColumn: 'key',

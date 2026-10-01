@@ -2,6 +2,7 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
 import '../../domain/entities/template_asset.dart';
 import '../../domain/repositories/template_repository.dart';
+import '../models/template_asset_model.dart';
 
 class TemplateRepositoryImpl implements TemplateRepository {
   TemplateRepositoryImpl(this._database);
@@ -10,7 +11,7 @@ class TemplateRepositoryImpl implements TemplateRepository {
   @override
   Future<List<TemplateAsset>> getAll() async {
     final rows = await _database.query(DatabaseTables.templates);
-    return rows.map(_fromRow).toList(growable: false);
+    return rows.map(TemplateAssetModel.fromRow).toList(growable: false);
   }
 
   @override
@@ -24,18 +25,20 @@ class TemplateRepositoryImpl implements TemplateRepository {
 
   @override
   Future<TemplateAsset> add(TemplateAsset template) async {
-    await _database.insert(DatabaseTables.templates, {
-      'id': template.id,
-      'name': template.name,
-      'file_path': template.filePath,
-      'width': template.width,
-      'height': template.height,
-      'dpi': template.dpi,
-      'format': template.format,
-      'created_at': DateTime.now().toUtc().toIso8601String(),
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    });
-    return template;
+    final model = TemplateAssetModel(
+      id: template.id,
+      name: template.name,
+      filePath: template.filePath,
+      width: template.width,
+      height: template.height,
+      dpi: template.dpi,
+      format: template.format,
+    );
+    await _database.insert(
+      DatabaseTables.templates,
+      model.toRow(now: DateTime.now().toUtc().toIso8601String()),
+    );
+    return model;
   }
 
   @override
@@ -67,14 +70,4 @@ class TemplateRepositoryImpl implements TemplateRepository {
   @override
   Future<void> delete(String id) =>
       _database.delete(DatabaseTables.templates, id);
-
-  TemplateAsset _fromRow(Map<String, Object?> row) => TemplateAsset(
-    id: row['id']! as String,
-    name: row['name']! as String,
-    filePath: row['file_path']! as String,
-    width: row['width']! as int,
-    height: row['height']! as int,
-    dpi: (row['dpi']! as num).toDouble(),
-    format: row['format']! as String,
-  );
 }

@@ -1,6 +1,7 @@
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
 import '../../domain/entities/certificate_record.dart';
+import '../models/certificate_record_model.dart';
 import '../../domain/repositories/certificate_repository.dart';
 
 class CertificateRepositoryImpl implements CertificateRepository {
@@ -20,7 +21,7 @@ class CertificateRepositoryImpl implements CertificateRepository {
         where: {'id': row['record_id']},
       );
       records.add(
-        CertificateRecord(row, recordS.isEmpty ? null : recordS.first),
+        CertificateRecordModel.fromRows(row, recordS.isEmpty ? null : recordS.first),
       );
     }
     return records;

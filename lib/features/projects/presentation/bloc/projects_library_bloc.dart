@@ -1,35 +1,11 @@
+export 'projects_library_event.dart';
+export 'projects_library_state.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/project.dart';
+import 'projects_library_event.dart';
+import 'projects_library_state.dart';
 import '../../domain/repositories/project_repository.dart';
 import '../../domain/usecases/delete_project.dart';
-
-sealed class ProjectsLibraryEvent {
-  const ProjectsLibraryEvent();
-}
-
-final class ProjectsRequested extends ProjectsLibraryEvent {
-  const ProjectsRequested();
-}
-
-final class ProjectDeleted extends ProjectsLibraryEvent {
-  const ProjectDeleted(this.project);
-  final Project project;
-}
-
-enum ProjectsLibraryStatus { initial, loading, loaded, deleting, failure }
-
-class ProjectsLibraryState {
-  const ProjectsLibraryState({
-    this.status = ProjectsLibraryStatus.initial,
-    this.projects = const [],
-    this.errorMessage,
-    this.deletedProjectName,
-  });
-  final ProjectsLibraryStatus status;
-  final List<Project> projects;
-  final String? errorMessage;
-  final String? deletedProjectName;
-}
 
 class ProjectsLibraryBloc
     extends Bloc<ProjectsLibraryEvent, ProjectsLibraryState> {

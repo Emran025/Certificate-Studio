@@ -1,58 +1,12 @@
-import 'dart:typed_data';
+export 'data_import_event.dart';
+export 'data_import_state.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'data_import_event.dart';
+import 'data_import_state.dart';
 import '../../domain/entities/imported_table.dart';
 import '../../domain/usecases/import_excel.dart';
 import '../../domain/usecases/paste_table.dart';
-
-sealed class DataImportEvent {
-  const DataImportEvent();
-}
-
-final class DataImportRequested extends DataImportEvent {
-  const DataImportRequested();
-}
-
-final class PasteTableRequested extends DataImportEvent {
-  const PasteTableRequested(this.rawText);
-
-  final String rawText;
-}
-
-final class ExcelImportRequested extends DataImportEvent {
-  const ExcelImportRequested(this.bytes);
-
-  final Uint8List bytes;
-}
-
-final class TableUpdatedRequested extends DataImportEvent {
-  const TableUpdatedRequested(this.table);
-
-  final ImportedTable table;
-}
-
-final class DataImportErrorReported extends DataImportEvent {
-  const DataImportErrorReported(this.message);
-
-  final String message;
-}
-
-enum DataImportStatus { initial, loading, saving, loaded, failure }
-
-class DataImportState {
-  const DataImportState({
-    this.status = DataImportStatus.initial,
-    this.table = const ImportedTable(columns: [], rows: []),
-    this.errorMessage,
-  });
-
-  final DataImportStatus status;
-  final ImportedTable table;
-  final String? errorMessage;
-
-  bool get isSaving => status == DataImportStatus.saving;
-}
 
 class DataImportBloc extends Bloc<DataImportEvent, DataImportState> {
   DataImportBloc({

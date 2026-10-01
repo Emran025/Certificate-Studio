@@ -1,45 +1,10 @@
-import 'dart:typed_data';
+export 'verification_event.dart';
+export 'verification_state.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'verification_event.dart';
+import 'verification_state.dart';
 import '../../domain/certificate_verification_service.dart';
-
-sealed class VerificationEvent {
-  const VerificationEvent();
-}
-
-final class VerifyCertificateFile extends VerificationEvent {
-  const VerifyCertificateFile(this.bytes, this.fileName);
-
-  final Uint8List bytes;
-  final String fileName;
-}
-
-final class VerifyCertificateId extends VerificationEvent {
-  const VerifyCertificateId(this.id);
-
-  final String id;
-}
-
-final class VerifyQrPayload extends VerificationEvent {
-  const VerifyQrPayload(this.payload);
-
-  final String payload;
-}
-
-enum VerificationStatus { idle, loading, loaded, failure }
-
-class VerificationState {
-  const VerificationState({
-    this.status = VerificationStatus.idle,
-    this.result,
-    this.errorMessage,
-  });
-
-  final VerificationStatus status;
-  final CertificateVerificationResult? result;
-  final Object? errorMessage;
-}
 
 class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
   VerificationBloc(this._service) : super(const VerificationState()) {

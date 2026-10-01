@@ -1,29 +1,10 @@
+export 'startup_event.dart';
+export 'startup_state.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../../institution/domain/entities/institution.dart';
+import 'startup_event.dart';
+import 'startup_state.dart';
 import '../../../institution/domain/repositories/institution_repository.dart';
-
-sealed class StartupEvent {
-  const StartupEvent();
-}
-
-final class StartupRequested extends StartupEvent {
-  const StartupRequested();
-}
-
-enum StartupStatus { loading, loaded, failure }
-
-class StartupState {
-  const StartupState({
-    this.status = StartupStatus.loading,
-    this.institution,
-    this.errorMessage,
-  });
-
-  final StartupStatus status;
-  final Institution? institution;
-  final Object? errorMessage;
-}
 
 class StartupBloc extends Bloc<StartupEvent, StartupState> {
   StartupBloc(this._repository) : super(const StartupState()) {

@@ -1,45 +1,10 @@
+export 'fonts_library_event.dart';
+export 'fonts_library_state.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/font_asset.dart';
+import 'fonts_library_event.dart';
+import 'fonts_library_state.dart';
 import '../../domain/repositories/font_repository.dart';
-
-sealed class FontsLibraryEvent {
-  const FontsLibraryEvent();
-}
-
-final class FontsRequested extends FontsLibraryEvent {
-  const FontsRequested();
-}
-
-final class FontAdded extends FontsLibraryEvent {
-  const FontAdded(this.font, this.bytes);
-  final FontAsset font;
-  final List<int> bytes;
-}
-
-final class FontSelected extends FontsLibraryEvent {
-  const FontSelected(this.id);
-  final String id;
-}
-
-final class FontDeleted extends FontsLibraryEvent {
-  const FontDeleted(this.id);
-  final String id;
-}
-
-enum FontsLibraryStatus { initial, loading, loaded, saving, failure }
-
-class FontsLibraryState {
-  const FontsLibraryState({
-    this.status = FontsLibraryStatus.initial,
-    this.fonts = const [],
-    this.selectedId,
-    this.errorMessage,
-  });
-  final FontsLibraryStatus status;
-  final List<FontAsset> fonts;
-  final String? selectedId;
-  final String? errorMessage;
-}
 
 class FontsLibraryBloc extends Bloc<FontsLibraryEvent, FontsLibraryState> {
   FontsLibraryBloc(this._repository, this._projectId)

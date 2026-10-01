@@ -1,49 +1,10 @@
+export 'template_picker_event.dart';
+export 'template_picker_state.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/template_asset.dart';
+import 'template_picker_event.dart';
+import 'template_picker_state.dart';
 import '../../domain/repositories/template_repository.dart';
-
-sealed class TemplatePickerEvent {
-  const TemplatePickerEvent();
-}
-
-final class TemplatesRequested extends TemplatePickerEvent {
-  const TemplatesRequested();
-}
-
-final class TemplateAdded extends TemplatePickerEvent {
-  const TemplateAdded(this.template);
-  final TemplateAsset template;
-}
-
-final class TemplateSelected extends TemplatePickerEvent {
-  const TemplateSelected(this.id);
-  final String id;
-}
-
-final class TemplateUpdated extends TemplatePickerEvent {
-  const TemplateUpdated(this.template);
-  final TemplateAsset template;
-}
-
-final class TemplateDeleted extends TemplatePickerEvent {
-  const TemplateDeleted(this.id);
-  final String id;
-}
-
-enum TemplatePickerStatus { initial, loading, loaded, saving, failure }
-
-class TemplatePickerState {
-  const TemplatePickerState({
-    this.status = TemplatePickerStatus.initial,
-    this.templates = const [],
-    this.selectedId,
-    this.errorMessage,
-  });
-  final TemplatePickerStatus status;
-  final List<TemplateAsset> templates;
-  final String? selectedId;
-  final String? errorMessage;
-}
 
 class TemplatePickerBloc
     extends Bloc<TemplatePickerEvent, TemplatePickerState> {

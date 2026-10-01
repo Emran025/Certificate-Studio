@@ -1,29 +1,10 @@
+export 'workspace_metrics_event.dart';
+export 'workspace_metrics_state.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../domain/entities/workspace_metrics.dart';
+import 'workspace_metrics_event.dart';
+import 'workspace_metrics_state.dart';
 import '../../domain/usecases/get_workspace_metrics.dart';
-
-sealed class WorkspaceMetricsEvent {
-  const WorkspaceMetricsEvent();
-}
-
-final class WorkspaceMetricsRequested extends WorkspaceMetricsEvent {
-  const WorkspaceMetricsRequested();
-}
-
-enum WorkspaceMetricsStatus { initial, loading, loaded, failure }
-
-class WorkspaceMetricsState {
-  const WorkspaceMetricsState({
-    this.metrics = const WorkspaceMetrics.empty(),
-    this.status = WorkspaceMetricsStatus.initial,
-    this.errorMessage,
-  });
-
-  final WorkspaceMetrics metrics;
-  final WorkspaceMetricsStatus status;
-  final String? errorMessage;
-}
 
 class WorkspaceMetricsBloc
     extends Bloc<WorkspaceMetricsEvent, WorkspaceMetricsState> {

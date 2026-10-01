@@ -1,27 +1,10 @@
+export 'certificate_library_event.dart';
+export 'certificate_library_state.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/certificate_record.dart';
+import 'certificate_library_event.dart';
+import 'certificate_library_state.dart';
 import '../../domain/usecases/get_certificates.dart';
-
-sealed class CertificateLibraryEvent {
-  const CertificateLibraryEvent();
-}
-
-final class CertificatesRequested extends CertificateLibraryEvent {
-  const CertificatesRequested();
-}
-
-enum CertificateLibraryStatus { initial, loading, loaded, failure }
-
-class CertificateLibraryState {
-  const CertificateLibraryState({
-    this.status = CertificateLibraryStatus.initial,
-    this.certificates = const [],
-    this.errorMessage,
-  });
-  final CertificateLibraryStatus status;
-  final List<CertificateRecord> certificates;
-  final String? errorMessage;
-}
 
 class CertificateLibraryBloc
     extends Bloc<CertificateLibraryEvent, CertificateLibraryState> {

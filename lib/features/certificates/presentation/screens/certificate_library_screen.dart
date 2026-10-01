@@ -39,7 +39,7 @@ class CertificateLibraryScreen extends StatefulWidget {
 
 class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
   late final CertificateLibraryBloc _certificatesBloc;
-  late final CertificateExportService _exporter;
+  late final CertificateExportServiceContract _exporter;
   String _query = '';
   final Set<String> _selected = {};
 
@@ -684,7 +684,7 @@ class _CertificatePreviewScreen extends StatelessWidget {
   final _LibraryCertificate certificate;
   final AppDatabase database;
   final KeyStorage keyStorage;
-  final CertificateExportService exporter;
+  final CertificateExportServiceContract exporter;
   final String fileName;
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -1031,7 +1031,7 @@ class _ArtifactImage extends StatelessWidget {
       );
     }
     return FutureBuilder<Uint8List?>(
-      future: CertificateArtifactStore().read(reference!),
+      future: SharedPreferencesCertificateArtifactStore().read(reference!),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());

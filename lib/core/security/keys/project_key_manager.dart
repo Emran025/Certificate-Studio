@@ -8,6 +8,7 @@ class ProjectKeyManager implements ProjectKeyService {
 
   final KeyStorage _storage;
 
+  @override
   Future<bool> hasKey(String projectId) async => (await _storage.read(_keyName(projectId))) != null;
 
   @override
@@ -16,6 +17,7 @@ class ProjectKeyManager implements ProjectKeyService {
     await _storage.write(_keyName(projectId), _generateKey());
   }
 
+  @override
   Future<void> rotate(String projectId) async => _storage.write(_keyName(projectId), _generateKey());
 
   String _keyName(String projectId) => 'project.$projectId.key';

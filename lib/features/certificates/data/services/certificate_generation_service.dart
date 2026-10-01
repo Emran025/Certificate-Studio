@@ -32,12 +32,20 @@ class CertificateGenerationResult {
 }
 
 /// Generates signed certificate metadata plus portable PDF and high-resolution PNG artifacts.
-class CertificateGenerationService {
+abstract interface class CertificateGenerationServiceContract {
+  Future<CertificateGenerationResult> generate({
+    required String projectId,
+    required String institutionId,
+    void Function(int completed, int total)? onProgress,
+  });
+}
+
+class CertificateGenerationService implements CertificateGenerationServiceContract {
   CertificateGenerationService(
     this.database,
     this.keyStorage, {
     CertificateArtifactStore? artifactStore,
-  }) : artifactStore = artifactStore ?? CertificateArtifactStore();
+  }) : artifactStore = artifactStore ?? SharedPreferencesCertificateArtifactStore();
   final AppDatabase database;
   final KeyStorage keyStorage;
   final CertificateArtifactStore artifactStore;

@@ -21,19 +21,28 @@ class InMemoryKeyStorage implements KeyStorage {
   Future<void> delete(String key) async => _values.remove(key);
 }
 
-class InstitutionKeyManager {
+abstract interface class InstitutionKeyService {
+  Future<bool> hasKey();
+  Future<void> initialize();
+  Future<void> rotate();
+}
+
+class InstitutionKeyManager implements InstitutionKeyService {
   InstitutionKeyManager(this._storage);
 
   static const _storageKey = 'institution.master_key';
   final KeyStorage _storage;
 
+  @override
   Future<bool> hasKey() async => (await _storage.read(_storageKey)) != null;
 
+  @override
   Future<void> initialize() async {
     if (await hasKey()) return;
     await _storage.write(_storageKey, _generateKey());
   }
 
+  @override
   Future<void> rotate() async => _storage.write(_storageKey, _generateKey());
 
   String _generateKey() {

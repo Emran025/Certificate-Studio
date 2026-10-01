@@ -9,11 +9,26 @@ import '../../../../core/files/export_file_writer.dart';
 
 enum CertificateExportBundleStyle { flat, perCertificate }
 
-class CertificateExportService {
+abstract interface class CertificateExportServiceContract {
+  Future<String?> exportSingle({
+    required Map<String, Object?> certificate,
+    required String extension,
+    required String fileName,
+  });
+  Future<String?> exportZip({
+    required List<Map<String, Object?>> certificates,
+    required String fileName,
+    required Set<String> extensions,
+    String Function(Map<String, Object?> certificate)? fileNameFor,
+    CertificateExportBundleStyle style,
+  });
+}
+
+class CertificateExportService implements CertificateExportServiceContract {
   CertificateExportService({
     CertificateArtifactStore? artifactStore,
     this.database,
-  }) : artifactStore = artifactStore ?? CertificateArtifactStore();
+  }) : artifactStore = artifactStore ?? SharedPreferencesCertificateArtifactStore();
 
   final CertificateArtifactStore artifactStore;
   final AppDatabase? database;

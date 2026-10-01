@@ -58,7 +58,13 @@ class _ExtractedCertificate {
   final List<int> artifactBytes;
 }
 
-class CertificateVerificationService {
+abstract interface class CertificateVerificationServiceContract {
+  Future<CertificateVerificationResult> verify(String certificateId);
+  Future<CertificateVerificationResult> verifyFile(List<int> bytes, {String? fileName});
+  Future<CertificateVerificationResult> verifyQr(String payload);
+}
+
+class CertificateVerificationService implements CertificateVerificationServiceContract {
   CertificateVerificationService(this.database, this.keyStorage);
   final AppDatabase database;
   final KeyStorage keyStorage;

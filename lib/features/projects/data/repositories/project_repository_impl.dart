@@ -65,7 +65,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
       where: {'project_id': id},
       columns: ['file_path', 'image_path'],
     );
-    final artifacts = CertificateArtifactStore();
+    final CertificateArtifactStore artifacts = SharedPreferencesCertificateArtifactStore();
     await Future.wait([
       for (final certificate in certificates)
         for (final key in ['file_path', 'image_path'])

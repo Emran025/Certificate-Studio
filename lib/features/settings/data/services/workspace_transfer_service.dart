@@ -12,7 +12,16 @@ import '../../../../core/files/project_asset_store.dart';
 import '../../../../core/security/keys/institution_key_manager.dart';
 import '../../../certificates/data/services/template_bytes.dart';
 
-class WorkspaceTransferService {
+abstract interface class WorkspaceTransferServiceContract {
+  Future<String?> exportProfile(String institutionId);
+  Future<bool> importProfile();
+  Future<String?> exportSignatures(String institutionId);
+  Future<int> importSignatures();
+  Future<String?> exportProject(String projectId);
+  Future<String?> importProject(String institutionId);
+}
+
+class WorkspaceTransferService implements WorkspaceTransferServiceContract {
   WorkspaceTransferService(this._database, {this.keyStorage});
 
   final AppDatabase _database;
@@ -29,6 +38,7 @@ class WorkspaceTransferService {
   static const _projectMetadataName = 'project.json';
   static const _spacingName = 'app_spacing.dart';
 
+  @override
   Future<String?> exportProfile(String institutionId) async {
     final storage = keyStorage;
     if (storage == null) {
@@ -86,6 +96,7 @@ class WorkspaceTransferService {
     );
   }
 
+  @override
   Future<bool> importProfile() async {
     final storage = keyStorage;
     if (storage == null) {
@@ -141,6 +152,7 @@ class WorkspaceTransferService {
     return true;
   }
 
+  @override
   Future<String?> exportSignatures(String institutionId) async {
     final projects = await _database.query(
       DatabaseTables.projects,
@@ -163,6 +175,7 @@ class WorkspaceTransferService {
     );
   }
 
+  @override
   Future<int> importSignatures() async {
     final file = await _pickFile(['json']);
     if (file == null) return 0;
@@ -186,6 +199,7 @@ class WorkspaceTransferService {
     return imported;
   }
 
+  @override
   Future<String?> exportProject(String projectId) async {
     final project = await _one(DatabaseTables.projects, {'id': projectId});
     if (project == null) {
@@ -274,6 +288,7 @@ class WorkspaceTransferService {
     );
   }
 
+  @override
   Future<String?> importProject(String institutionId) async {
     final file = await _pickFile(['czip', 'json']);
     if (file == null) return null;

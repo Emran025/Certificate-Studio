@@ -1,16 +1,18 @@
 import 'dart:convert';
 import 'dart:typed_data';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Stores generated certificate bytes behind stable, database-friendly references.
-/// SharedPreferences is used as the portable fallback so generation also works on
-/// web; a native filesystem implementation can replace this adapter later.
-class CertificateArtifactStore {
-  CertificateArtifactStore({this._preferences});
+abstract interface class CertificateArtifactStore {
+  Future<String> save({required String certificateId, required String extension, required List<int> bytes});
+  Future<Uint8List?> read(String reference);
+  Future<void> delete(String reference);
+}
 
+class SharedPreferencesCertificateArtifactStore implements CertificateArtifactStore {
+  SharedPreferencesCertificateArtifactStore({this._preferences});
   SharedPreferences? _preferences;
 
+  @override
   Future<String> save({required String certificateId, required String extension, required List<int> bytes}) async {
     final preferences = _preferences ??= await SharedPreferences.getInstance();
     final reference = 'artifact://certificates/$certificateId.$extension';
@@ -18,12 +20,14 @@ class CertificateArtifactStore {
     return reference;
   }
 
+  @override
   Future<Uint8List?> read(String reference) async {
     final preferences = _preferences ??= await SharedPreferences.getInstance();
     final encoded = preferences.getString(_key(reference));
     return encoded == null ? null : Uint8List.fromList(base64Decode(encoded));
   }
 
+  @override
   Future<void> delete(String reference) async {
     final preferences = _preferences ??= await SharedPreferences.getInstance();
     await preferences.remove(_key(reference));
@@ -32,9 +36,7 @@ class CertificateArtifactStore {
   String _key(String reference) => 'certificate_artifact:$reference';
 }
 
-/// Deterministic test adapter; it also makes the generation service easy to use
-/// in headless environments where platform preferences are unavailable.
-class InMemoryCertificateArtifactStore extends CertificateArtifactStore {
+class InMemoryCertificateArtifactStore implements CertificateArtifactStore {
   final Map<String, Uint8List> artifacts = {};
 
   @override
@@ -46,4 +48,7 @@ class InMemoryCertificateArtifactStore extends CertificateArtifactStore {
 
   @override
   Future<Uint8List?> read(String reference) async => artifacts[reference];
+
+  @override
+  Future<void> delete(String reference) async => artifacts.remove(reference);
 }

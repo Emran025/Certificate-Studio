@@ -57,7 +57,7 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
     );
   }
 
-  final CertificateVerificationService _service;
+  final CertificateVerificationServiceContract _service;
 
   Future<void> _verify(
     Emitter<VerificationState> emit,

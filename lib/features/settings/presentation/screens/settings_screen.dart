@@ -32,7 +32,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late AppSettings _settings = widget.settings;
   late final SettingsRepositoryImpl _settingsRepository;
-  late final WorkspaceTransferService _transfer;
+  late final WorkspaceTransferServiceContract _transfer;
   String? _message;
 
   @override

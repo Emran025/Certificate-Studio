@@ -8,7 +8,7 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
   @override
   void initState() {
     super.initState();
-    _repository = ProjectRepositoryImpl(widget.database);
+    _repository = ProjectRepositoryImpl(ProjectDataSourceImpl(widget.database));
     _createProject = CreateProject(
       _repository,
       ProjectKeyManager(widget.keyStorage),

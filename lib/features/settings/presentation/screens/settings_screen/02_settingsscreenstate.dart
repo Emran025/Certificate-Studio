@@ -9,7 +9,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _settingsRepository = SettingsRepositoryImpl(widget.database);
+    _settingsRepository = SettingsRepositoryImpl(SettingsDataSourceImpl(widget.database));
     _transfer = WorkspaceTransferService(
       widget.database,
       keyStorage: widget.keyStorage,

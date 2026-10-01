@@ -11,7 +11,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     super.initState();
     _exporter = CertificateExportService(database: widget.database);
     _certificatesBloc = CertificateLibraryBloc(
-      GetCertificates(CertificateRepositoryImpl(widget.database)),
+      GetCertificates(CertificateRepositoryImpl(CertificateDataSourceImpl(widget.database))),
       widget.projectId,
     )..add(const CertificatesRequested());
   }

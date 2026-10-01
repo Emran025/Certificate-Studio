@@ -26,14 +26,14 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
     super.initState();
     final database = widget.database;
     if (database != null) {
-      _projectRepository = ProjectRepositoryImpl(database);
+      _projectRepository = ProjectRepositoryImpl(ProjectDataSourceImpl(database));
       _createProject = CreateProject(
         _projectRepository!,
         ProjectKeyManager(widget.keyStorage ?? InMemoryKeyStorage()),
       );
       _projectsFuture = _loadProjects();
       _workspaceMetricsBloc = WorkspaceMetricsBloc(
-        GetWorkspaceMetrics(WorkspaceRepositoryImpl(database)),
+        GetWorkspaceMetrics(WorkspaceRepositoryImpl(WorkspaceDataSourceImpl(database))),
       )..add(const WorkspaceMetricsRequested());
     }
   }

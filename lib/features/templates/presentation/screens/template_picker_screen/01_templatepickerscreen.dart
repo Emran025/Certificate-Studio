@@ -36,7 +36,7 @@ class TemplatePickerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (_) =>
-        TemplatePickerBloc(TemplateRepositoryImpl(database), projectId)
+        TemplatePickerBloc(TemplateRepositoryImpl(TemplateDataSourceImpl(database)), projectId)
           ..add(const TemplatesRequested()),
     child: BlocBuilder<TemplatePickerBloc, TemplatePickerState>(
       builder: (context, state) {

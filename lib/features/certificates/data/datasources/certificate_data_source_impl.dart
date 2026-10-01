@@ -7,11 +7,16 @@ class CertificateDataSourceImpl implements CertificateDataSource {
   final AppDatabase _database;
   @override
   Future<List<Map<String, Object?>>> getCertificateRows({String? projectId}) =>
-      _database.query(DatabaseTables.certificates,
-          where: projectId == null ? const {} : {'project_id': projectId});
+      _database.query(
+        DatabaseTables.certificates,
+        where: projectId == null ? const {} : {'project_id': projectId},
+      );
   @override
   Future<Map<String, Object?>?> getRecord(String id) async {
-    final rows = await _database.query(DatabaseTables.records, where: {'id': id});
+    final rows = await _database.query(
+      DatabaseTables.records,
+      where: {'id': id},
+    );
     return rows.isEmpty ? null : rows.first;
   }
 }

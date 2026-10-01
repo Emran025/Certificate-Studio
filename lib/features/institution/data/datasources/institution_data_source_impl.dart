@@ -6,9 +6,12 @@ class InstitutionDataSourceImpl implements InstitutionDataSource {
   InstitutionDataSourceImpl(this._database);
   final AppDatabase _database;
   @override
-  Future<List<Map<String, Object?>>> getCurrentRows() => _database.query(DatabaseTables.institutions);
+  Future<List<Map<String, Object?>>> getCurrentRows() =>
+      _database.query(DatabaseTables.institutions);
   @override
-  Future<void> save(Map<String, Object?> row) => _database.upsert(DatabaseTables.institutions, row);
+  Future<void> save(Map<String, Object?> row) =>
+      _database.upsert(DatabaseTables.institutions, row);
   @override
-  Future<void> delete(String id) => _database.delete(DatabaseTables.institutions, id);
+  Future<void> delete(String id) =>
+      _database.delete(DatabaseTables.institutions, id);
 }

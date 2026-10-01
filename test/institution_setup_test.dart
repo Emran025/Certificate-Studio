@@ -8,28 +8,40 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:certificate_studio/features/institution/data/datasources/institution_data_source_impl.dart';
 
 void main() {
-  testWidgets('renders institution setup when no institution exists', (tester) async {
+  testWidgets('renders institution setup when no institution exists', (
+    tester,
+  ) async {
     final database = InMemoryAppDatabase();
     await database.open();
 
-    await tester.pumpWidget(TestInstitutionSetup(
-      repository: InstitutionRepositoryImpl(InstitutionDataSourceImpl(database)),
-      keyManager: InstitutionKeyManager(InMemoryKeyStorage()),
-    ));
+    await tester.pumpWidget(
+      TestInstitutionSetup(
+        repository: InstitutionRepositoryImpl(
+          InstitutionDataSourceImpl(database),
+        ),
+        keyManager: InstitutionKeyManager(InMemoryKeyStorage()),
+      ),
+    );
 
     expect(find.text('Set up your institution'), findsOneWidget);
     expect(find.text('Institution name *'), findsOneWidget);
   });
 
-  testWidgets('saves institution details and initializes a key', (tester) async {
+  testWidgets('saves institution details and initializes a key', (
+    tester,
+  ) async {
     final database = InMemoryAppDatabase();
     await database.open();
     final storage = InMemoryKeyStorage();
 
-    await tester.pumpWidget(TestInstitutionSetup(
-      repository: InstitutionRepositoryImpl(InstitutionDataSourceImpl(database)),
-      keyManager: InstitutionKeyManager(storage),
-    ));
+    await tester.pumpWidget(
+      TestInstitutionSetup(
+        repository: InstitutionRepositoryImpl(
+          InstitutionDataSourceImpl(database),
+        ),
+        keyManager: InstitutionKeyManager(storage),
+      ),
+    );
     await tester.enterText(find.byType(TextFormField).first, 'Al-Noor Academy');
     final button = find.text('Continue to workspace');
     await tester.ensureVisible(button);
@@ -42,13 +54,21 @@ void main() {
 }
 
 class TestInstitutionSetup extends StatelessWidget {
-  const TestInstitutionSetup({super.key, required this.repository, required this.keyManager});
+  const TestInstitutionSetup({
+    super.key,
+    required this.repository,
+    required this.keyManager,
+  });
 
   final InstitutionRepositoryImpl repository;
   final InstitutionKeyManager keyManager;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        home: InstitutionSetupScreen(repository: repository, keyManager: keyManager, onCompleted: (_) {}),
-      );
+    home: InstitutionSetupScreen(
+      repository: repository,
+      keyManager: keyManager,
+      onCompleted: (_) {},
+    ),
+  );
 }

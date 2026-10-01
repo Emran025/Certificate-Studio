@@ -37,7 +37,9 @@ class _AppStartupGateState extends State<AppStartupGate> {
   @override
   void initState() {
     super.initState();
-    _repository = InstitutionRepositoryImpl(InstitutionDataSourceImpl(widget.database));
+    _repository = InstitutionRepositoryImpl(
+      InstitutionDataSourceImpl(widget.database),
+    );
     _keyManager = InstitutionKeyManager(widget.keyStorage);
     _startupBloc = StartupBloc(_repository)..add(const StartupRequested());
   }

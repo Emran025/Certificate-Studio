@@ -6,7 +6,9 @@ import 'package:certificate_studio/features/data_import/data/datasources/data_im
 
 void main() {
   test('parses pasted tab-separated data and normalizes duplicate headers', () {
-    final repository = DataImportRepositoryImpl(DataImportDataSourceImpl(InMemoryAppDatabase()));
+    final repository = DataImportRepositoryImpl(
+      DataImportDataSourceImpl(InMemoryAppDatabase()),
+    );
     final table = repository.parseTable('Name\tName\tGrade\nAhmed\tA. Ali\t95');
 
     expect(table.columns, ['Name', 'Name 2', 'Grade']);
@@ -17,8 +19,12 @@ void main() {
   test('persists and reloads imported rows for a project', () async {
     final database = InMemoryAppDatabase();
     await database.open();
-    final repository = DataImportRepositoryImpl(DataImportDataSourceImpl(database));
-    final table = repository.parseTable('class\tname\tgrade\nA001\tAhmed Ali\t95');
+    final repository = DataImportRepositoryImpl(
+      DataImportDataSourceImpl(database),
+    );
+    final table = repository.parseTable(
+      'class\tname\tgrade\nA001\tAhmed Ali\t95',
+    );
 
     await repository.saveForProject('project-1', table);
     final restored = await repository.getForProject('project-1');
@@ -43,7 +49,9 @@ void main() {
       IntCellValue(95),
     ]);
 
-    final repository = DataImportRepositoryImpl(DataImportDataSourceImpl(InMemoryAppDatabase()));
+    final repository = DataImportRepositoryImpl(
+      DataImportDataSourceImpl(InMemoryAppDatabase()),
+    );
     final table = repository.parseExcel(workbook.encode()!);
 
     expect(table.columns, ['class', 'name', 'grade']);

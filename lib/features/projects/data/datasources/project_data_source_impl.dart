@@ -7,7 +7,8 @@ class ProjectDataSourceImpl implements ProjectDataSource {
   ProjectDataSourceImpl(
     this._database, {
     CertificateArtifactStore? artifactStore,
-  }) : _artifactStore = artifactStore ?? SharedPreferencesCertificateArtifactStore();
+  }) : _artifactStore =
+           artifactStore ?? SharedPreferencesCertificateArtifactStore();
 
   final AppDatabase _database;
   final CertificateArtifactStore _artifactStore;
@@ -16,12 +17,17 @@ class ProjectDataSourceImpl implements ProjectDataSource {
   Future<List<Map<String, Object?>>> getProjects({String? institutionId}) =>
       _database.query(
         DatabaseTables.projects,
-        where: institutionId == null ? const {} : {'institution_id': institutionId},
+        where: institutionId == null
+            ? const {}
+            : {'institution_id': institutionId},
       );
 
   @override
   Future<Map<String, Object?>?> getProject(String id) async {
-    final rows = await _database.query(DatabaseTables.projects, where: {'id': id});
+    final rows = await _database.query(
+      DatabaseTables.projects,
+      where: {'id': id},
+    );
     return rows.isEmpty ? null : rows.first;
   }
 

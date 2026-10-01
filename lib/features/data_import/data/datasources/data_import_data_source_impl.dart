@@ -12,17 +12,26 @@ class DataImportDataSourceImpl implements DataImportDataSource {
   Future<void> replaceRecords(String projectId, ImportedTable table) async {
     _database.beginBatch();
     try {
-      await _database.deleteWhere(DatabaseTables.records, {'project_id': projectId});
+      await _database.deleteWhere(DatabaseTables.records, {
+        'project_id': projectId,
+      });
       for (var index = 0; index < table.rows.length; index++) {
         final values = table.rows[index];
         final classSource = values.entries
             .where((entry) {
               final id = canonicalFieldClassId(entry.key);
-              return id == 'class' || id == 'class_name' || id == 'record_class' ||
-                  id == 'الصف' || id == 'الفصل' || id == 'الشعبة';
+              return id == 'class' ||
+                  id == 'class_name' ||
+                  id == 'record_class' ||
+                  id == 'الصف' ||
+                  id == 'الفصل' ||
+                  id == 'الشعبة';
             })
             .map((entry) => entry.value.trim())
-            .firstWhere((value) => value.isNotEmpty, orElse: () => '${index + 1}');
+            .firstWhere(
+              (value) => value.isNotEmpty,
+              orElse: () => '${index + 1}',
+            );
         final now = DateTime.now().toUtc().toIso8601String();
         await _database.insert(DatabaseTables.records, {
           'id': 'record-${DateTime.now().microsecondsSinceEpoch}-$index',
@@ -38,7 +47,12 @@ class DataImportDataSourceImpl implements DataImportDataSource {
       await _database.endBatch();
     }
   }
+
   @override
   Future<List<Map<String, Object?>>> getRecordRows(String projectId) =>
-      _database.query(DatabaseTables.records, where: {'project_id': projectId}, columns: ['data_json']);
+      _database.query(
+        DatabaseTables.records,
+        where: {'project_id': projectId},
+        columns: ['data_json'],
+      );
 }

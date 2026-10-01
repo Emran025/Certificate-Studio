@@ -15,12 +15,16 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final keyStorage = await PersistentKeyStorage.create();
   final database = await PersistentAppDatabase.create(keyStorage: keyStorage);
-  final settings = await SettingsRepositoryImpl(SettingsDataSourceImpl(database)).loadAppSettings();
-  runApp(CertificateStudioApp(
-    database: database,
-    keyStorage: keyStorage,
-    initialSettings: settings,
-  ));
+  final settings = await SettingsRepositoryImpl(
+    SettingsDataSourceImpl(database),
+  ).loadAppSettings();
+  runApp(
+    CertificateStudioApp(
+      database: database,
+      keyStorage: keyStorage,
+      initialSettings: settings,
+    ),
+  );
 }
 
 class CertificateStudioApp extends StatefulWidget {
@@ -45,7 +49,8 @@ class _CertificateStudioAppState extends State<CertificateStudioApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      onGenerateTitle: (context) => context.l10n.text(AppEnvironment.appNameKey),
+      onGenerateTitle: (context) =>
+          context.l10n.text(AppEnvironment.appNameKey),
       debugShowCheckedModeBanner: false,
       theme: AppTheme.withAccent(
         brightness: Brightness.light,

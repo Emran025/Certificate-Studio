@@ -112,7 +112,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     Object? error;
     try {
       path = await _exporter.exportSingle(
-        certificate: certificate.row,
+        certificate: _exportRow(certificate),
         extension: extension,
         fileName: _fileName(certificate, field),
       );
@@ -140,12 +140,17 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     Object? error;
     try {
       path = await _exporter.exportZip(
-        certificates: [for (final item in chosen) item.row],
+        certificates: [for (final item in chosen) _exportRow(item)],
         extensions: options.extensions,
         style: options.style,
         fileName: await _projectFileName(chosen),
-        fileNameFor: (row) =>
-            _fileName(_LibraryCertificate(row, null), options.field),
+        fileNameFor: (row) {
+          final certificate = chosen.firstWhere(
+            (item) => item.id == row['id'],
+            orElse: () => chosen.first,
+          );
+          return _fileName(certificate, options.field);
+        },
       );
     } catch (exception) {
       error = exception;
@@ -167,12 +172,17 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
     Object? error;
     try {
       path = await _exporter.exportZip(
-        certificates: [for (final item in certificates) item.row],
+        certificates: [for (final item in certificates) _exportRow(item)],
         extensions: options.extensions,
         style: options.style,
         fileName: await _projectFileName(certificates),
-        fileNameFor: (row) =>
-            _fileName(_LibraryCertificate(row, null), options.field),
+        fileNameFor: (row) {
+          final certificate = certificates.firstWhere(
+            (item) => item.id == row['id'],
+            orElse: () => certificates.first,
+          );
+          return _fileName(certificate, options.field);
+        },
       );
     } catch (exception) {
       error = exception;
@@ -358,7 +368,7 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
   Future<String> _projectFileName(
     List<_LibraryCertificate> certificates,
   ) async {
-    final projectId = certificates.first.row['project_id'];
+    final projectId = certificates.first.projectId;
     if (projectId is String) {
       final rows = await widget.database.query(
         DatabaseTables.projects,
@@ -701,7 +711,7 @@ class _CertificatePreviewScreen extends StatelessWidget {
           PopupMenuButton<String>(
             onSelected: (value) async {
               final path = await exporter.exportSingle(
-                certificate: certificate.row,
+                certificate: _exportRow(certificate),
                 extension: value,
                 fileName: fileName,
               );
@@ -913,8 +923,7 @@ class _CertificateDetails extends StatelessWidget {
               _Detail(
                 icon: Icons.fingerprint,
                 label: context.l10n.text('Document hash'),
-                value:
-                    certificate.row['document_hash']?.toString() ??
+                value: certificate.documentHash ??
                     context.l10n.text('Unavailable'),
                 showDivider: false,
               ),
@@ -1052,5 +1061,14 @@ class _ArtifactImage extends StatelessWidget {
     );
   }
 }
+
+Map<String, Object?> _exportRow(_LibraryCertificate certificate) => {
+  'id': certificate.id,
+  'project_id': certificate.projectId,
+  'record_id': certificate.recordId,
+  'file_path': certificate.pdfReference,
+  'image_path': certificate.imageReference,
+  'document_hash': certificate.documentHash,
+};
 
 typedef _LibraryCertificate = CertificateRecord;

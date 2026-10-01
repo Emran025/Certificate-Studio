@@ -80,6 +80,7 @@ class CertificateVerificationService implements CertificateVerificationServiceCo
     'signature',
   };
 
+  @override
   Future<CertificateVerificationResult> verify(String certificateId) async {
     try {
       final records = await database.query(
@@ -129,6 +130,7 @@ class CertificateVerificationService implements CertificateVerificationServiceCo
     }
   }
 
+  @override
   Future<CertificateVerificationResult> verifyFile(
     List<int> bytes, {
     String? fileName,
@@ -250,6 +252,7 @@ class CertificateVerificationService implements CertificateVerificationServiceCo
     return await _verifyRecord(record, _documentFromRecord(record), publicKey);
   }
 
+  @override
   Future<CertificateVerificationResult> verifyQr(String payload) async {
     try {
       final record = await _hydrateQrRecord(

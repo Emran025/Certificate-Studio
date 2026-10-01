@@ -7,6 +7,7 @@ class CertificateRecord {
     this.className,
     this.imageReference,
     this.pdfReference,
+    this.documentHash,
     required this.data,
   });
 
@@ -17,6 +18,7 @@ class CertificateRecord {
   final String? className;
   final String? imageReference;
   final String? pdfReference;
+  final String? documentHash;
   final Map<String, dynamic> data;
 
   String? valueFor(String field) {

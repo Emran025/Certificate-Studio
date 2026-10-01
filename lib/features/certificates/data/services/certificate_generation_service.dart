@@ -54,6 +54,7 @@ class CertificateGenerationService implements CertificateGenerationServiceContra
   Future<Map<String, List<int>>>? _projectFontBytes;
   _PdfRenderWorker? _pdfWorker;
 
+  @override
   Future<CertificateGenerationResult> generate({
     required String projectId,
     required String institutionId,

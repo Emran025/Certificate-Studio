@@ -15,6 +15,7 @@ class CertificateRecordModel extends CertificateRecord {
     super.className,
     super.imageReference,
     super.pdfReference,
+    super.documentHash,
     required super.data,
   });
 
@@ -30,6 +31,7 @@ class CertificateRecordModel extends CertificateRecord {
       className: recordRow?['class_name']?.toString(),
       imageReference: certificateRow['image_path'] as String?,
       pdfReference: certificateRow['file_path'] as String?,
+      documentHash: certificateRow['document_hash'] as String?,
       data: _decodeData(recordRow, certificateRow),
     );
   }

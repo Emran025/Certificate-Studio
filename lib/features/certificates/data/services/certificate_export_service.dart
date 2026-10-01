@@ -33,6 +33,7 @@ class CertificateExportService implements CertificateExportServiceContract {
   final CertificateArtifactStore artifactStore;
   final AppDatabase? database;
 
+  @override
   Future<String?> exportSingle({
     required Map<String, Object?> certificate,
     required String extension,
@@ -52,6 +53,7 @@ class CertificateExportService implements CertificateExportServiceContract {
     );
   }
 
+  @override
   Future<String?> exportZip({
     required List<Map<String, Object?>> certificates,
     required String fileName,

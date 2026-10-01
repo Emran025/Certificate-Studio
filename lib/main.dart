@@ -7,9 +7,9 @@ import 'core/database/persistent_app_database.dart';
 import 'core/security/keys/institution_key_manager.dart';
 import 'features/app/presentation/screens/app_startup_gate.dart';
 import 'features/settings/data/repositories/settings_repository_impl.dart';
-import 'features/settings/data/datasources/settings_data_source.dart';
 import 'features/settings/domain/entities/app_settings.dart';
 import 'shared/themes/app_theme.dart';
+import 'features/settings/data/datasources/settings_data_source_impl.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -6,8 +6,8 @@ import 'package:certificate_studio/features/institution/domain/entities/institut
 import 'package:certificate_studio/features/projects/data/repositories/project_repository_impl.dart';
 import 'package:certificate_studio/features/projects/domain/entities/project.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:certificate_studio/features/projects/data/datasources/project_data_source.dart';
-import 'package:certificate_studio/features/institution/data/datasources/institution_data_source.dart';
+import 'package:certificate_studio/features/institution/data/datasources/institution_data_source_impl.dart';
+import 'package:certificate_studio/features/projects/data/datasources/project_data_source_impl.dart';
 
 void main() {
   late InMemoryAppDatabase database;

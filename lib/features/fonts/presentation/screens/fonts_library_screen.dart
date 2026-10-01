@@ -11,7 +11,7 @@ import '../../../../shared/widgets/design_system.dart';
 import '../../data/repositories/font_repository_impl.dart';
 import '../../domain/entities/font_asset.dart';
 import '../bloc/fonts_library_bloc.dart';
-import '../../data/datasources/font_data_source.dart';
+import '../../data/datasources/font_data_source_impl.dart';
 
 part 'fonts_library_screen/01_fontslibraryscreen.dart';
 part 'fonts_library_screen/02_fontslibraryscreenstate.dart';

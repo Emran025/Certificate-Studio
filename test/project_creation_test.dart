@@ -6,7 +6,7 @@ import 'package:certificate_studio/features/projects/domain/usecases/create_proj
 import 'package:certificate_studio/features/projects/presentation/screens/create_project_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:certificate_studio/features/projects/data/datasources/project_data_source.dart';
+import 'package:certificate_studio/features/projects/data/datasources/project_data_source_impl.dart';
 
 void main() {
   test('creates and persists a project with a separate project key', () async {

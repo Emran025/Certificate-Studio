@@ -5,7 +5,7 @@ import 'package:certificate_studio/features/institution/data/repositories/instit
 import 'package:certificate_studio/features/institution/presentation/screens/institution_setup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:certificate_studio/features/institution/data/datasources/institution_data_source.dart';
+import 'package:certificate_studio/features/institution/data/datasources/institution_data_source_impl.dart';
 
 void main() {
   testWidgets('renders institution setup when no institution exists', (tester) async {

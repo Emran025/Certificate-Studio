@@ -2,7 +2,7 @@ import 'package:excel/excel.dart';
 import 'package:certificate_studio/core/database/app_database.dart';
 import 'package:certificate_studio/features/data_import/data/repositories/data_import_repository_impl.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:certificate_studio/features/data_import/data/datasources/data_import_data_source.dart';
+import 'package:certificate_studio/features/data_import/data/datasources/data_import_data_source_impl.dart';
 
 void main() {
   test('parses pasted tab-separated data and normalizes duplicate headers', () {

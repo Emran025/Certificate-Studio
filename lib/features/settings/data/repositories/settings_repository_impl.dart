@@ -1,42 +1,27 @@
 import 'dart:convert';
-
-import '../../../../core/database/app_database.dart';
-import '../../../../core/database/database_tables.dart';
 import '../../domain/entities/app_settings.dart';
-import '../models/app_settings_model.dart';
 import '../../domain/repositories/settings_repository.dart';
+import '../datasources/settings_data_source.dart';
+import '../models/app_settings_model.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
-  SettingsRepositoryImpl(this._database);
-
-  final AppDatabase _database;
+  SettingsRepositoryImpl(this._dataSource);
+  final SettingsDataSource _dataSource;
   static const _appSettingsKey = 'app.settings';
-
   @override
   Future<AppSettings> loadAppSettings() async {
-    final rows = await _database.query(
-      DatabaseTables.settings,
-      where: {'key': _appSettingsKey},
-    );
-    if (rows.isEmpty) return const AppSettings();
-    final value = jsonDecode(rows.first['value_json']! as String);
+    final raw = await _dataSource.loadValue(_appSettingsKey);
+    if (raw == null) return const AppSettings();
+    final value = jsonDecode(raw);
     return AppSettingsModel.fromJson(Map<String, Object?>.from(value as Map));
   }
-
   @override
-  Future<void> saveAppSettings(AppSettings settings) async {
-    await _database.upsert(
-      DatabaseTables.settings,
-      {
-        'key': _appSettingsKey,
-        'value_json': jsonEncode(AppSettingsModel(
+  Future<void> saveAppSettings(AppSettings settings) => _dataSource.saveValue(
+        _appSettingsKey,
+        jsonEncode(AppSettingsModel(
           themeMode: settings.themeMode,
           accentColorValue: settings.accentColorValue,
           languageCode: settings.languageCode,
         ).toJson()),
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      },
-      conflictColumn: 'key',
-    );
-  }
+      );
 }

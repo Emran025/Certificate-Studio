@@ -1,35 +1,21 @@
-import '../../../../core/database/app_database.dart';
-import '../../../../core/database/database_tables.dart';
-import '../../../../core/files/certificate_artifact_store.dart';
 import '../../domain/entities/project.dart';
 import '../../domain/repositories/project_repository.dart';
+import '../datasources/project_data_source.dart';
 import '../models/project_model.dart';
 
 class ProjectRepositoryImpl implements ProjectRepository {
-  ProjectRepositoryImpl(this._database);
-
-  final AppDatabase _database;
-
+  ProjectRepositoryImpl(this._dataSource);
+  final ProjectDataSource _dataSource;
   @override
-  Future<List<Project>> getAll({String? institutionId}) async {
-    final rows = await _database.query(
-      DatabaseTables.projects,
-      where: institutionId == null
-          ? const {}
-          : {'institution_id': institutionId},
-    );
-    return rows.map(ProjectModel.fromRow).toList(growable: false);
-  }
-
+  Future<List<Project>> getAll({String? institutionId}) async =>
+      (await _dataSource.getProjects(institutionId: institutionId))
+          .map(ProjectModel.fromRow)
+          .toList(growable: false);
   @override
   Future<Project?> getById(String id) async {
-    final rows = await _database.query(
-      DatabaseTables.projects,
-      where: {'id': id},
-    );
-    return rows.isEmpty ? null : ProjectModel.fromRow(rows.first);
+    final row = await _dataSource.getProject(id);
+    return row == null ? null : ProjectModel.fromRow(row);
   }
-
   @override
   Future<Project> save(Project project) async {
     final model = ProjectModel(
@@ -50,61 +36,11 @@ class ProjectRepositoryImpl implements ProjectRepository {
       createdAt: project.createdAt,
       updatedAt: DateTime.now().toUtc(),
     );
-    await _database.upsert(DatabaseTables.projects, model.toRow());
+    await _dataSource.saveProject(model.toRow());
     return model;
   }
-
   @override
-  Future<void> delete(String id) =>
-      _database.delete(DatabaseTables.projects, id);
-
+  Future<void> delete(String id) => _dataSource.deleteProject(id);
   @override
-  Future<void> deleteCascade(String id) async {
-    final certificates = await _database.query(
-      DatabaseTables.certificates,
-      where: {'project_id': id},
-      columns: ['file_path', 'image_path'],
-    );
-    final CertificateArtifactStore artifacts = SharedPreferencesCertificateArtifactStore();
-    await Future.wait([
-      for (final certificate in certificates)
-        for (final key in ['file_path', 'image_path'])
-          if ((certificate[key] as String?)?.isNotEmpty == true)
-            artifacts.delete(certificate[key]! as String),
-    ]);
-    _database.beginBatch();
-    try {
-      await _database.deleteWhere(DatabaseTables.verificationRecords, {
-        'project_id': id,
-      });
-      await _database.deleteWhere(DatabaseTables.certificates, {
-        'project_id': id,
-      });
-      final jobs = await _database.query(
-        DatabaseTables.generationJobs,
-        where: {'project_id': id},
-        columns: ['id'],
-      );
-      await _database.deleteWhereIn(
-        DatabaseTables.generationItems,
-        'job_id',
-        jobs.map((job) => job['id']),
-      );
-      await _database.deleteWhere(DatabaseTables.generationJobs, {
-        'project_id': id,
-      });
-      for (final table in [
-        DatabaseTables.certificateFields,
-        DatabaseTables.certificateLayouts,
-        DatabaseTables.records,
-        DatabaseTables.signatures,
-      ]) {
-        await _database.deleteWhere(table, {'project_id': id});
-      }
-      await _database.delete(DatabaseTables.settings, 'mapping:$id');
-      await delete(id);
-    } finally {
-      await _database.endBatch();
-    }
-  }
+  Future<void> deleteCascade(String id) => _dataSource.deleteProjectCascade(id);
 }

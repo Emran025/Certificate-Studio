@@ -11,6 +11,7 @@ import '../../data/repositories/template_repository_impl.dart';
 import '../../domain/entities/template_asset.dart';
 import '../bloc/template_picker_bloc.dart';
 import '../template_file_support.dart';
+import '../../data/datasources/template_data_source.dart';
 
 part 'template_picker_screen/01_templatepickerscreen.dart';
 part 'template_picker_screen/02_templatecard.dart';

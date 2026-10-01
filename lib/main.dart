@@ -7,6 +7,7 @@ import 'core/database/persistent_app_database.dart';
 import 'core/security/keys/institution_key_manager.dart';
 import 'features/app/presentation/screens/app_startup_gate.dart';
 import 'features/settings/data/repositories/settings_repository_impl.dart';
+import 'features/settings/data/datasources/settings_data_source.dart';
 import 'features/settings/domain/entities/app_settings.dart';
 import 'shared/themes/app_theme.dart';
 
@@ -14,7 +15,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final keyStorage = await PersistentKeyStorage.create();
   final database = await PersistentAppDatabase.create(keyStorage: keyStorage);
-  final settings = await SettingsRepositoryImpl(database).loadAppSettings();
+  final settings = await SettingsRepositoryImpl(SettingsDataSourceImpl(database)).loadAppSettings();
   runApp(CertificateStudioApp(
     database: database,
     keyStorage: keyStorage,

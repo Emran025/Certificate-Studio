@@ -29,9 +29,10 @@ void main() {
       expect(pdfOptions, contains('defaultValue: true'));
       expect(readSource('pubspec.yaml'), contains('path: packages/pdf'));
 
-      final designer = readSource(
+      final designer = [
         'lib/features/certificates/presentation/screens/certificate_designer_screen.dart',
-      );
+        'lib/features/certificates/presentation/screens/certificate_designer_screen/02_certificatedesignerscreenstate.dart',
+      ].map(readSource).join('\n');
       expect(designer, contains('FontLoader(family)'));
       expect(designer, contains("row['font_bytes']"));
 

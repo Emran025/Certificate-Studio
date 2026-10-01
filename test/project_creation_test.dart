@@ -6,6 +6,7 @@ import 'package:certificate_studio/features/projects/domain/usecases/create_proj
 import 'package:certificate_studio/features/projects/presentation/screens/create_project_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:certificate_studio/features/projects/data/datasources/project_data_source.dart';
 
 void main() {
   test('creates and persists a project with a separate project key', () async {
@@ -13,20 +14,20 @@ void main() {
     await database.open();
     final storage = InMemoryKeyStorage();
     final keyManager = ProjectKeyManager(storage);
-    final useCase = CreateProject(ProjectRepositoryImpl(database), keyManager);
+    final useCase = CreateProject(ProjectRepositoryImpl(ProjectDataSourceImpl(database)), keyManager);
 
     final project = await useCase(const CreateProjectParams(name: 'Flutter Advanced 2026', institutionId: 'academy-001', courseName: 'Flutter Advanced', projectType: 'training'));
 
     expect(project.name, 'Flutter Advanced 2026');
     expect(project.settings['project_type'], 'training');
     expect(await keyManager.hasKey(project.id), isTrue);
-    expect(await ProjectRepositoryImpl(database).getById(project.id), isNotNull);
+    expect(await ProjectRepositoryImpl(ProjectDataSourceImpl(database)).getById(project.id), isNotNull);
   });
 
   testWidgets('validates project name before saving', (tester) async {
     final database = InMemoryAppDatabase();
     await database.open();
-    final useCase = CreateProject(ProjectRepositoryImpl(database), ProjectKeyManager(InMemoryKeyStorage()));
+    final useCase = CreateProject(ProjectRepositoryImpl(ProjectDataSourceImpl(database)), ProjectKeyManager(InMemoryKeyStorage()));
 
     await tester.pumpWidget(MaterialApp(home: CreateProjectScreen(institutionId: 'academy-001', createProject: useCase)));
     final button = find.text('Continue');

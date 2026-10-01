@@ -5,6 +5,7 @@ import 'package:certificate_studio/features/institution/data/repositories/instit
 import 'package:certificate_studio/features/institution/presentation/screens/institution_setup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:certificate_studio/features/institution/data/datasources/institution_data_source.dart';
 
 void main() {
   testWidgets('renders institution setup when no institution exists', (tester) async {
@@ -12,7 +13,7 @@ void main() {
     await database.open();
 
     await tester.pumpWidget(TestInstitutionSetup(
-      repository: InstitutionRepositoryImpl(database),
+      repository: InstitutionRepositoryImpl(InstitutionDataSourceImpl(database)),
       keyManager: InstitutionKeyManager(InMemoryKeyStorage()),
     ));
 
@@ -26,7 +27,7 @@ void main() {
     final storage = InMemoryKeyStorage();
 
     await tester.pumpWidget(TestInstitutionSetup(
-      repository: InstitutionRepositoryImpl(database),
+      repository: InstitutionRepositoryImpl(InstitutionDataSourceImpl(database)),
       keyManager: InstitutionKeyManager(storage),
     ));
     await tester.enterText(find.byType(TextFormField).first, 'Al-Noor Academy');

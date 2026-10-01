@@ -6,6 +6,8 @@ import 'package:certificate_studio/features/institution/domain/entities/institut
 import 'package:certificate_studio/features/projects/data/repositories/project_repository_impl.dart';
 import 'package:certificate_studio/features/projects/domain/entities/project.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:certificate_studio/features/projects/data/datasources/project_data_source.dart';
+import 'package:certificate_studio/features/institution/data/datasources/institution_data_source.dart';
 
 void main() {
   late InMemoryAppDatabase database;
@@ -29,7 +31,7 @@ void main() {
   });
 
   test('persists and updates an institution', () async {
-    final repository = InstitutionRepositoryImpl(database);
+    final repository = InstitutionRepositoryImpl(InstitutionDataSourceImpl(database));
     final now = DateTime.utc(2026, 9, 12);
     final institution = Institution(
       id: 'institution-1',
@@ -54,7 +56,7 @@ void main() {
   });
 
   test('filters projects by institution', () async {
-    final repository = ProjectRepositoryImpl(database);
+    final repository = ProjectRepositoryImpl(ProjectDataSourceImpl(database));
     final now = DateTime.utc(2026, 9, 12);
 
     for (final project in [

@@ -1,20 +1,16 @@
-import '../../../../core/database/app_database.dart';
-import '../../../../core/database/database_tables.dart';
 import '../../domain/entities/institution.dart';
 import '../../domain/repositories/institution_repository.dart';
+import '../datasources/institution_data_source.dart';
 import '../models/institution_model.dart';
 
 class InstitutionRepositoryImpl implements InstitutionRepository {
-  InstitutionRepositoryImpl(this._database);
-
-  final AppDatabase _database;
-
+  InstitutionRepositoryImpl(this._dataSource);
+  final InstitutionDataSource _dataSource;
   @override
   Future<Institution?> getCurrent() async {
-    final rows = await _database.query(DatabaseTables.institutions);
+    final rows = await _dataSource.getCurrentRows();
     return rows.isEmpty ? null : InstitutionModel.fromRow(rows.first);
   }
-
   @override
   Future<Institution> save(Institution institution) async {
     final model = InstitutionModel(
@@ -29,10 +25,9 @@ class InstitutionRepositoryImpl implements InstitutionRepository {
       createdAt: institution.createdAt,
       updatedAt: DateTime.now().toUtc(),
     );
-    await _database.upsert(DatabaseTables.institutions, model.toRow());
+    await _dataSource.save(model.toRow());
     return model;
   }
-
   @override
-  Future<void> delete(String id) => _database.delete(DatabaseTables.institutions, id);
+  Future<void> delete(String id) => _dataSource.delete(id);
 }

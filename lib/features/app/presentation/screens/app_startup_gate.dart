@@ -9,6 +9,7 @@ import '../../../institution/presentation/screens/institution_setup_screen.dart'
 import '../../../settings/domain/entities/app_settings.dart';
 import '../widgets/app_shell.dart';
 import '../bloc/startup_bloc.dart';
+import '../../../institution/data/datasources/institution_data_source.dart';
 
 class AppStartupGate extends StatefulWidget {
   const AppStartupGate({
@@ -36,7 +37,7 @@ class _AppStartupGateState extends State<AppStartupGate> {
   @override
   void initState() {
     super.initState();
-    _repository = InstitutionRepositoryImpl(widget.database);
+    _repository = InstitutionRepositoryImpl(InstitutionDataSourceImpl(widget.database));
     _keyManager = InstitutionKeyManager(widget.keyStorage);
     _startupBloc = StartupBloc(_repository)..add(const StartupRequested());
   }

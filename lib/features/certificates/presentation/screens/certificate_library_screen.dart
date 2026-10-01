@@ -17,6 +17,7 @@ import '../../data/repositories/certificate_repository_impl.dart';
 import '../../domain/entities/certificate_record.dart';
 import '../../domain/usecases/get_certificates.dart';
 import '../bloc/certificate_library_bloc.dart';
+import '../../data/datasources/certificate_data_source.dart';
 
 part 'certificate_library_screen/01_certificatelibraryscreen.dart';
 part 'certificate_library_screen/02_certificatelibraryscreenstate.dart';

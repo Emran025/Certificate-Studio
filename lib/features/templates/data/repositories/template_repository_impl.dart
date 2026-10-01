@@ -1,28 +1,19 @@
-import '../../../../core/database/app_database.dart';
-import '../../../../core/database/database_tables.dart';
 import '../../domain/entities/template_asset.dart';
 import '../../domain/repositories/template_repository.dart';
+import '../datasources/template_data_source.dart';
 import '../models/template_asset_model.dart';
 
 class TemplateRepositoryImpl implements TemplateRepository {
-  TemplateRepositoryImpl(this._database);
-  final AppDatabase _database;
-
+  TemplateRepositoryImpl(this._dataSource);
+  final TemplateDataSource _dataSource;
   @override
-  Future<List<TemplateAsset>> getAll() async {
-    final rows = await _database.query(DatabaseTables.templates);
-    return rows.map(TemplateAssetModel.fromRow).toList(growable: false);
-  }
-
+  Future<List<TemplateAsset>> getAll() async =>
+      (await _dataSource.getTemplates())
+          .map(TemplateAssetModel.fromRow)
+          .toList(growable: false);
   @override
-  Future<String?> selectedForProject(String projectId) async {
-    final rows = await _database.query(
-      DatabaseTables.projects,
-      where: {'id': projectId},
-    );
-    return rows.isEmpty ? null : rows.first['template_id'] as String?;
-  }
-
+  Future<String?> selectedForProject(String projectId) =>
+      _dataSource.selectedForProject(projectId);
   @override
   Future<TemplateAsset> add(TemplateAsset template) async {
     final model = TemplateAssetModel(
@@ -34,40 +25,30 @@ class TemplateRepositoryImpl implements TemplateRepository {
       dpi: template.dpi,
       format: template.format,
     );
-    await _database.insert(
-      DatabaseTables.templates,
+    await _dataSource.insertTemplate(
       model.toRow(now: DateTime.now().toUtc().toIso8601String()),
     );
     return model;
   }
-
   @override
-  Future<void> update(TemplateAsset template) =>
-      _database.update(DatabaseTables.templates, template.id, {
-        'name': template.name,
-        'file_path': template.filePath,
-        'width': template.width,
-        'height': template.height,
-        'dpi': template.dpi,
-        'format': template.format,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
-
+  Future<void> update(TemplateAsset template) => _dataSource.updateTemplate(
+        template.id,
+        {
+          'name': template.name,
+          'file_path': template.filePath,
+          'width': template.width,
+          'height': template.height,
+          'dpi': template.dpi,
+          'format': template.format,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        },
+      );
   @override
   Future<void> selectForProject(String projectId, String templateId) =>
-      _database.update(DatabaseTables.projects, projectId, {
-        'template_id': templateId,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
-
+      _dataSource.selectForProject(projectId, templateId);
   @override
-  Future<bool> isUsedByProject(String templateId) async =>
-      (await _database.query(
-        DatabaseTables.projects,
-        where: {'template_id': templateId},
-      )).isNotEmpty;
-
+  Future<bool> isUsedByProject(String templateId) =>
+      _dataSource.isUsedByProject(templateId);
   @override
-  Future<void> delete(String id) =>
-      _database.delete(DatabaseTables.templates, id);
+  Future<void> delete(String id) => _dataSource.deleteTemplate(id);
 }

@@ -2,16 +2,14 @@ import 'dart:convert';
 
 import 'package:excel/excel.dart';
 
-import '../../../../core/database/app_database.dart';
-import '../../../../core/database/database_tables.dart';
-import '../../../../shared/utils/field_identifier.dart';
+import '../datasources/data_import_data_source.dart';
 import '../../domain/entities/imported_table.dart';
 import '../../domain/repositories/data_import_repository.dart';
 
 class DataImportRepositoryImpl implements DataImportRepository {
-  DataImportRepositoryImpl(this._database);
+  DataImportRepositoryImpl(this._dataSource);
 
-  final AppDatabase _database;
+  final DataImportDataSource _dataSource;
 
   @override
   ImportedTable parseTable(String rawText) {
@@ -68,44 +66,13 @@ class DataImportRepositoryImpl implements DataImportRepository {
     String projectId,
     ImportedTable table,
   ) async {
-    _database.beginBatch();
-    try {
-      await _database.deleteWhere(DatabaseTables.records, {
-        'project_id': projectId,
-      });
-      for (var index = 0; index < table.rows.length; index++) {
-        final values = table.rows[index];
-        final classSource = values.entries
-            .where((entry) => _isClassColumn(entry.key))
-            .map((entry) => entry.value.trim())
-            .firstWhere(
-              (value) => value.isNotEmpty,
-              orElse: () => '${index + 1}',
-            );
-        final className = classSource;
-        await _database.insert(DatabaseTables.records, {
-          'id': 'record-${DateTime.now().microsecondsSinceEpoch}-$index',
-          'project_id': projectId,
-          'class_name': className,
-          'data_json': jsonEncode(values),
-          'row_number': index + 1,
-          'created_at': DateTime.now().toUtc().toIso8601String(),
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        });
-      }
-    } finally {
-      await _database.endBatch();
-    }
+    await _dataSource.replaceRecords(projectId, table);
     return table;
   }
 
   @override
   Future<ImportedTable> getForProject(String projectId) async {
-    final rows = await _database.query(
-      DatabaseTables.records,
-      where: {'project_id': projectId},
-      columns: ['data_json'],
-    );
+    final rows = await _dataSource.getRecordRows(projectId);
     final maps = <Map<String, String>>[];
     for (final row in rows) {
       final raw = row['data_json'];
@@ -144,16 +111,6 @@ class DataImportRepositoryImpl implements DataImportRepository {
       result.add(candidate);
     }
     return result;
-  }
-
-  bool _isClassColumn(String header) {
-    final id = canonicalFieldClassId(header);
-    return id == 'class' ||
-        id == 'class_name' ||
-        id == 'record_class' ||
-        id == 'الصف' ||
-        id == 'الفصل' ||
-        id == 'الشعبة';
   }
 
   String _cellText(Data? cell) {

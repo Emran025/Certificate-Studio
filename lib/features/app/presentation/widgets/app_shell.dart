@@ -26,6 +26,8 @@ import '../../../fonts/presentation/screens/fonts_library_screen.dart';
 import '../../../settings/domain/entities/app_settings.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
 import '../controllers/workspace_metrics_bloc.dart';
+import '../../../projects/data/datasources/project_data_source.dart';
+import '../../data/datasources/workspace_data_source.dart';
 
 part 'app_shell/01_workspaceshell.dart';
 part 'app_shell/02_workspaceshellstate.dart';

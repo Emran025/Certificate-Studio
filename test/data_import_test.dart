@@ -2,10 +2,11 @@ import 'package:excel/excel.dart';
 import 'package:certificate_studio/core/database/app_database.dart';
 import 'package:certificate_studio/features/data_import/data/repositories/data_import_repository_impl.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:certificate_studio/features/data_import/data/datasources/data_import_data_source.dart';
 
 void main() {
   test('parses pasted tab-separated data and normalizes duplicate headers', () {
-    final repository = DataImportRepositoryImpl(InMemoryAppDatabase());
+    final repository = DataImportRepositoryImpl(DataImportDataSourceImpl(InMemoryAppDatabase()));
     final table = repository.parseTable('Name\tName\tGrade\nAhmed\tA. Ali\t95');
 
     expect(table.columns, ['Name', 'Name 2', 'Grade']);
@@ -16,7 +17,7 @@ void main() {
   test('persists and reloads imported rows for a project', () async {
     final database = InMemoryAppDatabase();
     await database.open();
-    final repository = DataImportRepositoryImpl(database);
+    final repository = DataImportRepositoryImpl(DataImportDataSourceImpl(database));
     final table = repository.parseTable('class\tname\tgrade\nA001\tAhmed Ali\t95');
 
     await repository.saveForProject('project-1', table);
@@ -42,7 +43,7 @@ void main() {
       IntCellValue(95),
     ]);
 
-    final repository = DataImportRepositoryImpl(InMemoryAppDatabase());
+    final repository = DataImportRepositoryImpl(DataImportDataSourceImpl(InMemoryAppDatabase()));
     final table = repository.parseExcel(workbook.encode()!);
 
     expect(table.columns, ['class', 'name', 'grade']);

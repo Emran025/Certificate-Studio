@@ -8,6 +8,7 @@ import '../../../../shared/widgets/design_system.dart';
 import '../../data/repositories/settings_repository_impl.dart';
 import '../../data/services/workspace_transfer_service.dart';
 import '../../domain/entities/app_settings.dart';
+import '../../data/datasources/settings_data_source.dart';
 
 part 'settings_screen/01_settingsscreen.dart';
 part 'settings_screen/02_settingsscreenstate.dart';

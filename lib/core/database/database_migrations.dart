@@ -101,6 +101,16 @@ abstract final class DatabaseMigrations {
         'CREATE INDEX IF NOT EXISTS idx_signature_assets_project ON signature_assets (project_id)',
       ],
     ),
+    DatabaseMigration(
+      fromVersion: 6,
+      toVersion: 7,
+      description:
+          'Remove unused visual-signature storage and normalize foreign keys',
+      // SQLite requires table rebuilds to change foreign-key targets. The
+      // adapter performs this migration atomically after inspecting the
+      // existing schema; keeping the SQL here empty prevents unsafe replay.
+      statements: [],
+    ),
   ];
 
   static Iterable<DatabaseMigration> pendingFrom(int currentVersion) sync* {

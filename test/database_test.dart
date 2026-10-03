@@ -51,11 +51,11 @@ void main() {
     );
   });
 
-  test('separates visual signature assets from electronic signatures', () {
-    expect(DatabaseTables.all, contains(DatabaseTables.signatureAssets));
+  test('keeps electronic signatures only in verification records', () {
+    expect(DatabaseTables.all, isNot(contains('signature_assets')));
     expect(
       DatabaseSchema.createStatements,
-      anyElement(contains('CREATE TABLE signature_assets')),
+      everyElement(isNot(contains('CREATE TABLE signature_assets'))),
     );
     expect(
       DatabaseSchema.createStatements,

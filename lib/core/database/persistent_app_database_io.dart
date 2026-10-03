@@ -42,6 +42,7 @@ class PersistentAppDatabase implements AppDatabase {
       _setKey(database, key);
       final adapter = PersistentAppDatabase._(database, storage);
       adapter._migrateSchema();
+      database.execute('PRAGMA foreign_keys = ON');
       await adapter._migrateLegacyPreferences();
       return adapter;
     } catch (_) {
@@ -257,6 +258,8 @@ class PersistentAppDatabase implements AppDatabase {
             _migrateRecordTerminologyIfNeeded();
           } else if (migration.toVersion == 6) {
             _migrateSignatureAssetsIfNeeded();
+          } else if (migration.toVersion == 7) {
+            _migrateCanonicalRelationships();
           } else {
             for (final statement in migration.statements) {
               _database.execute(statement);
@@ -305,6 +308,116 @@ class PersistentAppDatabase implements AppDatabase {
       'CREATE INDEX IF NOT EXISTS idx_signature_assets_project '
       'ON signature_assets (project_id)',
     );
+  }
+
+  void _migrateCanonicalRelationships() {
+    // Canonicalize institution_id as the internal institutions.id used by the
+    // UI and domain. Older exported data may contain the public identifier;
+    // the copy query resolves either representation without data loss.
+    _database.execute('''
+      CREATE TABLE projects_new (
+        id TEXT PRIMARY KEY,
+        institution_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        course_name TEXT,
+        description TEXT,
+        start_date TEXT,
+        end_date TEXT,
+        trainer_name TEXT,
+        organization_name TEXT,
+        logo_path TEXT,
+        template_id TEXT,
+        settings_json TEXT,
+        project_key_reference TEXT NOT NULL,
+        version INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (institution_id) REFERENCES institutions (id),
+        FOREIGN KEY (template_id) REFERENCES templates (id) ON DELETE SET NULL
+      )
+    ''');
+    _database.execute('''
+      INSERT INTO projects_new
+      SELECT p.id,
+        COALESCE(
+          (SELECT i.id FROM institutions i WHERE i.id = p.institution_id),
+          (SELECT i.id FROM institutions i WHERE i.institution_id = p.institution_id)
+        ),
+        p.name, p.course_name, p.description, p.start_date, p.end_date,
+        p.trainer_name, p.organization_name, p.logo_path, p.template_id,
+        p.settings_json, p.project_key_reference, p.version,
+        p.created_at, p.updated_at
+      FROM projects p
+    ''');
+    _database.execute('DROP TABLE projects');
+    _database.execute('ALTER TABLE projects_new RENAME TO projects');
+
+    _database.execute('''
+      CREATE TABLE generation_items_new (
+        id TEXT PRIMARY KEY,
+        job_id TEXT NOT NULL,
+        record_id TEXT NOT NULL,
+        certificate_id TEXT,
+        status TEXT NOT NULL,
+        error_message TEXT,
+        completed_at TEXT,
+        FOREIGN KEY (job_id) REFERENCES generation_jobs (id),
+        FOREIGN KEY (record_id) REFERENCES records (id),
+        FOREIGN KEY (certificate_id) REFERENCES certificates (id)
+      )
+    ''');
+    _database.execute(
+      'INSERT INTO generation_items_new SELECT * FROM generation_items',
+    );
+    _database.execute('DROP TABLE generation_items');
+    _database.execute(
+      'ALTER TABLE generation_items_new RENAME TO generation_items',
+    );
+
+    final unsigned = _database.select(
+      'SELECT id FROM verification_records WHERE signature IS NULL',
+    );
+    if (unsigned.isNotEmpty) {
+      throw StateError(
+        'Cannot migrate unsigned verification records: '
+        '${unsigned.length} record(s) require review.',
+      );
+    }
+    _database.execute('''
+      CREATE TABLE verification_records_new (
+        id TEXT PRIMARY KEY,
+        certificate_id TEXT NOT NULL UNIQUE,
+        institution_id TEXT NOT NULL,
+        project_id TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        signature TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (certificate_id) REFERENCES certificates (id),
+        FOREIGN KEY (institution_id) REFERENCES institutions (id),
+        FOREIGN KEY (project_id) REFERENCES projects (id)
+      )
+    ''');
+    _database.execute('''
+      INSERT INTO verification_records_new
+      SELECT v.id, v.certificate_id,
+        COALESCE(
+          (SELECT i.id FROM institutions i WHERE i.id = v.institution_id),
+          (SELECT i.id FROM institutions i WHERE i.institution_id = v.institution_id)
+        ),
+        v.project_id, v.payload_json, v.signature, v.created_at
+      FROM verification_records v
+    ''');
+    _database.execute('DROP TABLE verification_records');
+    _database.execute(
+      'ALTER TABLE verification_records_new RENAME TO verification_records',
+    );
+    _database.execute('DROP TABLE IF EXISTS signature_assets');
+
+    for (final statement in DatabaseSchema.indexes) {
+      _database.execute(
+        statement.replaceAll('CREATE INDEX ', 'CREATE INDEX IF NOT EXISTS '),
+      );
+    }
   }
 
   bool _hasTable(String table) => _database.select(
@@ -411,7 +524,6 @@ class PersistentAppDatabase implements AppDatabase {
         .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
         .join();
     database.execute("PRAGMA key = \"x'$hex'\"");
-    database.execute('PRAGMA foreign_keys = ON');
     database.select('SELECT count(*) FROM sqlite_master');
   }
 

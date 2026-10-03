@@ -1,14 +1,10 @@
 /// Canonical names for every persisted table.
 ///
-/// `signature_assets` contains reusable visual signature/stamp elements. It is
-/// intentionally distinct from the cryptographic signature stored in
-/// `verification_records.signature`.
 abstract final class DatabaseTables {
   static const institutions = 'institutions';
   static const projects = 'projects';
   static const templates = 'templates';
   static const fonts = 'fonts';
-  static const signatureAssets = 'signature_assets';
   static const records = 'records';
   static const certificateFields = 'certificate_fields';
   static const certificateLayouts = 'certificate_layouts';
@@ -23,7 +19,6 @@ abstract final class DatabaseTables {
     projects,
     templates,
     fonts,
-    signatureAssets,
     records,
     certificateFields,
     certificateLayouts,
@@ -36,9 +31,8 @@ abstract final class DatabaseTables {
 }
 
 abstract final class DatabaseSchema {
-  /// Version 6 is the first schema whose table names and migration history
-  /// match the current certificate terminology and signature model.
-  static const version = 6;
+  /// Version 7 is the canonical schema for the currently implemented domain.
+  static const version = 7;
 
   /// The complete schema used for a new database. Existing databases must use
   /// [DatabaseMigrations] instead of replaying this list.
@@ -71,8 +65,9 @@ abstract final class DatabaseSchema {
       project_key_reference TEXT NOT NULL,
       version INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      FOREIGN KEY (institution_id) REFERENCES institutions (id)
+        updated_at TEXT NOT NULL,
+      FOREIGN KEY (institution_id) REFERENCES institutions (id),
+      FOREIGN KEY (template_id) REFERENCES templates (id) ON DELETE SET NULL
     )''',
     '''CREATE TABLE templates (
       id TEXT PRIMARY KEY,
@@ -94,20 +89,6 @@ abstract final class DatabaseSchema {
       font_bytes BLOB,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
-    )''',
-    '''CREATE TABLE signature_assets (
-      id TEXT PRIMARY KEY,
-      project_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      title TEXT,
-      file_path TEXT NOT NULL,
-      x REAL NOT NULL,
-      y REAL NOT NULL,
-      width REAL NOT NULL,
-      height REAL NOT NULL,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      FOREIGN KEY (project_id) REFERENCES projects (id)
     )''',
     '''CREATE TABLE records (
       id TEXT PRIMARY KEY,
@@ -175,7 +156,8 @@ abstract final class DatabaseSchema {
       error_message TEXT,
       completed_at TEXT,
       FOREIGN KEY (job_id) REFERENCES generation_jobs (id),
-      FOREIGN KEY (record_id) REFERENCES records (id)
+      FOREIGN KEY (record_id) REFERENCES records (id),
+      FOREIGN KEY (certificate_id) REFERENCES certificates (id)
     )''',
     '''CREATE TABLE verification_records (
       id TEXT PRIMARY KEY,
@@ -183,9 +165,11 @@ abstract final class DatabaseSchema {
       institution_id TEXT NOT NULL,
       project_id TEXT NOT NULL,
       payload_json TEXT NOT NULL,
-      signature TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      FOREIGN KEY (certificate_id) REFERENCES certificates (id)
+        signature TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (certificate_id) REFERENCES certificates (id),
+      FOREIGN KEY (institution_id) REFERENCES institutions (id),
+      FOREIGN KEY (project_id) REFERENCES projects (id)
     )''',
     '''CREATE TABLE settings (
       key TEXT PRIMARY KEY,
@@ -197,7 +181,6 @@ abstract final class DatabaseSchema {
   static const indexes = <String>[
     'CREATE INDEX idx_projects_institution ON projects (institution_id)',
     'CREATE INDEX idx_projects_template ON projects (template_id)',
-    'CREATE INDEX idx_signature_assets_project ON signature_assets (project_id)',
     'CREATE INDEX idx_records_project ON records (project_id)',
     'CREATE INDEX idx_certificate_fields_project ON certificate_fields (project_id)',
     'CREATE INDEX idx_certificates_project ON certificates (project_id)',

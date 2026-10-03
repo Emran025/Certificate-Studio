@@ -15,8 +15,6 @@ import '../../../certificates/data/services/template_bytes.dart';
 abstract interface class WorkspaceTransferServiceContract {
   Future<String?> exportProfile(String institutionId);
   Future<bool> importProfile();
-  Future<String?> exportSignatures(String institutionId);
-  Future<int> importSignatures();
   Future<String?> exportProject(String projectId);
   Future<String?> importProject(String institutionId);
 }
@@ -153,53 +151,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
   }
 
   @override
-  Future<String?> exportSignatures(String institutionId) async {
-    final projects = await _database.query(
-      DatabaseTables.projects,
-      where: {'institution_id': institutionId},
-      columns: ['id'],
-    );
-    final signatures = <Map<String, Object?>>[];
-    for (final project in projects) {
-      signatures.addAll(
-        await _database.query(
-          DatabaseTables.signatureAssets,
-          where: {'project_id': project['id']},
-        ),
-      );
-    }
-    return _saveJson(
-      title: 'Export signature settings',
-      name: 'certificate-studio-signatures.json',
-      payload: {'format': 'cstudio-signatures-v1', 'signatures': signatures},
-    );
-  }
-
-  @override
-  Future<int> importSignatures() async {
-    final file = await _pickFile(['json']);
-    if (file == null) return 0;
-    final decoded = jsonDecode(utf8.decode(await file.readAsBytes()));
-    if (decoded is! Map || decoded['format'] != 'cstudio-signatures-v1') {
-      throw const FormatException('Unsupported signature settings file.');
-    }
-    final values = decoded['signatures'];
-    if (values is! List) {
-      throw const FormatException('Invalid signatures payload.');
-    }
-    var imported = 0;
-    for (final value in values) {
-      if (value is! Map) continue;
-      await _database.upsert(
-        DatabaseTables.signatureAssets,
-        Map<String, Object?>.from(value),
-      );
-      imported++;
-    }
-    return imported;
-  }
-
-  @override
   Future<String?> exportProject(String projectId) async {
     final project = await _one(DatabaseTables.projects, {'id': projectId});
     if (project == null) {
@@ -228,10 +179,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
       DatabaseTables.certificateLayouts,
       where: {'project_id': projectId},
     );
-    final signatures = await _database.query(
-      DatabaseTables.signatureAssets,
-      where: {'project_id': projectId},
-    );
     final records = await _database.query(
       DatabaseTables.records,
       where: {'project_id': projectId},
@@ -242,7 +189,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
           'format': _projectFormat,
           'project': project,
           'template': template,
-          'signatures': signatures,
           'layouts': layouts,
         }),
       )
@@ -344,11 +290,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     }
     await _database.upsert(DatabaseTables.projects, project);
 
-    await _upsertRows(
-      DatabaseTables.signatureAssets,
-      metadata['signatures'],
-      projectId,
-    );
     final fieldPayload = _decodeArchiveJson(
       entries,
       entries.containsKey(_fieldPositionsName)
@@ -392,7 +333,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     await _clearProjectData(projectId);
     await _database.upsert(DatabaseTables.projects, project);
     for (final table in [
-      DatabaseTables.signatureAssets,
       DatabaseTables.records,
       DatabaseTables.certificateFields,
       DatabaseTables.certificateLayouts,
@@ -403,8 +343,26 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
   }
 
   Future<void> _clearProjectData(String projectId) async {
+    final jobs = await _database.query(
+      DatabaseTables.generationJobs,
+      where: {'project_id': projectId},
+      columns: ['id'],
+    );
+    await _database.deleteWhereIn(
+      DatabaseTables.generationItems,
+      'job_id',
+      jobs.map((job) => job['id']),
+    );
+    await _database.deleteWhere(DatabaseTables.verificationRecords, {
+      'project_id': projectId,
+    });
+    await _database.deleteWhere(DatabaseTables.certificates, {
+      'project_id': projectId,
+    });
+    await _database.deleteWhere(DatabaseTables.generationJobs, {
+      'project_id': projectId,
+    });
     for (final table in [
-      DatabaseTables.signatureAssets,
       DatabaseTables.records,
       DatabaseTables.certificateFields,
       DatabaseTables.certificateLayouts,
@@ -496,20 +454,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
       throw FormatException('Invalid $name.');
     }
     return Map<String, Object?>.from(decoded);
-  }
-
-  Future<String?> _saveJson({
-    required String title,
-    required String name,
-    required Map<String, Object?> payload,
-  }) {
-    final bytes = utf8.encode(jsonEncode(payload));
-    return saveExportBytes(
-      dialogTitle: title,
-      fileName: name,
-      extension: 'json',
-      bytes: bytes,
-    );
   }
 
   String _backgroundName(

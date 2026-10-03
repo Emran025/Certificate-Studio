@@ -1,9 +1,14 @@
+/// Canonical names for every persisted table.
+///
+/// `signature_assets` contains reusable visual signature/stamp elements. It is
+/// intentionally distinct from the cryptographic signature stored in
+/// `verification_records.signature`.
 abstract final class DatabaseTables {
   static const institutions = 'institutions';
   static const projects = 'projects';
   static const templates = 'templates';
   static const fonts = 'fonts';
-  static const signatures = 'signatures';
+  static const signatureAssets = 'signature_assets';
   static const records = 'records';
   static const certificateFields = 'certificate_fields';
   static const certificateLayouts = 'certificate_layouts';
@@ -18,7 +23,7 @@ abstract final class DatabaseTables {
     projects,
     templates,
     fonts,
-    signatures,
+    signatureAssets,
     records,
     certificateFields,
     certificateLayouts,
@@ -31,8 +36,12 @@ abstract final class DatabaseTables {
 }
 
 abstract final class DatabaseSchema {
-  static const version = 4;
+  /// Version 6 is the first schema whose table names and migration history
+  /// match the current certificate terminology and signature model.
+  static const version = 6;
 
+  /// The complete schema used for a new database. Existing databases must use
+  /// [DatabaseMigrations] instead of replaying this list.
   static const createStatements = <String>[
     '''CREATE TABLE institutions (
       id TEXT PRIMARY KEY,
@@ -86,7 +95,7 @@ abstract final class DatabaseSchema {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )''',
-    '''CREATE TABLE signatures (
+    '''CREATE TABLE signature_assets (
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL,
       name TEXT NOT NULL,
@@ -174,7 +183,7 @@ abstract final class DatabaseSchema {
       institution_id TEXT NOT NULL,
       project_id TEXT NOT NULL,
       payload_json TEXT NOT NULL,
-      signature TEXT,
+      signature TEXT NOT NULL,
       created_at TEXT NOT NULL,
       FOREIGN KEY (certificate_id) REFERENCES certificates (id)
     )''',
@@ -188,9 +197,9 @@ abstract final class DatabaseSchema {
   static const indexes = <String>[
     'CREATE INDEX idx_projects_institution ON projects (institution_id)',
     'CREATE INDEX idx_projects_template ON projects (template_id)',
+    'CREATE INDEX idx_signature_assets_project ON signature_assets (project_id)',
     'CREATE INDEX idx_records_project ON records (project_id)',
     'CREATE INDEX idx_certificate_fields_project ON certificate_fields (project_id)',
-    'CREATE INDEX idx_signatures_project ON signatures (project_id)',
     'CREATE INDEX idx_certificates_project ON certificates (project_id)',
     'CREATE INDEX idx_certificates_status ON certificates (status)',
     'CREATE INDEX idx_generation_jobs_project ON generation_jobs (project_id)',

@@ -78,7 +78,7 @@ class ProjectDataSourceImpl implements ProjectDataSource {
         DatabaseTables.certificateFields,
         DatabaseTables.certificateLayouts,
         DatabaseTables.records,
-        DatabaseTables.signatures,
+        DatabaseTables.signatureAssets,
       ]) {
         await _database.deleteWhere(table, {'project_id': id});
       }

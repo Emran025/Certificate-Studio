@@ -30,6 +30,43 @@ void main() {
     expect(DatabaseMigrations.statementsForUpgrade(0), isNotEmpty);
   });
 
+  test('keeps migrations contiguous and ordered', () {
+    final migrations = DatabaseMigrations.migrations;
+    expect(migrations.first.fromVersion, 0);
+    for (var index = 0; index < migrations.length; index++) {
+      final migration = migrations[index];
+      expect(migration.toVersion, migration.fromVersion + 1);
+      if (index > 0) {
+        expect(migration.fromVersion, migrations[index - 1].toVersion);
+      }
+    }
+    expect(migrations.last.toVersion, DatabaseSchema.version);
+    expect(
+      migrations[4].statements,
+      contains('ALTER TABLE students RENAME TO records'),
+    );
+    expect(
+      migrations[5].statements,
+      contains('ALTER TABLE signatures RENAME TO signature_assets'),
+    );
+  });
+
+  test('separates visual signature assets from electronic signatures', () {
+    expect(DatabaseTables.all, contains(DatabaseTables.signatureAssets));
+    expect(
+      DatabaseSchema.createStatements,
+      anyElement(contains('CREATE TABLE signature_assets')),
+    );
+    expect(
+      DatabaseSchema.createStatements,
+      anyElement(contains('CREATE TABLE verification_records')),
+    );
+    expect(
+      DatabaseSchema.createStatements,
+      anyElement(contains('signature TEXT NOT NULL')),
+    );
+  });
+
   test('persists and updates an institution', () async {
     final repository = InstitutionRepositoryImpl(
       InstitutionDataSourceImpl(database),

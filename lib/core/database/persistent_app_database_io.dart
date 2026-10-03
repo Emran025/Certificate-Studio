@@ -247,10 +247,22 @@ class PersistentAppDatabase implements AppDatabase {
     }
     _database.execute('BEGIN');
     try {
-      for (final statement in DatabaseMigrations.statementsForUpgrade(
-        current,
-      )) {
-        _database.execute(statement);
+      if (current == 0) {
+        for (final statement in DatabaseMigrations.statementsForUpgrade(0)) {
+          _database.execute(statement);
+        }
+      } else {
+        for (final migration in DatabaseMigrations.pendingFrom(current)) {
+          if (migration.toVersion == 5) {
+            _migrateRecordTerminologyIfNeeded();
+          } else if (migration.toVersion == 6) {
+            _migrateSignatureAssetsIfNeeded();
+          } else {
+            for (final statement in migration.statements) {
+              _database.execute(statement);
+            }
+          }
+        }
       }
       _database.execute('PRAGMA user_version = ${DatabaseSchema.version}');
       _database.execute('COMMIT');
@@ -259,6 +271,46 @@ class PersistentAppDatabase implements AppDatabase {
       rethrow;
     }
   }
+
+  void _migrateRecordTerminologyIfNeeded() {
+    // The terminology refactor shipped without a version bump. Some v4
+    // databases already contain `records`, while older v4 files still
+    // contain `students`. Detect the actual schema before renaming.
+    if (!_hasTable('students')) return;
+    _database.execute('ALTER TABLE students RENAME TO records');
+    _database.execute(
+      'ALTER TABLE certificates RENAME COLUMN student_id TO record_id',
+    );
+    _database.execute(
+      'ALTER TABLE generation_items RENAME COLUMN student_id TO record_id',
+    );
+    _database.execute('DROP INDEX IF EXISTS idx_students_project');
+    _database.execute('DROP INDEX IF EXISTS idx_generation_items_student');
+    _database.execute(
+      'CREATE INDEX IF NOT EXISTS idx_records_project ON records (project_id)',
+    );
+    _database.execute(
+      'CREATE INDEX IF NOT EXISTS idx_generation_items_record '
+      'ON generation_items (record_id)',
+    );
+  }
+
+  void _migrateSignatureAssetsIfNeeded() {
+    // Keep this conditional for v4/v5 databases created after the terminology
+    // refactor but before the visual-signature table was clarified.
+    if (!_hasTable('signatures')) return;
+    _database.execute('ALTER TABLE signatures RENAME TO signature_assets');
+    _database.execute('DROP INDEX IF EXISTS idx_signatures_project');
+    _database.execute(
+      'CREATE INDEX IF NOT EXISTS idx_signature_assets_project '
+      'ON signature_assets (project_id)',
+    );
+  }
+
+  bool _hasTable(String table) => _database.select(
+    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+    [table],
+  ).isNotEmpty;
 
   Future<void> _migrateLegacyPreferences() async {
     final preferences = await SharedPreferences.getInstance();
@@ -359,6 +411,7 @@ class PersistentAppDatabase implements AppDatabase {
         .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
         .join();
     database.execute("PRAGMA key = \"x'$hex'\"");
+    database.execute('PRAGMA foreign_keys = ON');
     database.select('SELECT count(*) FROM sqlite_master');
   }
 

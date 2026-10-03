@@ -163,7 +163,7 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     for (final project in projects) {
       signatures.addAll(
         await _database.query(
-          DatabaseTables.signatures,
+          DatabaseTables.signatureAssets,
           where: {'project_id': project['id']},
         ),
       );
@@ -191,7 +191,7 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     for (final value in values) {
       if (value is! Map) continue;
       await _database.upsert(
-        DatabaseTables.signatures,
+        DatabaseTables.signatureAssets,
         Map<String, Object?>.from(value),
       );
       imported++;
@@ -229,7 +229,7 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
       where: {'project_id': projectId},
     );
     final signatures = await _database.query(
-      DatabaseTables.signatures,
+      DatabaseTables.signatureAssets,
       where: {'project_id': projectId},
     );
     final records = await _database.query(
@@ -345,7 +345,7 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     await _database.upsert(DatabaseTables.projects, project);
 
     await _upsertRows(
-      DatabaseTables.signatures,
+      DatabaseTables.signatureAssets,
       metadata['signatures'],
       projectId,
     );
@@ -392,7 +392,7 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     await _clearProjectData(projectId);
     await _database.upsert(DatabaseTables.projects, project);
     for (final table in [
-      DatabaseTables.signatures,
+      DatabaseTables.signatureAssets,
       DatabaseTables.records,
       DatabaseTables.certificateFields,
       DatabaseTables.certificateLayouts,
@@ -404,7 +404,7 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
 
   Future<void> _clearProjectData(String projectId) async {
     for (final table in [
-      DatabaseTables.signatures,
+      DatabaseTables.signatureAssets,
       DatabaseTables.records,
       DatabaseTables.certificateFields,
       DatabaseTables.certificateLayouts,

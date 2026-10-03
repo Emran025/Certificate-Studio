@@ -1062,6 +1062,9 @@ erDiagram
     }
 ```
 
+الملف المستقل القابل لإعادة الرسم: `docs/database-erd.mmd`، والنسخة المرئية:
+`docs/database-erd.png`.
+
 ### قواعد ERD الأمنية
 
 * `verification_records.certificate_id` فريد، لذلك لكل شهادة سجل تحقق واحد فقط.

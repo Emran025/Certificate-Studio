@@ -3,6 +3,7 @@ import 'package:certificate_studio/core/database/app_database.dart';
 import 'package:certificate_studio/features/data_import/data/repositories/data_import_repository_impl.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:certificate_studio/features/data_import/data/datasources/data_import_data_source_impl.dart';
+import 'package:certificate_studio/features/data_import/domain/entities/imported_table.dart';
 
 void main() {
   test('parses pasted tab-separated data and normalizes duplicate headers', () {
@@ -33,6 +34,23 @@ void main() {
     expect(restored.rows, [
       {'class': 'A001', 'name': 'Ahmed Ali', 'grade': '95'},
     ]);
+  });
+
+  test('persists newly added fields even when there are no student rows', () async {
+    final database = InMemoryAppDatabase();
+    await database.open();
+    final repository = DataImportRepositoryImpl(
+      DataImportDataSourceImpl(database),
+    );
+
+    await repository.saveForProject(
+      'project-1',
+      const ImportedTable(columns: ['name', 'email'], rows: []),
+    );
+
+    final restored = await repository.getForProject('project-1');
+    expect(restored.columns, ['name', 'email']);
+    expect(restored.rows, isEmpty);
   });
 
   test('parses the first worksheet from an XLSX workbook', () {

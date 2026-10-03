@@ -74,7 +74,18 @@ class DataImportRepositoryImpl implements DataImportRepository {
   Future<ImportedTable> getForProject(String projectId) async {
     final rows = await _dataSource.getRecordRows(projectId);
     final maps = <Map<String, String>>[];
+    final columns = await _dataSource.getRecordColumns(projectId);
     for (final row in rows) {
+      final storedColumns = row['columns_json'];
+      if (storedColumns is String && storedColumns.isNotEmpty) {
+        final decodedColumns = jsonDecode(storedColumns);
+        if (decodedColumns is List) {
+          for (final column in decodedColumns) {
+            final name = column.toString();
+            if (name.isNotEmpty && !columns.contains(name)) columns.add(name);
+          }
+        }
+      }
       final raw = row['data_json'];
       if (raw is String) {
         final decoded = jsonDecode(raw);
@@ -87,13 +98,20 @@ class DataImportRepositoryImpl implements DataImportRepository {
         }
       }
     }
-    final columns = <String>[];
     for (final row in maps) {
       for (final key in row.keys) {
         if (!columns.contains(key)) columns.add(key);
       }
     }
-    return ImportedTable(columns: columns, rows: maps);
+    return ImportedTable(
+      columns: columns,
+      rows: [
+        for (final row in maps)
+          {
+            for (final column in columns) column: row[column] ?? '',
+          },
+      ],
+    );
   }
 
   List<String> _uniqueHeaders(List<String> headers) {

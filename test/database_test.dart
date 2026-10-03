@@ -68,7 +68,7 @@ void main() {
   });
 
   test('uses denormalized project settings without history tables', () {
-    expect(DatabaseSchema.version, 9);
+    expect(DatabaseSchema.version, 10);
     expect(DatabaseTables.all, isNot(contains('certificate_layouts')));
     expect(DatabaseTables.all, isNot(contains('generation_jobs')));
     expect(DatabaseTables.all, isNot(contains('generation_items')));

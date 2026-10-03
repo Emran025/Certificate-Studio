@@ -10,12 +10,17 @@ import '../../domain/usecases/paste_table.dart';
 
 class DataImportBloc extends Bloc<DataImportEvent, DataImportState> {
   DataImportBloc({
-    required this._projectId,
-    required this._pasteTable,
-    required this._importExcel,
-    required this._loadTable,
-    required this._saveTable,
-  }) : super(const DataImportState()) {
+    required String projectId,
+    required PasteTable pasteTable,
+    required ImportExcel importExcel,
+    required Future<ImportedTable> Function() loadTable,
+    required Future<ImportedTable> Function(ImportedTable table) saveTable,
+  }) : _projectId = projectId,
+       _pasteTable = pasteTable,
+       _importExcel = importExcel,
+       _loadTable = loadTable,
+       _saveTable = saveTable,
+       super(const DataImportState()) {
     on<DataImportRequested>(_onLoad);
     on<PasteTableRequested>(_onPaste);
     on<ExcelImportRequested>(_onExcel);

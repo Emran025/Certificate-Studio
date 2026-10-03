@@ -15,6 +15,15 @@ class DataImportDataSourceImpl implements DataImportDataSource {
       await _database.deleteWhere(DatabaseTables.records, {
         'project_id': projectId,
       });
+      await _database.upsert(
+        DatabaseTables.settings,
+        {
+          'key': _columnsKey(projectId),
+          'value_json': jsonEncode(table.columns),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        },
+        conflictColumn: 'key',
+      );
       for (var index = 0; index < table.rows.length; index++) {
         final values = table.rows[index];
         final classSource = values.entries
@@ -38,6 +47,7 @@ class DataImportDataSourceImpl implements DataImportDataSource {
           'project_id': projectId,
           'class_name': classSource,
           'data_json': jsonEncode(values),
+          'columns_json': jsonEncode(table.columns),
           'row_number': index + 1,
           'created_at': now,
           'updated_at': now,
@@ -53,6 +63,22 @@ class DataImportDataSourceImpl implements DataImportDataSource {
       _database.query(
         DatabaseTables.records,
         where: {'project_id': projectId},
-        columns: ['data_json'],
+        columns: ['data_json', 'columns_json'],
       );
+
+  @override
+  Future<List<String>> getRecordColumns(String projectId) async {
+    final rows = await _database.query(
+      DatabaseTables.settings,
+      where: {'key': _columnsKey(projectId)},
+      columns: ['value_json'],
+    );
+    if (rows.isEmpty) return const [];
+    final raw = rows.first['value_json'];
+    if (raw is! String || raw.isEmpty) return const [];
+    final decoded = jsonDecode(raw);
+    return decoded is List ? [for (final value in decoded) value.toString()] : const [];
+  }
+
+  String _columnsKey(String projectId) => 'records-columns:$projectId';
 }

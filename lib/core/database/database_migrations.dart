@@ -124,6 +124,12 @@ abstract final class DatabaseMigrations {
       description: 'Link certificate fields to their selected font asset',
       statements: [],
     ),
+    DatabaseMigration(
+      fromVersion: 9,
+      toVersion: 10,
+      description: 'Persist imported record column definitions',
+      statements: ['ALTER TABLE records ADD COLUMN columns_json TEXT'],
+    ),
   ];
 
   static Iterable<DatabaseMigration> pendingFrom(int currentVersion) sync* {

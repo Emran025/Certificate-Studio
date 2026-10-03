@@ -25,8 +25,8 @@ abstract final class DatabaseTables {
 }
 
 abstract final class DatabaseSchema {
-  /// Version 9 adds the explicit font-to-certificate-field relationship.
-  static const version = 9;
+  /// Version 10 persists the imported record column definitions.
+  static const version = 10;
 
   /// The complete schema used for a new database. Existing databases must use
   /// [DatabaseMigrations] instead of replaying this list.
@@ -89,6 +89,7 @@ abstract final class DatabaseSchema {
       project_id TEXT NOT NULL,
       class_name TEXT NOT NULL,
       data_json TEXT NOT NULL,
+      columns_json TEXT,
       row_number INTEGER NOT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,

@@ -67,6 +67,17 @@ void main() {
     );
   });
 
+  test('uses denormalized project settings without history tables', () {
+    expect(DatabaseSchema.version, 8);
+    expect(DatabaseTables.all, isNot(contains('certificate_layouts')));
+    expect(DatabaseTables.all, isNot(contains('generation_jobs')));
+    expect(DatabaseTables.all, isNot(contains('generation_items')));
+    expect(
+      DatabaseSchema.createStatements,
+      everyElement(isNot(contains('CREATE TABLE certificate_layouts'))),
+    );
+  });
+
   test('persists and updates an institution', () async {
     final repository = InstitutionRepositoryImpl(
       InstitutionDataSourceImpl(database),

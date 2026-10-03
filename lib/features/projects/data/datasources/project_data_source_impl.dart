@@ -55,33 +55,18 @@ class ProjectDataSourceImpl implements ProjectDataSource {
 
     _database.beginBatch();
     try {
-      final jobs = await _database.query(
-        DatabaseTables.generationJobs,
-        where: {'project_id': id},
-        columns: ['id'],
-      );
-      await _database.deleteWhereIn(
-        DatabaseTables.generationItems,
-        'job_id',
-        jobs.map((job) => job['id']),
-      );
       await _database.deleteWhere(DatabaseTables.verificationRecords, {
         'project_id': id,
       });
       await _database.deleteWhere(DatabaseTables.certificates, {
         'project_id': id,
       });
-      await _database.deleteWhere(DatabaseTables.generationJobs, {
-        'project_id': id,
-      });
       for (final table in [
         DatabaseTables.certificateFields,
-        DatabaseTables.certificateLayouts,
         DatabaseTables.records,
       ]) {
         await _database.deleteWhere(table, {'project_id': id});
       }
-      await _database.delete(DatabaseTables.settings, 'mapping:$id');
       await deleteProject(id);
     } finally {
       await _database.endBatch();

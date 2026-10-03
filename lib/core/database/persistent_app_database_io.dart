@@ -260,6 +260,8 @@ class PersistentAppDatabase implements AppDatabase {
             _migrateSignatureAssetsIfNeeded();
           } else if (migration.toVersion == 7) {
             _migrateCanonicalRelationships();
+          } else if (migration.toVersion == 8) {
+            _migrateDenormalizedProjectSettings();
           } else {
             for (final statement in migration.statements) {
               _database.execute(statement);
@@ -418,6 +420,46 @@ class PersistentAppDatabase implements AppDatabase {
         statement.replaceAll('CREATE INDEX ', 'CREATE INDEX IF NOT EXISTS '),
       );
     }
+  }
+
+  void _migrateDenormalizedProjectSettings() {
+    final mappingRows = _database.select(
+      'SELECT key, value_json FROM settings WHERE key LIKE ? ',
+      ['mapping:%'],
+    );
+    for (final row in mappingRows) {
+      final key = row['key']?.toString() ?? '';
+      final projectId = key.startsWith('mapping:')
+          ? key.substring('mapping:'.length)
+          : '';
+      if (projectId.isEmpty) continue;
+      final projects = _database.select(
+        'SELECT settings_json FROM projects WHERE id = ?',
+        [projectId],
+      );
+      if (projects.isEmpty) continue;
+      final settings = <String, dynamic>{};
+      final rawSettings = projects.first['settings_json'];
+      if (rawSettings is String && rawSettings.isNotEmpty) {
+        final decoded = jsonDecode(rawSettings);
+        if (decoded is Map) {
+          settings.addAll(Map<String, dynamic>.from(decoded));
+        }
+      }
+      final rawMapping = row['value_json'];
+      if (rawMapping is String && rawMapping.isNotEmpty) {
+        final mapping = jsonDecode(rawMapping);
+        if (mapping is Map) settings['mapping'] = mapping;
+      }
+      _database.execute('UPDATE projects SET settings_json = ? WHERE id = ?', [
+        jsonEncode(settings),
+        projectId,
+      ]);
+    }
+    _database.execute("DELETE FROM settings WHERE key LIKE 'mapping:%'");
+    _database.execute('DROP TABLE IF EXISTS certificate_layouts');
+    _database.execute('DROP TABLE IF EXISTS generation_items');
+    _database.execute('DROP TABLE IF EXISTS generation_jobs');
   }
 
   bool _hasTable(String table) => _database.select(

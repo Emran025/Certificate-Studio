@@ -175,10 +175,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
       DatabaseTables.certificateFields,
       where: {'project_id': projectId},
     );
-    final layouts = await _database.query(
-      DatabaseTables.certificateLayouts,
-      where: {'project_id': projectId},
-    );
     final records = await _database.query(
       DatabaseTables.records,
       where: {'project_id': projectId},
@@ -189,14 +185,12 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
           'format': _projectFormat,
           'project': project,
           'template': template,
-          'layouts': layouts,
         }),
       )
       ..addFile(
         _jsonFile(_fieldPositionsName, {
           'format': _projectFormat,
           'fields': fields,
-          'layouts': layouts,
         }),
       )
       ..addFile(
@@ -301,11 +295,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
       fieldPayload['fields'],
       projectId,
     );
-    await _upsertRows(
-      DatabaseTables.certificateLayouts,
-      fieldPayload['layouts'],
-      projectId,
-    );
     final csv = entries[_dataRowsName];
     if (csv != null) await _replaceRecordsFromCsv(projectId, utf8.decode(csv));
     return projectId;
@@ -335,7 +324,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     for (final table in [
       DatabaseTables.records,
       DatabaseTables.certificateFields,
-      DatabaseTables.certificateLayouts,
     ]) {
       await _upsertRows(table, decoded[table], projectId);
     }
@@ -343,29 +331,15 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
   }
 
   Future<void> _clearProjectData(String projectId) async {
-    final jobs = await _database.query(
-      DatabaseTables.generationJobs,
-      where: {'project_id': projectId},
-      columns: ['id'],
-    );
-    await _database.deleteWhereIn(
-      DatabaseTables.generationItems,
-      'job_id',
-      jobs.map((job) => job['id']),
-    );
     await _database.deleteWhere(DatabaseTables.verificationRecords, {
       'project_id': projectId,
     });
     await _database.deleteWhere(DatabaseTables.certificates, {
       'project_id': projectId,
     });
-    await _database.deleteWhere(DatabaseTables.generationJobs, {
-      'project_id': projectId,
-    });
     for (final table in [
       DatabaseTables.records,
       DatabaseTables.certificateFields,
-      DatabaseTables.certificateLayouts,
     ]) {
       await _database.deleteWhere(table, {'project_id': projectId});
     }

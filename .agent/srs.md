@@ -865,88 +865,83 @@ User confirms sending
 
 # 23. قاعدة البيانات SQLCipher
 
-تستخدم قاعدة البيانات المحلية SQLCipher الإصدار الحالي **v7**. هذا القسم هو
-المصدر المرجعي للكيانات والعلاقات، وليس مجرد قائمة تقريبية للجداول.
+تستخدم قاعدة البيانات المحلية SQLCipher الإصدار الحالي **v8**. جميع تعريفات
+الجداول الحالية موجودة مركزيًا في `lib/core/database/database_tables.dart`.
+تم اختيار denormalization لتقليل الجداول الخاصة بالمشروع؛ فلا توجد جداول
+مستقلة لحالة التوليد أو layout أو mapping.
 
-## 23.1 الكيانات المعتمدة
+## 23.1 الكيانات والجداول المعتمدة
 
 | الكيان | الجدول | الغرض | المفتاح الأساسي |
 |---|---|---|---|
-| Institution | `institutions` | هوية الجهة المصدرة ومعرفها العام | `id` |
-| Project | `projects` | دورة/مقرر مستقل تابع لمؤسسة | `id` |
-| TemplateAsset | `templates` | بيانات قالب الشهادة ومرجع الملف | `id` |
-| FontAsset | `fonts` | الخطوط القابلة لإعادة الاستخدام | `id` |
-| Record | `records` | صف المستفيد المستورد وبياناته المرنة | `id` |
-| CertificateField | `certificate_fields` | تعريف الحقول ومواضعها داخل المشروع | `id` |
-| CertificateLayout | `certificate_layouts` | إعدادات لوحة التصميم للمشروع | `id` |
-| Certificate | `certificates` | نتيجة الإصدار وملفات PDF/PNG والبصمة | `id` |
-| GenerationJob | `generation_jobs` | عملية التوليد الجماعية وحالتها | `id` |
-| GenerationItem | `generation_items` | نتيجة توليد سجل واحد داخل العملية | `id` |
-| VerificationRecord | `verification_records` | الدليل الموقع للتحقق من الشهادة | `id` |
-| AppSetting | `settings` | إعدادات التطبيق ومطابقة الأعمدة | `key` |
+| Institution | `institutions` | هوية الجهة ومعرفها العام | `id` |
+| Project | `projects` | بيانات المشروع والقالب والإعدادات | `id` |
+| TemplateAsset | `templates` | أصول خلفيات القوالب المشتركة | `id` |
+| FontAsset | `fonts` | أصول الخطوط المشتركة | `id` |
+| Record | `records` | صف المستفيد المستورد | `id` |
+| CertificateField | `certificate_fields` | عناصر التصميم داخل المشروع | `id` |
+| Certificate | `certificates` | الملف الناتج والبصمة والحالة | `id` |
+| VerificationRecord | `verification_records` | التوقيع الإلكتروني والتحقق | `id` |
+| AppSetting | `settings` | إعدادات التطبيق العامة فقط | `key` |
 
-لا يوجد جدول مستقل لـ `SignatureAsset` في النسخة الحالية؛ لأن التطبيق لا
-ينشئه ولا يستخدمه أثناء التوليد. التوقيع المرئي يمكن إضافته لاحقًا ككيان كامل
-عند تنفيذ واجهته وخدمته، ولا يجوز الاحتفاظ بجدول غير مستخدم في المخطط الحالي.
-أما التوقيع الإلكتروني الفعلي فيحفظ في `verification_records.signature` ضمن
-حمولة التحقق الموقعة، وتبقى المفاتيح الخاصة في secure storage.
+## 23.2 ما تم دمجه أو حذفه
 
-## 23.2 العلاقات والمفاتيح الموحدة
+* تم دمج `certificate_layouts` داخل `projects.settings_json` تحت المفتاح
+  `layout`، لأن علاقة layout بالمشروع كانت `1:1` ولا يوجد استخدام مستقل له.
+* تم دمج mapping الخاص بالمشروع داخل `projects.settings_json` تحت المفتاح
+  `mapping`. جدول `settings` أصبح مخصصًا لإعدادات التطبيق العامة فقط.
+* تم حذف `generation_jobs` و`generation_items`. التوليد عملية فورية ولا توجد
+  شاشة تاريخ أو استئناف تعتمد على هذه الجداول؛ يعاد التوليد عند الطلب وتبقى
+  النتيجة النهائية في `certificates` والتوقيع في `verification_records`.
+* لا يوجد `SignatureAsset` لأن التوقيع المرئي غير منفذ فعليًا. التوقيع
+  الإلكتروني المنفذ هو Ed25519 داخل `verification_records`.
+
+## 23.3 العلاقات
 
 ```text
-institutions.id  (المفتاح الداخلي)
-        │
+institutions.id
         └── projects.institution_id
-                │
                 ├── records.project_id
                 ├── certificate_fields.project_id
-                ├── certificate_layouts.project_id (UNIQUE)
                 ├── certificates.project_id
-                ├── generation_jobs.project_id
-                └── verification_records.project_id
-
-records.id
-        ├── certificates.record_id
-        └── generation_items.record_id
-
-generation_jobs.id
-        └── generation_items.job_id
-
-certificates.id
-        ├── generation_items.certificate_id (NULL قبل اكتمال التوليد)
-        └── verification_records.certificate_id (UNIQUE)
+                └── projects.settings_json
 
 templates.id
         └── projects.template_id (NULL مسموح، ON DELETE SET NULL)
+
+records.id
+        └── certificates.record_id
+
+certificates.id
+        └── verification_records.certificate_id (UNIQUE)
+
+institutions.id
+        └── verification_records.institution_id
+
+projects.id
+        └── verification_records.project_id
 ```
 
-قواعد المفاتيح:
+`projects.settings_json` يحتوي على إعدادات المشروع المدمجة، مثل:
 
-1. `id` هو المفتاح الداخلي لكل كيان، باستثناء `settings.key` لأنه إعداد
-   singleton يعتمد على مفتاح وظيفي.
-2. `projects.institution_id` و`verification_records.institution_id` يشيران إلى
-   `institutions.id` الداخلي، وهو المفتاح الذي تستخدمه الواجهة والـ domain.
-   أما `institutions.institution_id` فهو المعرف العام المنفصل الذي يمكن تضمينه
-   داخل حمولة التحقق، ولا يستخدم كـ FK داخلي.
-3. كل الأعمدة المرجعية تستخدم صيغة `<entity>_id`، مثل `project_id` و`record_id`
-   و`certificate_id`.
-4. `verification_records` لا يعتمد على وجود جدول توقيع بصري؛ فهو يحتفظ فقط
-   ببصمة الحمولة والتوقيع الإلكتروني وعلاقات الشهادة والمؤسسة والمشروع.
-5. عند حذف مشروع، تحذف طبقة الـ DataSource بياناته التابعة بترتيب صريح، ولا
-   تعتمد على حذف عشوائي من الواجهة.
+```json
+{
+  "font_id": "font-...",
+  "mapping": {
+    "اسم المستلم": "recipient"
+  },
+  "layout": {
+    "canvas_width": 1000,
+    "canvas_height": 700,
+    "grid_enabled": true,
+    "zoom": 0.55
+  }
+}
+```
 
-## 23.3 تعريفات الجداول الأساسية
+## 23.4 الجداول الأساسية
 
 ```text
-institutions
-------------
-id PK
-institution_id UNIQUE (المعرف العام)
-name, name_ar, name_en
-logo_path
-contact_json, settings_json
-created_at, updated_at
-
 projects
 --------
 id PK
@@ -956,17 +951,14 @@ start_date, end_date, trainer_name, organization_name
 logo_path
 template_id FK -> templates.id ON DELETE SET NULL
 settings_json
-project_key_reference
-version
+project_key_reference, version
 created_at, updated_at
 
 records
 -------
 id PK
 project_id FK -> projects.id
-class_name
-data_json
-row_number
+class_name, data_json, row_number
 created_at, updated_at
 
 certificate_fields
@@ -976,14 +968,6 @@ project_id FK -> projects.id
 class_name, source
 position_json, style_json
 created_at, updated_at
-
-certificate_layouts
--------------------
-id PK
-project_id FK -> projects.id UNIQUE
-canvas_width, canvas_height
-grid_enabled, settings_json
-updated_at
 
 certificates
 ------------
@@ -1000,25 +984,19 @@ id PK
 certificate_id FK -> certificates.id UNIQUE
 institution_id FK -> institutions.id
 project_id FK -> projects.id
-payload_json
-signature NOT NULL
+payload_json, signature NOT NULL
 created_at
 ```
 
-وتستخدم `generation_jobs` و`generation_items` لتسجيل تقدم التوليد والأخطاء
-والإعادة الجزئية، بينما لا تُنشأ جداول منفصلة لمطابقة الأعمدة أو بيانات الخطوط
-المختارة؛ تحفظ المطابقة وإعدادات الخط داخل `projects.settings_json` أو
-`settings` حسب نطاقها.
+## 23.5 سياسة migration
 
-## 23.4 سياسة migrations
-
-* كل migration متسلسلة وغير قابلة لإعادة الكتابة.
-* `v4 → v5` يصلح تسمية `students` التاريخية إلى `records`.
-* `v5 → v6` يرحل جدول التوقيعات القديم الذي لم يعد مستخدمًا.
-* `v6 → v7` يحذف التخزين المرئي غير المستخدم ويعيد بناء العلاقات لتشير إلى
-  المفاتيح الداخلية الصحيحة للمؤسسة وإضافة علاقات الشهادة.
-* قاعدة بيانات جديدة تستخدم schema الحالي مباشرة، بينما قواعد البيانات القديمة
-  تمر عبر migrations بالترتيب.
+* `v4 → v5`: تحويل `students` التاريخية إلى `records`.
+* `v5 → v6`: توحيد تسمية أصول التوقيع التاريخية.
+* `v6 → v7`: تصحيح العلاقات وإضافة Foreign Keys الدقيقة.
+* `v7 → v8`: نقل layout وmapping إلى `projects.settings_json` وحذف جداول
+  generation history و`certificate_layouts`.
+* لا يتم حذف بيانات المشروع الأساسية أثناء migration v8؛ الحذف يقتصر على
+  سجلات التوليد المؤقتة والـ layout المنفصل الذي أصبح جزءًا من المشروع.
 
 ---
 # 24. نظام الملفات
@@ -1038,8 +1016,6 @@ Application Data
 ├── templates/
 │
 ├── fonts/
-│
-├── signatures/
 │
 └── certificates/
 ```

@@ -5,6 +5,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
   List<_DesignerField> _fields = [];
   List<String> _columns = [];
   Map<String, dynamic> _previewData = {};
+  Map<String, dynamic> _projectSettings = {};
   Map<String, Object?>? _template;
   String? _selectedId;
   bool _loading = true;
@@ -48,10 +49,6 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
   }
 
   Future<void> _load() async {
-    final layouts = await widget.database.query(
-      DatabaseTables.certificateLayouts,
-      where: {'project_id': widget.projectId},
-    );
     final rows = await widget.database.query(
       DatabaseTables.certificateFields,
       where: {'project_id': widget.projectId},
@@ -66,7 +63,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
     );
     final projectTemplateId = projects.firstOrNull?['template_id'] as String?;
     final projectSettings = _decodeMap(projects.firstOrNull?['settings_json']);
-    final layoutSettings = _decodeMap(layouts.firstOrNull?['settings_json']);
+    final layoutSettings = _decodeMap(projectSettings['layout']);
     final savedZoom = _number(
       layoutSettings['zoom'],
       _zoom,
@@ -103,6 +100,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
     setState(() {
       _columns = columns.toList()..sort();
       _previewData = preview;
+      _projectSettings = projectSettings;
       _template = templates.firstOrNull;
       _projectFontFamily =
           projectFonts.firstOrNull?['family']?.toString() ?? 'Cairo';
@@ -279,15 +277,19 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
           field.toRow(widget.projectId, now),
         );
       }
-      await widget.database.upsert(DatabaseTables.certificateLayouts, {
-        'id': 'layout-${widget.projectId}',
-        'project_id': widget.projectId,
-        'canvas_width': _canvasWidth,
-        'canvas_height': _canvasHeight,
-        'grid_enabled': 1,
-        'settings_json': jsonEncode({'updated_by': 'designer', 'zoom': _zoom}),
+      final nextSettings = Map<String, dynamic>.from(_projectSettings)
+        ..['layout'] = {
+          'canvas_width': _canvasWidth,
+          'canvas_height': _canvasHeight,
+          'grid_enabled': true,
+          'updated_by': 'designer',
+          'zoom': _zoom,
+        };
+      await widget.database.update(DatabaseTables.projects, widget.projectId, {
+        'settings_json': jsonEncode(nextSettings),
         'updated_at': now,
-      }, conflictColumn: 'project_id');
+      });
+      _projectSettings = nextSettings;
     } finally {
       await widget.database.endBatch();
     }

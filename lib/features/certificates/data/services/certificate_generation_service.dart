@@ -40,12 +40,14 @@ abstract interface class CertificateGenerationServiceContract {
   });
 }
 
-class CertificateGenerationService implements CertificateGenerationServiceContract {
+class CertificateGenerationService
+    implements CertificateGenerationServiceContract {
   CertificateGenerationService(
     this.database,
     this.keyStorage, {
     CertificateArtifactStore? artifactStore,
-  }) : artifactStore = artifactStore ?? SharedPreferencesCertificateArtifactStore();
+  }) : artifactStore =
+           artifactStore ?? SharedPreferencesCertificateArtifactStore();
   final AppDatabase database;
   final KeyStorage keyStorage;
   final CertificateArtifactStore artifactStore;
@@ -73,7 +75,7 @@ class CertificateGenerationService implements CertificateGenerationServiceContra
     final projects = await database.query(
       DatabaseTables.projects,
       where: {'id': projectId},
-      columns: ['template_id'],
+      columns: ['template_id', 'settings_json'],
     );
     final project = projects.isEmpty
         ? const <String, Object?>{}
@@ -91,31 +93,11 @@ class CertificateGenerationService implements CertificateGenerationServiceContra
         : templates.first;
     final templatePath = template['file_path'] as String? ?? '';
     final templateBytes = await _cachedTemplateBytes(templatePath);
-    final mappingRows = await database.query(
-      DatabaseTables.settings,
-      where: {'key': 'mapping:$projectId'},
-      columns: ['value_json'],
-    );
-    final mapping = _decodeMapping(
-      mappingRows.isEmpty ? null : mappingRows.first['value_json'],
-    );
+    final projectSettings = _decodeProjectSettings(project['settings_json']);
+    final mapping = _decodeMapping(projectSettings['mapping']);
     final issueDate = DateTime.now().toUtc().toIso8601String().split('T').first;
     final jobId =
         'generation-$projectId-${DateTime.now().microsecondsSinceEpoch}';
-    final startedAt = DateTime.now().toUtc().toIso8601String();
-    await database.insert(DatabaseTables.generationJobs, {
-      'id': jobId,
-      'project_id': projectId,
-      'status': records.isEmpty ? 'empty' : 'running',
-      'total_count': records.length,
-      'completed_count': 0,
-      'failed_count': 0,
-      'started_at': startedAt,
-      'completed_at': records.isEmpty ? startedAt : null,
-      'error_message': records.isEmpty
-          ? 'No recipient data was imported.'
-          : null,
-    });
     if (records.isEmpty) {
       return CertificateGenerationResult(
         jobId: jobId,
@@ -136,15 +118,8 @@ class CertificateGenerationService implements CertificateGenerationServiceContra
       await _yieldToUi();
       final record = records[index];
       final recordId = record['id']! as String;
-      final itemId = '$jobId-item-$index';
       final completed = index + 1;
       try {
-        await database.insert(DatabaseTables.generationItems, {
-          'id': itemId,
-          'job_id': jobId,
-          'record_id': recordId,
-          'status': 'running',
-        });
         try {
           final data = _decodeData(record['data_json']);
           final values = <String, dynamic>{
@@ -255,11 +230,6 @@ class CertificateGenerationService implements CertificateGenerationServiceContra
             DatabaseTables.verificationRecords,
             verificationValues,
           );
-          await database.update(DatabaseTables.generationItems, itemId, {
-            'certificate_id': certificateId,
-            'status': 'completed',
-            'completed_at': now,
-          });
           generated++;
         } catch (error) {
           final message = 'Row ${index + 1}: $error';
@@ -267,16 +237,7 @@ class CertificateGenerationService implements CertificateGenerationServiceContra
           // Roll back the row's atomic certificate writes before recording
           // the failure outside the failed transaction.
           await database.endBatch();
-          await database.update(DatabaseTables.generationItems, itemId, {
-            'status': 'failed',
-            'error_message': message,
-            'completed_at': DateTime.now().toUtc().toIso8601String(),
-          });
         }
-        await database.update(DatabaseTables.generationJobs, jobId, {
-          'completed_count': completed,
-          'failed_count': completed - generated,
-        });
       } finally {
         await database.endBatch();
       }
@@ -288,11 +249,6 @@ class CertificateGenerationService implements CertificateGenerationServiceContra
         : generated == 0
         ? 'failed'
         : 'partial';
-    await database.update(DatabaseTables.generationJobs, jobId, {
-      'status': status,
-      'completed_at': DateTime.now().toUtc().toIso8601String(),
-      'error_message': errors.isEmpty ? null : errors.join('\n'),
-    });
     return CertificateGenerationResult(
       jobId: jobId,
       status: status,
@@ -397,6 +353,12 @@ class CertificateGenerationService implements CertificateGenerationServiceContra
   ];
   Map<String, dynamic> _decodeData(Object? raw) {
     if (raw is! String) return {};
+    final value = jsonDecode(raw);
+    return value is Map ? Map<String, dynamic>.from(value) : {};
+  }
+
+  Map<String, dynamic> _decodeProjectSettings(Object? raw) {
+    if (raw is! String || raw.isEmpty) return {};
     final value = jsonDecode(raw);
     return value is Map ? Map<String, dynamic>.from(value) : {};
   }

@@ -7,10 +7,7 @@ abstract final class DatabaseTables {
   static const fonts = 'fonts';
   static const records = 'records';
   static const certificateFields = 'certificate_fields';
-  static const certificateLayouts = 'certificate_layouts';
   static const certificates = 'certificates';
-  static const generationJobs = 'generation_jobs';
-  static const generationItems = 'generation_items';
   static const verificationRecords = 'verification_records';
   static const settings = 'settings';
 
@@ -21,18 +18,15 @@ abstract final class DatabaseTables {
     fonts,
     records,
     certificateFields,
-    certificateLayouts,
     certificates,
-    generationJobs,
-    generationItems,
     verificationRecords,
     settings,
   ];
 }
 
 abstract final class DatabaseSchema {
-  /// Version 7 is the canonical schema for the currently implemented domain.
-  static const version = 7;
+  /// Version 8 is the denormalized schema for the currently implemented domain.
+  static const version = 8;
 
   /// The complete schema used for a new database. Existing databases must use
   /// [DatabaseMigrations] instead of replaying this list.
@@ -111,16 +105,6 @@ abstract final class DatabaseSchema {
       updated_at TEXT NOT NULL,
       FOREIGN KEY (project_id) REFERENCES projects (id)
     )''',
-    '''CREATE TABLE certificate_layouts (
-      id TEXT PRIMARY KEY,
-      project_id TEXT NOT NULL UNIQUE,
-      canvas_width REAL NOT NULL,
-      canvas_height REAL NOT NULL,
-      grid_enabled INTEGER NOT NULL DEFAULT 1,
-      settings_json TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      FOREIGN KEY (project_id) REFERENCES projects (id)
-    )''',
     '''CREATE TABLE certificates (
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL,
@@ -134,30 +118,6 @@ abstract final class DatabaseSchema {
       updated_at TEXT NOT NULL,
       FOREIGN KEY (project_id) REFERENCES projects (id),
       FOREIGN KEY (record_id) REFERENCES records (id)
-    )''',
-    '''CREATE TABLE generation_jobs (
-      id TEXT PRIMARY KEY,
-      project_id TEXT NOT NULL,
-      status TEXT NOT NULL,
-      total_count INTEGER NOT NULL,
-      completed_count INTEGER NOT NULL DEFAULT 0,
-      failed_count INTEGER NOT NULL DEFAULT 0,
-      started_at TEXT NOT NULL,
-      completed_at TEXT,
-      error_message TEXT,
-      FOREIGN KEY (project_id) REFERENCES projects (id)
-    )''',
-    '''CREATE TABLE generation_items (
-      id TEXT PRIMARY KEY,
-      job_id TEXT NOT NULL,
-      record_id TEXT NOT NULL,
-      certificate_id TEXT,
-      status TEXT NOT NULL,
-      error_message TEXT,
-      completed_at TEXT,
-      FOREIGN KEY (job_id) REFERENCES generation_jobs (id),
-      FOREIGN KEY (record_id) REFERENCES records (id),
-      FOREIGN KEY (certificate_id) REFERENCES certificates (id)
     )''',
     '''CREATE TABLE verification_records (
       id TEXT PRIMARY KEY,
@@ -185,9 +145,6 @@ abstract final class DatabaseSchema {
     'CREATE INDEX idx_certificate_fields_project ON certificate_fields (project_id)',
     'CREATE INDEX idx_certificates_project ON certificates (project_id)',
     'CREATE INDEX idx_certificates_status ON certificates (status)',
-    'CREATE INDEX idx_generation_jobs_project ON generation_jobs (project_id)',
-    'CREATE INDEX idx_generation_items_job ON generation_items (job_id)',
-    'CREATE INDEX idx_generation_items_record ON generation_items (record_id)',
     'CREATE INDEX idx_verification_records_project ON verification_records (project_id)',
   ];
 }

@@ -111,6 +111,13 @@ abstract final class DatabaseMigrations {
       // existing schema; keeping the SQL here empty prevents unsafe replay.
       statements: [],
     ),
+    DatabaseMigration(
+      fromVersion: 7,
+      toVersion: 8,
+      description:
+          'Denormalize project layout and mapping; remove generation history',
+      statements: [],
+    ),
   ];
 
   static Iterable<DatabaseMigration> pendingFrom(int currentVersion) sync* {

@@ -14,7 +14,7 @@ void main() {
 
   if (runNativeGenerationTests) {
     test(
-      'tracks a generation job and updates the same certificate on rerun',
+      'regenerates and updates the same certificate without history tables',
       () async {
         final database = InMemoryAppDatabase();
         await database.open();
@@ -52,17 +52,6 @@ void main() {
           await database.query(DatabaseTables.verificationRecords),
           hasLength(1),
         );
-        expect(
-          await database.query(DatabaseTables.generationJobs),
-          hasLength(2),
-        );
-        expect(
-          await database.query(
-            DatabaseTables.generationItems,
-            where: {'status': 'completed'},
-          ),
-          hasLength(2),
-        );
         final certificate = (await database.query(
           DatabaseTables.certificates,
         )).single;
@@ -87,25 +76,18 @@ void main() {
     );
   }
 
-  test(
-    'records an empty generation job instead of silently succeeding',
-    () async {
-      final database = InMemoryAppDatabase();
-      await database.open();
-      final result = await CertificateGenerationService(
-        database,
-        InMemoryKeyStorage(),
-      ).generate(projectId: 'project-empty', institutionId: 'institution-1');
+  test('returns an empty result instead of silently succeeding', () async {
+    final database = InMemoryAppDatabase();
+    await database.open();
+    final result = await CertificateGenerationService(
+      database,
+      InMemoryKeyStorage(),
+    ).generate(projectId: 'project-empty', institutionId: 'institution-1');
 
-      expect(result.status, 'empty');
-      expect(result.failed, 0);
-      expect(result.errors, isNotEmpty);
-      expect(
-        (await database.query(DatabaseTables.generationJobs)).single['status'],
-        'empty',
-      );
-    },
-  );
+    expect(result.status, 'empty');
+    expect(result.failed, 0);
+    expect(result.errors, isNotEmpty);
+  });
 
   if (runNativeGenerationTests) {
     test(
@@ -122,12 +104,16 @@ void main() {
           'created_at': DateTime.now().toUtc().toIso8601String(),
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         });
-        await database.insert(DatabaseTables.settings, {
-          'key': 'mapping:project-mapped',
-          'value_json': jsonEncode({
-            'اسم المستلم': 'recipient',
-            'الدورة': 'course',
+        await database.insert(DatabaseTables.projects, {
+          'id': 'project-mapped',
+          'institution_id': 'institution-1',
+          'name': 'Mapped project',
+          'settings_json': jsonEncode({
+            'mapping': {'اسم المستلم': 'recipient', 'الدورة': 'course'},
           }),
+          'project_key_reference': 'project-mapped',
+          'version': 1,
+          'created_at': DateTime.now().toUtc().toIso8601String(),
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         });
 

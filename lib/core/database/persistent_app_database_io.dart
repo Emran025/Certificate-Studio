@@ -262,6 +262,8 @@ class PersistentAppDatabase implements AppDatabase {
             _migrateCanonicalRelationships();
           } else if (migration.toVersion == 8) {
             _migrateDenormalizedProjectSettings();
+          } else if (migration.toVersion == 9) {
+            _migrateCertificateFieldFonts();
           } else {
             for (final statement in migration.statements) {
               _database.execute(statement);
@@ -460,6 +462,67 @@ class PersistentAppDatabase implements AppDatabase {
     _database.execute('DROP TABLE IF EXISTS certificate_layouts');
     _database.execute('DROP TABLE IF EXISTS generation_items');
     _database.execute('DROP TABLE IF EXISTS generation_jobs');
+  }
+
+  void _migrateCertificateFieldFonts() {
+    final fontRows = _database.select('SELECT id, family FROM fonts');
+    final fontIdsByFamily = <String, String>{
+      for (final row in fontRows)
+        if (row['id'] != null && row['family'] != null)
+          row['family'].toString(): row['id'].toString(),
+    };
+    final fields = _database.select(
+      'SELECT id, project_id, class_name, source, position_json, style_json, '
+      'created_at, updated_at FROM certificate_fields',
+    );
+    _database.execute('''CREATE TABLE certificate_fields_new (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      font_id TEXT,
+      class_name TEXT NOT NULL,
+      source TEXT,
+      position_json TEXT NOT NULL,
+      style_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (project_id) REFERENCES projects (id),
+      FOREIGN KEY (font_id) REFERENCES fonts (id) ON DELETE SET NULL
+    )''');
+    for (final field in fields) {
+      final style = field['style_json'] is String
+          ? jsonDecode(field['style_json'] as String)
+          : null;
+      final family = style is Map ? style['font_family']?.toString() : null;
+      final fontId = family == null ? null : fontIdsByFamily[family];
+      _database.execute(
+        'INSERT INTO certificate_fields_new '
+        '(id, project_id, font_id, class_name, source, position_json, '
+        'style_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          field['id'],
+          field['project_id'],
+          fontId,
+          field['class_name'],
+          field['source'],
+          field['position_json'],
+          field['style_json'],
+          field['created_at'],
+          field['updated_at'],
+        ],
+      );
+    }
+    _database.execute('DROP TABLE certificate_fields');
+    _database.execute(
+      'ALTER TABLE certificate_fields_new RENAME TO certificate_fields',
+    );
+    _database.execute(
+      'CREATE INDEX IF NOT EXISTS idx_certificate_fields_project '
+      'ON certificate_fields (project_id)',
+    );
+    _database.execute(
+      'CREATE INDEX IF NOT EXISTS idx_certificate_fields_font '
+      'ON certificate_fields (font_id)',
+    );
   }
 
   bool _hasTable(String table) => _database.select(

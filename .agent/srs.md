@@ -865,7 +865,7 @@ User confirms sending
 
 # 23. قاعدة البيانات SQLCipher
 
-تستخدم قاعدة البيانات المحلية SQLCipher الإصدار الحالي **v8**. جميع تعريفات
+تستخدم قاعدة البيانات المحلية SQLCipher الإصدار الحالي **v9**. جميع تعريفات
 الجداول الحالية موجودة مركزيًا في `lib/core/database/database_tables.dart`.
 تم اختيار denormalization لتقليل الجداول الخاصة بالمشروع؛ فلا توجد جداول
 مستقلة لحالة التوليد أو layout أو mapping.
@@ -909,6 +909,9 @@ institutions.id
 templates.id
         └── projects.template_id (NULL مسموح، ON DELETE SET NULL)
 
+fonts.id
+        └── certificate_fields.font_id (NULL مسموح، ON DELETE SET NULL)
+
 records.id
         └── certificates.record_id
 
@@ -941,7 +944,7 @@ projects.id
 
 ## 23.4 مخطط ERD
 
-يمثل المخطط التالي الجداول الحالية فقط بعد الدمج في schema v8. إعدادات `layout`
+يمثل المخطط التالي الجداول الحالية فقط بعد الدمج في schema v9. إعدادات `layout`
 و`mapping` مدمجة داخل `projects.settings_json` ولا تظهر كجداول مستقلة.
 
 ```mermaid
@@ -949,6 +952,7 @@ erDiagram
     INSTITUTIONS ||--o{ PROJECTS : owns
     INSTITUTIONS ||--o{ VERIFICATION_RECORDS : identifies
     TEMPLATES o|--o{ PROJECTS : selected_by
+    FONTS ||--o{ CERTIFICATE_FIELDS : styles
     PROJECTS ||--o{ RECORDS : contains
     PROJECTS ||--o{ CERTIFICATE_FIELDS : defines
     PROJECTS ||--o{ CERTIFICATES : generates
@@ -1024,6 +1028,7 @@ erDiagram
     CERTIFICATE_FIELDS {
         string id PK
         string project_id FK
+        string font_id FK
         string class_name
         string source
         json position_json
@@ -1072,8 +1077,10 @@ erDiagram
 * `projects.settings_json` قيمة JSON مملوكة للمشروع وتضم layout وmapping وإعدادات
   الخط؛ لا توجد علاقات مخفية مع جداول محذوفة.
 * `settings` مخصص لإعدادات التطبيق العامة فقط، ولا يحتوي mapping للمشاريع.
-* `fonts` أصل مشترك مستقل؛ ارتباط الخط بالمشروع محفوظ داخل `settings_json.font_id`
-  مع التحقق من وجود الأصل عند الاستخدام.
+* `fonts` أصل مشترك مستقل؛ الخط الافتراضي للمشروع محفوظ داخل
+  `settings_json.font_id`، بينما خط كل حقل محفوظ مباشرة في
+  `certificate_fields.font_id` مع `ON DELETE SET NULL` واستخدام خط المشروع
+  كـ fallback.
 
 ## 23.4 الجداول الأساسية
 
@@ -1131,6 +1138,8 @@ created_at
 * `v6 → v7`: تصحيح العلاقات وإضافة Foreign Keys الدقيقة.
 * `v7 → v8`: نقل layout وmapping إلى `projects.settings_json` وحذف جداول
   generation history و`certificate_layouts`.
+* `v8 → v9`: إضافة `certificate_fields.font_id` وربطه بـ `fonts.id`، مع تحويل
+  `style_json.font_family` القديم إلى المعرف المناسب عند توفره.
 * لا يتم حذف بيانات المشروع الأساسية أثناء migration v8؛ الحذف يقتصر على
   سجلات التوليد المؤقتة والـ layout المنفصل الذي أصبح جزءًا من المشروع.
 

@@ -25,8 +25,8 @@ abstract final class DatabaseTables {
 }
 
 abstract final class DatabaseSchema {
-  /// Version 8 is the denormalized schema for the currently implemented domain.
-  static const version = 8;
+  /// Version 9 adds the explicit font-to-certificate-field relationship.
+  static const version = 9;
 
   /// The complete schema used for a new database. Existing databases must use
   /// [DatabaseMigrations] instead of replaying this list.
@@ -97,13 +97,15 @@ abstract final class DatabaseSchema {
     '''CREATE TABLE certificate_fields (
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL,
+      font_id TEXT,
       class_name TEXT NOT NULL,
       source TEXT,
       position_json TEXT NOT NULL,
       style_json TEXT NOT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
-      FOREIGN KEY (project_id) REFERENCES projects (id)
+      FOREIGN KEY (project_id) REFERENCES projects (id),
+      FOREIGN KEY (font_id) REFERENCES fonts (id) ON DELETE SET NULL
     )''',
     '''CREATE TABLE certificates (
       id TEXT PRIMARY KEY,
@@ -143,6 +145,7 @@ abstract final class DatabaseSchema {
     'CREATE INDEX idx_projects_template ON projects (template_id)',
     'CREATE INDEX idx_records_project ON records (project_id)',
     'CREATE INDEX idx_certificate_fields_project ON certificate_fields (project_id)',
+    'CREATE INDEX idx_certificate_fields_font ON certificate_fields (font_id)',
     'CREATE INDEX idx_certificates_project ON certificates (project_id)',
     'CREATE INDEX idx_certificates_status ON certificates (status)',
     'CREATE INDEX idx_verification_records_project ON verification_records (project_id)',

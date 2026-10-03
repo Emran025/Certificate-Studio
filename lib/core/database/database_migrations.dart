@@ -118,6 +118,12 @@ abstract final class DatabaseMigrations {
           'Denormalize project layout and mapping; remove generation history',
       statements: [],
     ),
+    DatabaseMigration(
+      fromVersion: 8,
+      toVersion: 9,
+      description: 'Link certificate fields to their selected font asset',
+      statements: [],
+    ),
   ];
 
   static Iterable<DatabaseMigration> pendingFrom(int currentVersion) sync* {

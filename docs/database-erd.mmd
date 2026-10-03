@@ -2,6 +2,7 @@ erDiagram
     INSTITUTIONS ||--o{ PROJECTS : owns
     INSTITUTIONS ||--o{ VERIFICATION_RECORDS : identifies
     TEMPLATES o|--o{ PROJECTS : selected_by
+    FONTS ||--o{ CERTIFICATE_FIELDS : styles
     PROJECTS ||--o{ RECORDS : contains
     PROJECTS ||--o{ CERTIFICATE_FIELDS : defines
     PROJECTS ||--o{ CERTIFICATES : generates
@@ -77,6 +78,7 @@ erDiagram
     CERTIFICATE_FIELDS {
         string id PK
         string project_id FK
+        string font_id FK
         string class_name
         string source
         json position_json

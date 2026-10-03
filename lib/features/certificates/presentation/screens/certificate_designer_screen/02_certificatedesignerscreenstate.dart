@@ -15,6 +15,9 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
   String _saveLabel = 'Not saved';
   final Set<String> _loadedFontFamilies = {};
   String _projectFontFamily = 'Cairo';
+  String? _projectFontId;
+  Map<String, String> _fontIdsByFamily = {};
+  Map<String, String> _fontFamiliesById = {};
   List<String> _fontFamilies = const ['Cairo', 'Arial', 'sans-serif'];
   double _zoom = 0.55;
   final List<List<_DesignerField>> _undoStack = [];
@@ -76,6 +79,17 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
             where: {'id': projectFontId},
           );
     final fontRows = await widget.database.query(DatabaseTables.fonts);
+    final fontIdsByFamily = <String, String>{};
+    final fontFamiliesById = <String, String>{};
+    for (final font in fontRows) {
+      final id = font['id']?.toString();
+      final family = font['family']?.toString().trim();
+      if (id == null || id.isEmpty || family == null || family.isEmpty) {
+        continue;
+      }
+      fontIdsByFamily[family] = id;
+      fontFamiliesById[id] = family;
+    }
     await _registerImportedFonts(fontRows);
     final templates = projectTemplateId == null
         ? <Map<String, Object?>>[]
@@ -101,6 +115,9 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
       _columns = columns.toList()..sort();
       _previewData = preview;
       _projectSettings = projectSettings;
+      _projectFontId = projectFontId;
+      _fontIdsByFamily = fontIdsByFamily;
+      _fontFamiliesById = fontFamiliesById;
       _template = templates.firstOrNull;
       _projectFontFamily =
           projectFonts.firstOrNull?['family']?.toString() ?? 'Cairo';
@@ -113,7 +130,16 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
             font['family']!.toString(),
         _projectFontFamily,
       }.toList();
-      _fields = rows.map(_DesignerField.fromRow).toList();
+      _fields = rows.map((row) {
+        final field = _DesignerField.fromRow(row);
+        return field.copyWith(
+          fontFamily: _fontFamiliesById[field.fontId] ?? field.fontFamily,
+          fontId:
+              field.fontId ??
+              _fontIdsByFamily[field.fontFamily] ??
+              _projectFontId,
+        );
+      }).toList();
       _zoom = savedZoom;
       _undoStack
         ..clear()
@@ -169,6 +195,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
       fontSize: 28,
       color: '#20332B',
       fontFamily: _projectFontFamily,
+      fontId: _projectFontId,
     );
     await widget.database.insert(
       DatabaseTables.certificateFields,
@@ -227,6 +254,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
       fontSize: 28,
       color: '#20332B',
       fontFamily: _projectFontFamily,
+      fontId: _projectFontId,
     );
     await widget.database.insert(
       DatabaseTables.certificateFields,
@@ -374,6 +402,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
   }
 
   void _replaceField(_DesignerField field) {
+    field = field.copyWith(fontId: _fontIdsByFamily[field.fontFamily]);
     _updateFields(
       _fields.map((item) => item.id == field.id ? field : item).toList(),
     );

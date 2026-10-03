@@ -67,11 +67,35 @@ class CertificateGenerationService
       where: {'project_id': projectId},
       columns: ['id', 'class_name', 'data_json'],
     );
-    final fields = await database.query(
+    final rawFields = await database.query(
       DatabaseTables.certificateFields,
       where: {'project_id': projectId},
-      columns: ['class_name', 'source', 'position_json', 'style_json'],
+      columns: [
+        'class_name',
+        'source',
+        'font_id',
+        'position_json',
+        'style_json',
+      ],
     );
+    final fontRows = await database.query(
+      DatabaseTables.fonts,
+      columns: ['id', 'family'],
+    );
+    final fontFamiliesById = <String, String>{
+      for (final font in fontRows)
+        if (font['id'] != null && font['family'] != null)
+          font['id'].toString(): font['family'].toString(),
+    };
+    final fields = rawFields.map((field) {
+      final style = _decodeJsonMap(field['style_json']);
+      final fontId = field['font_id']?.toString();
+      final family = fontId == null ? null : fontFamiliesById[fontId];
+      if (family != null && family.isNotEmpty) {
+        style['font_family'] = family;
+      }
+      return <String, Object?>{...field, 'style_json': jsonEncode(style)};
+    }).toList();
     final projects = await database.query(
       DatabaseTables.projects,
       where: {'id': projectId},
@@ -358,6 +382,12 @@ class CertificateGenerationService
   }
 
   Map<String, dynamic> _decodeProjectSettings(Object? raw) {
+    if (raw is! String || raw.isEmpty) return {};
+    final value = jsonDecode(raw);
+    return value is Map ? Map<String, dynamic>.from(value) : {};
+  }
+
+  Map<String, dynamic> _decodeJsonMap(Object? raw) {
     if (raw is! String || raw.isEmpty) return {};
     final value = jsonDecode(raw);
     return value is Map ? Map<String, dynamic>.from(value) : {};

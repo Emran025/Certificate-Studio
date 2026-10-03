@@ -15,6 +15,7 @@ class _DesignerField {
     this.alignment = 'left',
     this.direction = 'ltr',
     this.fontFamily = 'Cairo',
+    this.fontId,
     this.bold = false,
     this.italic = false,
     this.qr = false,
@@ -32,6 +33,7 @@ class _DesignerField {
   final String alignment;
   final String direction;
   final String fontFamily;
+  final String? fontId;
   final bool bold;
   final bool italic;
   final bool qr;
@@ -60,6 +62,7 @@ class _DesignerField {
       alignment: (style['alignment'] as String?) ?? 'left',
       direction: (style['direction'] as String?) ?? 'ltr',
       fontFamily: (style['font_family'] as String?) ?? 'Cairo',
+      fontId: row['font_id'] as String?,
       bold: style['bold'] == true || style['font_weight'] == 'bold',
       italic: style['italic'] == true,
       qr: style['kind'] == 'qr',
@@ -68,6 +71,7 @@ class _DesignerField {
   Map<String, Object?> toRow(String projectId, String now) => {
     'id': id,
     'project_id': projectId,
+    'font_id': fontId,
     'class_name': canonicalFieldClassId(className),
     'source': source,
     'position_json': jsonEncode({
@@ -104,6 +108,7 @@ class _DesignerField {
     String? alignment,
     String? direction,
     String? fontFamily,
+    Object? fontId = _unset,
     bool? bold,
     bool? italic,
     bool? qr,
@@ -121,6 +126,7 @@ class _DesignerField {
     alignment: alignment ?? this.alignment,
     direction: direction ?? this.direction,
     fontFamily: fontFamily ?? this.fontFamily,
+    fontId: identical(fontId, _unset) ? this.fontId : fontId as String?,
     bold: bold ?? this.bold,
     italic: italic ?? this.italic,
     qr: qr ?? this.qr,
@@ -130,6 +136,8 @@ class _DesignerField {
     final value = jsonDecode(raw);
     return value is Map ? Map<String, Object?>.from(value) : {};
   }
+
+  static const Object _unset = Object();
 
   static double _number(Object? value, double fallback) =>
       value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;

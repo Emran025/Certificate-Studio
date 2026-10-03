@@ -68,13 +68,22 @@ void main() {
   });
 
   test('uses denormalized project settings without history tables', () {
-    expect(DatabaseSchema.version, 8);
+    expect(DatabaseSchema.version, 9);
     expect(DatabaseTables.all, isNot(contains('certificate_layouts')));
     expect(DatabaseTables.all, isNot(contains('generation_jobs')));
     expect(DatabaseTables.all, isNot(contains('generation_items')));
     expect(
       DatabaseSchema.createStatements,
       everyElement(isNot(contains('CREATE TABLE certificate_layouts'))),
+    );
+    expect(
+      DatabaseSchema.createStatements.singleWhere(
+        (statement) => statement.contains('CREATE TABLE certificate_fields'),
+      ),
+      allOf(
+        contains('font_id TEXT'),
+        contains('FOREIGN KEY (font_id) REFERENCES fonts (id)'),
+      ),
     );
   });
 

@@ -939,6 +939,139 @@ projects.id
 }
 ```
 
+## 23.4 مخطط ERD
+
+يمثل المخطط التالي الجداول الحالية فقط بعد الدمج في schema v8. إعدادات `layout`
+و`mapping` مدمجة داخل `projects.settings_json` ولا تظهر كجداول مستقلة.
+
+```mermaid
+erDiagram
+    INSTITUTIONS ||--o{ PROJECTS : owns
+    INSTITUTIONS ||--o{ VERIFICATION_RECORDS : identifies
+    TEMPLATES o|--o{ PROJECTS : selected_by
+    PROJECTS ||--o{ RECORDS : contains
+    PROJECTS ||--o{ CERTIFICATE_FIELDS : defines
+    PROJECTS ||--o{ CERTIFICATES : generates
+    PROJECTS ||--o{ VERIFICATION_RECORDS : scopes
+    RECORDS ||--o{ CERTIFICATES : produces
+    CERTIFICATES ||--o| VERIFICATION_RECORDS : proves
+
+    INSTITUTIONS {
+        string id PK
+        string institution_id
+        string name
+        string name_ar
+        string name_en
+        string logo_path
+        json contact_json
+        json settings_json
+        datetime created_at
+        datetime updated_at
+    }
+
+    PROJECTS {
+        string id PK
+        string institution_id FK
+        string name
+        string course_name
+        string description
+        datetime start_date
+        datetime end_date
+        string trainer_name
+        string organization_name
+        string logo_path
+        string template_id FK
+        json settings_json
+        string project_key_reference
+        int version
+        datetime created_at
+        datetime updated_at
+    }
+
+    TEMPLATES {
+        string id PK
+        string name
+        string file_path
+        int width
+        int height
+        float dpi
+        string format
+        datetime created_at
+        datetime updated_at
+    }
+
+    FONTS {
+        string id PK
+        string name
+        string family
+        string file_path
+        string format
+        blob font_bytes
+        datetime created_at
+        datetime updated_at
+    }
+
+    RECORDS {
+        string id PK
+        string project_id FK
+        string class_name
+        json data_json
+        int row_number
+        datetime created_at
+        datetime updated_at
+    }
+
+    CERTIFICATE_FIELDS {
+        string id PK
+        string project_id FK
+        string class_name
+        string source
+        json position_json
+        json style_json
+        datetime created_at
+        datetime updated_at
+    }
+
+    CERTIFICATES {
+        string id PK
+        string project_id FK
+        string record_id FK
+        string file_path
+        string image_path
+        json document_json
+        string status
+        string document_hash
+        datetime created_at
+        datetime updated_at
+    }
+
+    VERIFICATION_RECORDS {
+        string id PK
+        string certificate_id FK
+        string institution_id FK
+        string project_id FK
+        json payload_json
+        string signature
+        datetime created_at
+    }
+
+    SETTINGS {
+        string key PK
+        json value_json
+        datetime updated_at
+    }
+```
+
+### قواعد ERD الأمنية
+
+* `verification_records.certificate_id` فريد، لذلك لكل شهادة سجل تحقق واحد فقط.
+* `verification_records.signature` هو التوقيع الإلكتروني، وليس صورة توقيع.
+* `projects.settings_json` قيمة JSON مملوكة للمشروع وتضم layout وmapping وإعدادات
+  الخط؛ لا توجد علاقات مخفية مع جداول محذوفة.
+* `settings` مخصص لإعدادات التطبيق العامة فقط، ولا يحتوي mapping للمشاريع.
+* `fonts` أصل مشترك مستقل؛ ارتباط الخط بالمشروع محفوظ داخل `settings_json.font_id`
+  مع التحقق من وجود الأصل عند الاستخدام.
+
 ## 23.4 الجداول الأساسية
 
 ```text

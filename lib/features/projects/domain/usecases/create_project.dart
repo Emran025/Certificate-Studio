@@ -21,8 +21,12 @@ class CreateProject {
 
   Future<Project> call(CreateProjectParams params) async {
     final trimmedName = params.name.trim();
-    if (trimmedName.isEmpty) throw ArgumentError.value(params.name, 'name', 'Project name is required.');
-    if (params.institutionId.trim().isEmpty) throw ArgumentError.value(params.institutionId, 'institutionId', 'Institution is required.');
+    if (trimmedName.isEmpty) {
+      throw ArgumentError.value(params.name, 'name', 'Project name is required.');
+    }
+    if (params.institutionId.trim().isEmpty) {
+      throw ArgumentError.value(params.institutionId, 'institutionId', 'Institution is required.');
+    }
 
     final now = DateTime.now().toUtc();
     final id = 'project-${now.microsecondsSinceEpoch}';

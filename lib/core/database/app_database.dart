@@ -141,6 +141,8 @@ class InMemoryAppDatabase implements AppDatabase {
 
   void _ensureReady(String table) {
     if (!_isOpen) throw StateError('Database is not open.');
-    if (!_tables.containsKey(table)) throw ArgumentError.value(table, 'table', 'Unknown table.');
+    if (!_tables.containsKey(table)) {
+      throw ArgumentError.value(table, 'table', 'Unknown table.');
+    }
   }
 }

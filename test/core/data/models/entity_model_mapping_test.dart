@@ -34,18 +34,21 @@ void main() {
       expect(entity.valueFor('course'), 'Flutter');
     });
 
-    test('settings model owns JSON serialization and legacy default migration', () {
-      final settings = AppSettingsModel.fromJson({
-        'theme_mode': 'dark',
-        'accent_color': 0xFF176B87,
-        'language': 'en',
-      });
+    test(
+      'settings model owns JSON serialization and legacy default migration',
+      () {
+        final settings = AppSettingsModel.fromJson({
+          'theme_mode': 'dark',
+          'accent_color': 0xFF176B87,
+          'language': 'en',
+        });
 
-      expect(settings, isA<AppSettings>());
-      expect(settings.themeMode, AppThemeMode.dark);
-      expect(settings.languageCode, 'en');
-      expect(settings.toJson()['theme_mode'], 'dark');
-    });
+        expect(settings, isA<AppSettings>());
+        expect(settings.themeMode, AppThemeMode.dark);
+        expect(settings.languageCode, 'en');
+        expect(settings.toJson()['theme_mode'], 'dark');
+      },
+    );
 
     test('asset models map to database-compatible rows', () {
       final font = FontAssetModel(

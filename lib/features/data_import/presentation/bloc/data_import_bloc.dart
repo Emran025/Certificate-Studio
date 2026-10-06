@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_initializing_formals
+
 export 'data_import_event.dart';
 export 'data_import_state.dart';
 

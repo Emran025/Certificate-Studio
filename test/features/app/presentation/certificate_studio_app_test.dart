@@ -20,7 +20,9 @@ void main() {
     expect(find.text('إعداد المؤسسة'), findsOneWidget);
   });
 
-  testWidgets('uses the light beige and green application theme', (tester) async {
+  testWidgets('uses the light beige and green application theme', (
+    tester,
+  ) async {
     await tester.pumpWidget(const CertificateStudioApp());
 
     final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));

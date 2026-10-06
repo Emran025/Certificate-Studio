@@ -45,8 +45,9 @@ class DataPreview extends StatelessWidget {
       );
     }
     final unique = values.toSet().toList();
-    if (unique.length <= 8 ||
-        (values.isNotEmpty && unique.length / values.length <= .35)) {
+    if (unique.isNotEmpty &&
+        (unique.length <= 8 ||
+            (values.isNotEmpty && unique.length / values.length <= .35))) {
       return _FieldProfile(kind: _FieldKind.choice, choices: unique);
     }
     return const _FieldProfile(kind: _FieldKind.text);
@@ -120,7 +121,7 @@ class DataPreview extends StatelessWidget {
           onSubmitted: (_) => Navigator.of(dialogContext).pop(controller.text),
         ),
       ),
-    ).whenComplete(controller.dispose);
+    );
     if (!context.mounted || value == null) return;
     final name = value.trim();
     if (name.isEmpty || (table.columns.contains(name) && name != oldName)) {
@@ -185,8 +186,9 @@ class DataPreview extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
-          LayoutBuilder(
-            builder: (context, constraints) {
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
               final compact = constraints.maxWidth < AppBreakpoints.tablet;
               if (compact) {
                 return ListView.separated(
@@ -288,7 +290,8 @@ class DataPreview extends StatelessWidget {
                   ),
                 ),
               );
-            },
+              },
+            ),
           ),
         ],
       ),

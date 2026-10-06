@@ -36,22 +36,25 @@ void main() {
     ]);
   });
 
-  test('persists newly added fields even when there are no student rows', () async {
-    final database = InMemoryAppDatabase();
-    await database.open();
-    final repository = DataImportRepositoryImpl(
-      DataImportDataSourceImpl(database),
-    );
+  test(
+    'persists newly added fields even when there are no student rows',
+    () async {
+      final database = InMemoryAppDatabase();
+      await database.open();
+      final repository = DataImportRepositoryImpl(
+        DataImportDataSourceImpl(database),
+      );
 
-    await repository.saveForProject(
-      'project-1',
-      const ImportedTable(columns: ['name', 'email'], rows: []),
-    );
+      await repository.saveForProject(
+        'project-1',
+        const ImportedTable(columns: ['name', 'email'], rows: []),
+      );
 
-    final restored = await repository.getForProject('project-1');
-    expect(restored.columns, ['name', 'email']);
-    expect(restored.rows, isEmpty);
-  });
+      final restored = await repository.getForProject('project-1');
+      expect(restored.columns, ['name', 'email']);
+      expect(restored.rows, isEmpty);
+    },
+  );
 
   test('parses the first worksheet from an XLSX workbook', () {
     final workbook = Excel.createExcel();

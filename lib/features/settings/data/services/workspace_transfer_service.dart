@@ -11,6 +11,7 @@ import '../../../../core/files/export_file_writer.dart';
 import '../../../../core/files/project_asset_store.dart';
 import '../../../../core/security/keys/institution_key_manager.dart';
 import '../../../certificates/data/services/template_bytes.dart';
+import 'workspace_transfer_csv.dart';
 
 abstract interface class WorkspaceTransferServiceContract {
   Future<String?> exportProfile(String institutionId);
@@ -210,8 +211,8 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
       ..addFile(
         ArchiveFile(
           _dataRowsName,
-          utf8.encode(_recordsToCsv(records)).length,
-          utf8.encode(_recordsToCsv(records)),
+          utf8.encode(recordsToCsv(records)).length,
+          utf8.encode(recordsToCsv(records)),
         ),
       );
 
@@ -361,7 +362,7 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
   }
 
   Future<void> _replaceRecordsFromCsv(String projectId, String csv) async {
-    final rows = _csvToRows(csv);
+    final rows = csvToRows(csv);
     await _database.deleteWhere(DatabaseTables.records, {
       'project_id': projectId,
     });
@@ -453,76 +454,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     for (var index = 0; index < value.length; index += 2)
       int.parse(value.substring(index, index + 2), radix: 16),
   ];
-
-  String _recordsToCsv(List<Map<String, Object?>> records) {
-    final maps = <Map<String, String>>[];
-    final columns = <String>[];
-    for (final record in records) {
-      final raw = record['data_json'];
-      if (raw is! String) continue;
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map) continue;
-      final values = decoded.map(
-        (key, value) => MapEntry(key.toString(), value?.toString() ?? ''),
-      );
-      maps.add(values);
-      for (final key in values.keys) {
-        if (!columns.contains(key)) columns.add(key);
-      }
-    }
-    return [
-      columns.map(_csvCell).join(','),
-      for (final row in maps)
-        columns.map((column) => _csvCell(row[column] ?? '')).join(','),
-    ].join('\r\n');
-  }
-
-  List<Map<String, String>> _csvToRows(String input) {
-    final lines = input
-        .replaceAll('\r\n', '\n')
-        .replaceAll('\r', '\n')
-        .split('\n');
-    if (lines.isEmpty || lines.first.trim().isEmpty) return [];
-    final headers = _parseCsvLine(lines.first);
-    return [
-      for (final line in lines.skip(1))
-        if (line.trim().isNotEmpty)
-          {
-            for (var index = 0; index < headers.length; index++)
-              headers[index]: index < _parseCsvLine(line).length
-                  ? _parseCsvLine(line)[index]
-                  : '',
-          },
-    ];
-  }
-
-  String _csvCell(String value) => value.contains(RegExp(r'[,"]|\r|\n'))
-      ? '"${value.replaceAll('"', '""')}"'
-      : value;
-
-  List<String> _parseCsvLine(String line) {
-    final result = <String>[];
-    final buffer = StringBuffer();
-    var quoted = false;
-    for (var index = 0; index < line.length; index++) {
-      final character = line[index];
-      if (character == '"') {
-        if (quoted && index + 1 < line.length && line[index + 1] == '"') {
-          buffer.write('"');
-          index++;
-        } else {
-          quoted = !quoted;
-        }
-      } else if (character == ',' && !quoted) {
-        result.add(buffer.toString());
-        buffer.clear();
-      } else {
-        buffer.write(character);
-      }
-    }
-    result.add(buffer.toString());
-    return result;
-  }
 }
 
 const _appSpacingSource = '''

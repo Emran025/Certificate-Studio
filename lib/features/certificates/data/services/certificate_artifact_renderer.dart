@@ -8,18 +8,6 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:zxing2/qrcode.dart';
 
-class PdfBackgroundAssets {
-  const PdfBackgroundAssets({
-    required this.bytes,
-    required this.width,
-    required this.height,
-  });
-
-  final List<int> bytes;
-  final double width;
-  final double height;
-}
-
 class CertificateArtifactRenderer {
   /// Appends the same portable verification record used by the PDF artifact
   /// to a PNG byte stream. PNG decoders ignore trailing bytes, while the
@@ -32,36 +20,26 @@ class CertificateArtifactRenderer {
   /// Prepares the immutable background once per generation job. Rendering a
   /// certificate must remain pixel-compatible, but decoding and enhancing the
   /// same template for every record is unnecessary work.
-  static PdfBackgroundAssets? preparePdfBackground(
-    List<int>? templateBytes,
-    Map<String, Object?> template,
-  ) {
+  static List<int>? preparePdfBackground(List<int>? templateBytes) {
     if (templateBytes == null) return null;
     final source = img.decodeImage(Uint8List.fromList(templateBytes));
     if (source == null) return null;
-    return PdfBackgroundAssets(
-      bytes: _enhanceBackground(
-        templateBytes,
-        width: source.width,
-        height: source.height,
-        scale: 3,
-      ),
-      width: source.width.toDouble(),
-      height: source.height.toDouble(),
+    return _enhanceBackground(
+      templateBytes,
+      width: source.width,
+      height: source.height,
+      scale: 3,
     );
   }
 
   static Future<List<int>> renderPdf({
     required Map<String, dynamic> values,
     required List<Map<String, Object?>> fields,
-    required String hash,
     required Map<String, dynamic> record,
     required List<int>? templateBytes,
     required Map<String, Object?> template,
     required Map<String, List<int>> fontBytesByFamily,
     List<int>? preparedBackgroundBytes,
-    double? preparedImageWidth,
-    double? preparedImageHeight,
   }) async {
     final document = pw.Document(title: 'Certificate');
     // A corrupt/unsupported imported font must never abort certificate
@@ -84,7 +62,7 @@ class CertificateArtifactRenderer {
     final canvasWidth = _number(template['width'], 1000);
     final canvasHeight = _number(template['height'], 700);
     final dpi = _number(template['dpi'], 96);
-    final sourceImage = templateBytes == null || preparedImageWidth != null
+    final sourceImage = templateBytes == null
         ? null
         : img.decodeImage(Uint8List.fromList(templateBytes));
     final enhancedBackground =
@@ -100,21 +78,11 @@ class CertificateArtifactRenderer {
     final background = enhancedBackground == null
         ? null
         : pw.MemoryImage(Uint8List.fromList(enhancedBackground));
-    // The final PDF page follows the actual background image dimensions. The
-    // designer fields are mapped from the image's contain rectangle inside
-    // the logical design canvas into this page.
-    final imageWidth =
-        preparedImageWidth ?? sourceImage?.width.toDouble() ?? canvasWidth;
-    final imageHeight =
-        preparedImageHeight ?? sourceImage?.height.toDouble() ?? canvasHeight;
-    final containScale = math.min(
-      canvasWidth / imageWidth,
-      canvasHeight / imageHeight,
-    );
-    final containOffsetX = (canvasWidth - imageWidth * containScale) / 2;
-    final containOffsetY = (canvasHeight - imageHeight * containScale) / 2;
-    final pageWidth = imageWidth / dpi * 72;
-    final pageHeight = imageHeight / dpi * 72;
+    // Use the designer's logical canvas as the output page. The background is
+    // contained within it, while fields keep their exact saved coordinates,
+    // sizes, padding, and margins instead of being reprojected onto the image.
+    final pageWidth = canvasWidth / dpi * 72;
+    final pageHeight = canvasHeight / dpi * 72;
     final qrField = fields.where(_isQrField).isEmpty
         ? null
         : fields.where(_isQrField).first;
@@ -126,7 +94,7 @@ class CertificateArtifactRenderer {
           children: [
             if (background != null)
               pw.Positioned.fill(
-                child: pw.Image(background, fit: pw.BoxFit.fill),
+                child: pw.Image(background, fit: pw.BoxFit.contain),
               ),
             for (final field in fields)
               if (_fieldIsVisible(field) && !_isQrField(field))
@@ -139,24 +107,7 @@ class CertificateArtifactRenderer {
                   pageHeight,
                   fonts,
                   defaultFont,
-                  imageWidth,
-                  imageHeight,
-                  containScale,
-                  containOffsetX,
-                  containOffsetY,
                 ),
-            pw.Positioned(
-              left: 8,
-              bottom: 6,
-              child: pw.Text(
-                hash,
-                style: pw.TextStyle(
-                  font: defaultFont,
-                  fontFallback: fonts.values.toList(),
-                  fontSize: 5,
-                ),
-              ),
-            ),
             _pdfQrField(
               encodeVerificationQrPayload(record),
               qrField,
@@ -164,11 +115,6 @@ class CertificateArtifactRenderer {
               canvasHeight,
               pageWidth,
               pageHeight,
-              imageWidth,
-              imageHeight,
-              containScale,
-              containOffsetX,
-              containOffsetY,
             ),
           ],
         ),
@@ -181,7 +127,6 @@ class CertificateArtifactRenderer {
   static List<int> renderPng({
     required Map<String, dynamic> values,
     required List<Map<String, Object?>> fields,
-    required String hash,
     required Map<String, dynamic> record,
     required List<int>? templateBytes,
     required Map<String, Object?> template,
@@ -260,14 +205,6 @@ class CertificateArtifactRenderer {
         color: _imageColor(style['color'] as String?),
       );
     }
-    img.drawString(
-      canvas,
-      'Verification hash: $hash',
-      font: img.arial14,
-      x: 180,
-      y: canvas.height - 40,
-      color: img.ColorRgb8(90, 90, 90),
-    );
     final qrFields = fields.where(_isQrField);
     final qrField = qrFields.isEmpty ? null : qrFields.first;
     final qrPosition = qrField == null
@@ -306,9 +243,9 @@ class CertificateArtifactRenderer {
     if (source == null || source.width <= 0 || source.height <= 0) {
       return sourceBytes;
     }
-    // Avoid allocating very large intermediate bitmaps on Windows. The PDF
-    // image is still fitted to the original page dimensions, while the cap
-    // prevents a 4K/8K template from freezing the UI during generation.
+    // Avoid allocating very large intermediate bitmaps on Windows. The image
+    // remains contained within the design canvas; the cap prevents a 4K/8K
+    // template from freezing the UI during generation.
     const maxDimension = 6000;
     final requestedScale = math
         .min(
@@ -348,11 +285,6 @@ class CertificateArtifactRenderer {
     double canvasHeight,
     double pageWidth,
     double pageHeight,
-    double imageWidth,
-    double imageHeight,
-    double containScale,
-    double containOffsetX,
-    double containOffsetY,
   ) {
     if (field == null) {
       return pw.Positioned(
@@ -362,18 +294,10 @@ class CertificateArtifactRenderer {
       );
     }
     final position = _jsonMap(field['position_json']);
-    final designX = _number(position['x'], 0);
-    final designY = _number(position['y'], 0);
-    final designWidth = _number(position['width'], 220);
-    final designHeight = _number(position['height'], 220);
-    final imageX = (designX - containOffsetX) / containScale;
-    final imageY = (designY - containOffsetY) / containScale;
-    final imageFieldWidth = designWidth / containScale;
-    final imageFieldHeight = designHeight / containScale;
-    final x = imageX / imageWidth * pageWidth;
-    final y = imageY / imageHeight * pageHeight;
-    final width = imageFieldWidth / imageWidth * pageWidth;
-    final height = imageFieldHeight / imageHeight * pageHeight;
+    final x = _number(position['x'], 0) / canvasWidth * pageWidth;
+    final y = _number(position['y'], 0) / canvasHeight * pageHeight;
+    final width = _number(position['width'], 220) / canvasWidth * pageWidth;
+    final height = _number(position['height'], 220) / canvasHeight * pageHeight;
     return pw.Positioned(
       left: x,
       top: y,
@@ -469,11 +393,6 @@ class CertificateArtifactRenderer {
     double pageHeight,
     Map<String, pw.Font> fonts,
     pw.Font defaultFont,
-    double imageWidth,
-    double imageHeight,
-    double containScale,
-    double containOffsetX,
-    double containOffsetY,
   ) {
     final position = _jsonMap(field['position_json']);
     final style = _jsonMap(field['style_json']);
@@ -482,18 +401,10 @@ class CertificateArtifactRenderer {
         ? defaultFont
         : fonts[requestedFamily] ?? defaultFont;
     final text = _fieldText(values, field);
-    final designX = _number(position['x'], 0);
-    final designY = _number(position['y'], 0);
-    final designWidth = _number(position['width'], 420);
-    final designHeight = _number(position['height'], 64);
-    final imageX = (designX - containOffsetX) / containScale;
-    final imageY = (designY - containOffsetY) / containScale;
-    final imageFieldWidth = designWidth / containScale;
-    final imageFieldHeight = designHeight / containScale;
-    final x = imageX / imageWidth * pageWidth;
-    final y = imageY / imageHeight * pageHeight;
-    final width = imageFieldWidth / imageWidth * pageWidth;
-    final height = imageFieldHeight / imageHeight * pageHeight;
+    final x = _number(position['x'], 0) / canvasWidth * pageWidth;
+    final y = _number(position['y'], 0) / canvasHeight * pageHeight;
+    final width = _number(position['width'], 420) / canvasWidth * pageWidth;
+    final height = _number(position['height'], 64) / canvasHeight * pageHeight;
     final alignment = switch (style['alignment']) {
       'center' => pw.TextAlign.center,
       'right' => pw.TextAlign.right,
@@ -505,8 +416,8 @@ class CertificateArtifactRenderer {
       _ => pw.Alignment.centerLeft,
     };
     // Keep an explicit designer direction authoritative. When it is left at
-    // the default, detect common RTL scripts (not Arabic only) so multilingual
-    // fields are laid out naturally without changing their saved geometry.
+    // the default, detect common RTL scripts so multilingual fields lay out
+    // naturally without changing their saved geometry.
     final direction = style['direction'] == 'rtl'
         ? pw.TextDirection.rtl
         : _containsRtl(text)
@@ -515,23 +426,21 @@ class CertificateArtifactRenderer {
     final textStyle = pw.TextStyle(
       color: _pdfColor(style['color'] as String?),
       font: font,
-      // Cairo is the first fallback by contract. Other imported families are
-      // still available for scripts Cairo does not cover (CJK, Indic, emoji,
-      // and other Unicode blocks).
       fontFallback: [
         defaultFont,
         ...fonts.values.where((item) => item != font && item != defaultFont),
       ],
-      fontSize:
-          _number(style['font_size'], 24) /
-          containScale *
-          pageWidth /
-          imageWidth,
+      fontSize: _number(style['font_size'], 24) / canvasWidth * pageWidth,
+      fontWeight: style['bold'] == true || style['font_weight'] == 'bold'
+          ? pw.FontWeight.bold
+          : pw.FontWeight.normal,
+      fontStyle: style['italic'] == true
+          ? pw.FontStyle.italic
+          : pw.FontStyle.normal,
     );
-    // The designer uses 10 logical canvas pixels of horizontal padding. Keep
-    // the same geometry in PDF points instead of applying a fixed 10pt inset,
-    // which becomes disproportionately large for high-DPI templates.
-    final fieldPadding = 10 / containScale * pageWidth / imageWidth;
+    // The designer uses 10 logical canvas pixels of horizontal padding and at
+    // most three clipped lines. Convert the padding from the same canvas scale.
+    final fieldPadding = 10 / canvasWidth * pageWidth;
     return pw.Positioned(
       left: x,
       top: y,
@@ -547,6 +456,8 @@ class CertificateArtifactRenderer {
               child: pw.Text(
                 _pdfText(text),
                 textAlign: alignment,
+                maxLines: 3,
+                overflow: pw.TextOverflow.clip,
                 style: textStyle,
               ),
             ),

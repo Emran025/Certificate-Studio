@@ -59,15 +59,11 @@ void _pdfRenderWorkerEntry(Map<String, Object?> init) {
       (key, value) => MapEntry(key.toString(), List<int>.from(value as List)),
     ),
   );
-  final prepared = CertificateArtifactRenderer.preparePdfBackground(
+  final background = CertificateArtifactRenderer.preparePdfBackground(
     init['templateBytes'] == null
         ? null
         : List<int>.from(init['templateBytes'] as List),
-    Map<String, Object?>.from(init['template'] as Map),
   );
-  final background = prepared?.bytes;
-  final backgroundWidth = prepared?.width;
-  final backgroundHeight = prepared?.height;
   commands.listen((message) async {
     if (message is! List || message.length < 2) return;
     final id = message[0];
@@ -79,14 +75,11 @@ void _pdfRenderWorkerEntry(Map<String, Object?> init) {
           for (final field in args['fields'] as List)
             Map<String, Object?>.from(field as Map),
         ],
-        hash: args['hash'] as String,
         record: Map<String, dynamic>.from(args['record'] as Map),
         templateBytes: null,
         template: Map<String, Object?>.from(args['template'] as Map),
         fontBytesByFamily: fonts,
         preparedBackgroundBytes: background,
-        preparedImageWidth: backgroundWidth,
-        preparedImageHeight: backgroundHeight,
       );
       (init['responses'] as SendPort).send(<Object?>[id, bytes]);
     } catch (error, stack) {

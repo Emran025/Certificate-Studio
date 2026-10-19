@@ -131,7 +131,7 @@ class _CanvasField extends StatelessWidget {
                 : Text(
                     previewText,
                     maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+                    overflow: TextOverflow.clip,
                     textDirection: field.textDirection,
                     style: TextStyle(
                       fontFamily: field.fontFamily,

@@ -199,7 +199,6 @@ class CertificateGenerationService
           final pdfBytes = await _renderPdfInIsolate(
             values,
             fields,
-            signedRecord['document_hash'] as String,
             signedRecord,
             templateBytes,
             template,
@@ -285,7 +284,6 @@ class CertificateGenerationService
   Future<List<int>> _renderPdfInIsolate(
     Map<String, dynamic> values,
     List<Map<String, Object?>> fields,
-    String hash,
     Map<String, dynamic> record,
     List<int>? templateBytes,
     Map<String, Object?> template,
@@ -301,15 +299,12 @@ class CertificateGenerationService
     return worker.render({
       'values': values,
       'fields': fields,
-      'hash': hash,
       'record': record,
       // The worker owns the decoded/enhanced background. Keeping this null
       // prevents every certificate from decoding and transferring it again.
       'templateBytes': null,
       'template': template,
       'preparedBackgroundBytes': null,
-      'preparedImageWidth': null,
-      'preparedImageHeight': null,
     });
   }
 

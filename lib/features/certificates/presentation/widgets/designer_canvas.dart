@@ -13,6 +13,7 @@ class _Canvas extends StatelessWidget {
     required this.onSelect,
     required this.onMove,
     required this.onResize,
+    this.fieldRenderer = const FlutterCertificateCanvasFieldRenderer(),
   });
   final List<_DesignerField> fields;
   final String? selectedId;
@@ -31,6 +32,7 @@ class _Canvas extends StatelessWidget {
     required bool fromTop,
   })
   onResize;
+  final CertificateCanvasFieldRenderer fieldRenderer;
 
   @override
   Widget build(BuildContext context) => InteractiveViewer(
@@ -70,6 +72,7 @@ class _Canvas extends StatelessWidget {
                         staticText: field.text,
                       ),
                 fontFamilies: fontFamilies,
+                fieldRenderer: fieldRenderer,
                 onSelect: () => onSelect(field.id),
                 onMove: (delta) => onMove(field.id, delta),
                 onResize: (delta, fromLeft, fromTop) => onResize(
@@ -92,6 +95,7 @@ class _CanvasField extends StatelessWidget {
     required this.selected,
     required this.previewText,
     required this.fontFamilies,
+    required this.fieldRenderer,
     required this.onSelect,
     required this.onMove,
     required this.onResize,
@@ -100,6 +104,7 @@ class _CanvasField extends StatelessWidget {
   final bool selected;
   final String previewText;
   final List<String> fontFamilies;
+  final CertificateCanvasFieldRenderer fieldRenderer;
   final VoidCallback onSelect;
   final ValueChanged<Offset> onMove;
   final void Function(Offset, bool, bool) onResize;
@@ -116,24 +121,26 @@ class _CanvasField extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          CertificateCanvasField(
-            text: previewText,
-            fontFamily: field.fontFamily,
-            fontFamilies: fontFamilies,
-            fontSize: field.fontSize,
-            color: field.color,
-            alignment: field.alignment,
-            direction: field.textDirection,
-            bold: field.bold,
-            italic: field.italic,
-            qr: field.qr,
-            qrPayload: 'certificate-studio-preview-verification',
-            qrSize: math
-                .max(1.0, math.min(field.width, field.height) - 20)
-                .toDouble(),
-            selected: selected,
-            selectionColor: context.themeSelection,
-            selectionBorderColor: context.themePrimary,
+          fieldRenderer.render(
+            CertificateCanvasField(
+              text: previewText,
+              fontFamily: field.fontFamily,
+              fontFamilies: fontFamilies,
+              fontSize: field.fontSize,
+              color: field.color,
+              alignment: field.alignment,
+              direction: field.textDirection,
+              bold: field.bold,
+              italic: field.italic,
+              qr: field.qr,
+              qrPayload: 'certificate-studio-preview-verification',
+              qrSize: math
+                  .max(1.0, math.min(field.width, field.height) - 20)
+                  .toDouble(),
+              selected: selected,
+              selectionColor: context.themeSelection,
+              selectionBorderColor: context.themePrimary,
+            ),
           ),
           if (selected) ...[
             _ResizeHandle(

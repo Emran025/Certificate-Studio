@@ -111,7 +111,10 @@ class _CertificateGenerationScreenState
           maxHeight: double.infinity,
           child: IgnorePointer(
             child: ExcludeSemantics(
-              child: CertificateCanvasSnapshotHost(key: _canvasSnapshotKey),
+              child: CertificateCanvasSnapshotHost(
+                key: _canvasSnapshotKey,
+                fieldRenderer: widget.fieldRenderer,
+              ),
             ),
           ),
         ),

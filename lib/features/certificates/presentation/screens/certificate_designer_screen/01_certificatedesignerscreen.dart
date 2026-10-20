@@ -6,11 +6,13 @@ class CertificateDesignerScreen extends StatefulWidget {
     required this.database,
     required this.projectId,
     required this.projectName,
+    this.fieldRenderer = const FlutterCertificateCanvasFieldRenderer(),
   });
 
   final AppDatabase database;
   final String projectId;
   final String projectName;
+  final CertificateCanvasFieldRenderer fieldRenderer;
 
   @override
   State<CertificateDesignerScreen> createState() =>

@@ -8,6 +8,30 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:zxing2/qrcode.dart';
 
+/// Interchangeable implementations for the certificate field visual.
+abstract interface class CertificateCanvasFieldRenderer {
+  Widget render(CertificateCanvasField field);
+}
+
+/// The current renderer shared by the designer preview and Flutter export.
+class FlutterCertificateCanvasFieldRenderer
+    implements CertificateCanvasFieldRenderer {
+  const FlutterCertificateCanvasFieldRenderer();
+
+  @override
+  Widget render(CertificateCanvasField field) => field;
+}
+
+/// Preserves the original designer field drawing for compatibility/testing.
+class LegacyCertificateCanvasFieldRenderer
+    implements CertificateCanvasFieldRenderer {
+  const LegacyCertificateCanvasFieldRenderer();
+
+  @override
+  Widget render(CertificateCanvasField field) =>
+      _LegacyCertificateCanvasField(field: field);
+}
+
 /// The exact field body shared by the designer and generated certificate view.
 class CertificateCanvasField extends StatelessWidget {
   const CertificateCanvasField({
@@ -88,6 +112,59 @@ class CertificateCanvasField extends StatelessWidget {
   );
 }
 
+class _LegacyCertificateCanvasField extends StatelessWidget {
+  const _LegacyCertificateCanvasField({required this.field});
+
+  final CertificateCanvasField field;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    alignment: switch (field.alignment) {
+      'center' => Alignment.center,
+      'right' => Alignment.centerRight,
+      _ => Alignment.centerLeft,
+    },
+    padding: const EdgeInsets.symmetric(horizontal: 10),
+    decoration: BoxDecoration(
+      color: field.selected
+          ? field.selectionColor.withValues(alpha: .45)
+          : Colors.transparent,
+      border: Border.all(
+        color: field.selected ? field.selectionBorderColor : Colors.transparent,
+        width: 2,
+      ),
+    ),
+    child: field.qr
+        ? const Center(child: Icon(Icons.qr_code_2, size: 96))
+        : Text(
+            field.text,
+            maxLines: 3,
+            overflow: TextOverflow.clip,
+            textDirection: field.direction,
+            style: TextStyle(
+              fontFamily: field.fontFamily,
+              fontFamilyFallback: [
+                ...field.fontFamilies.where(
+                  (family) => family != field.fontFamily,
+                ),
+                'Noto Naskh Arabic',
+                'Noto Sans Arabic',
+                'Arial',
+              ],
+              fontSize: field.fontSize,
+              color: _legacyCertificateColor(field.color),
+              fontWeight: field.bold ? FontWeight.bold : FontWeight.normal,
+              fontStyle: field.italic ? FontStyle.italic : FontStyle.normal,
+            ),
+          ),
+  );
+}
+
+Color _legacyCertificateColor(String value) {
+  final hex = value.replaceFirst('#', '');
+  return Color(int.tryParse('FF$hex', radix: 16) ?? 0xFF20332B);
+}
+
 /// A real QR visual used in both the design preview and the exported canvas.
 class CertificateQrCode extends StatelessWidget {
   const CertificateQrCode({
@@ -156,6 +233,7 @@ class CertificateCanvasExportView extends StatelessWidget {
     required this.templateBytes,
     required this.template,
     required this.fontFamilies,
+    this.fieldRenderer = const FlutterCertificateCanvasFieldRenderer(),
     super.key,
   });
 
@@ -165,6 +243,7 @@ class CertificateCanvasExportView extends StatelessWidget {
   final List<int>? templateBytes;
   final Map<String, Object?> template;
   final List<String> fontFamilies;
+  final CertificateCanvasFieldRenderer fieldRenderer;
 
   @override
   Widget build(BuildContext context) {
@@ -217,25 +296,27 @@ class CertificateCanvasExportView extends StatelessWidget {
       top: y,
       width: width,
       height: height,
-      child: CertificateCanvasField(
-        text: certificateCanvasText(
-          values: values,
-          source: field['source']?.toString() ?? '',
-          staticText: style['text']?.toString() ?? '',
+      child: fieldRenderer.render(
+        CertificateCanvasField(
+          text: certificateCanvasText(
+            values: values,
+            source: field['source']?.toString() ?? '',
+            staticText: style['text']?.toString() ?? '',
+          ),
+          fontFamily: style['font_family']?.toString() ?? 'Cairo',
+          fontFamilies: fontFamilies,
+          fontSize: _number(style['font_size'], 28),
+          color: style['color']?.toString() ?? '#20332B',
+          alignment: style['alignment']?.toString() ?? 'left',
+          direction: style['direction'] == 'rtl'
+              ? TextDirection.rtl
+              : TextDirection.ltr,
+          bold: style['bold'] == true || style['font_weight'] == 'bold',
+          italic: style['italic'] == true,
+          qr: qr,
+          qrPayload: qrPayload,
+          qrSize: qrSize,
         ),
-        fontFamily: style['font_family']?.toString() ?? 'Cairo',
-        fontFamilies: fontFamilies,
-        fontSize: _number(style['font_size'], 28),
-        color: style['color']?.toString() ?? '#20332B',
-        alignment: style['alignment']?.toString() ?? 'left',
-        direction: style['direction'] == 'rtl'
-            ? TextDirection.rtl
-            : TextDirection.ltr,
-        bold: style['bold'] == true || style['font_weight'] == 'bold',
-        italic: style['italic'] == true,
-        qr: qr,
-        qrPayload: qrPayload,
-        qrSize: qrSize,
       ),
     );
   }
@@ -276,7 +357,12 @@ String _normalizeCertificateKey(String value) => value
 /// Mounted in the generation screen and used to snapshot the exact Flutter
 /// field widgets before the PDF is assembled. It must stay in the painted tree.
 class CertificateCanvasSnapshotHost extends StatefulWidget {
-  const CertificateCanvasSnapshotHost({super.key});
+  const CertificateCanvasSnapshotHost({
+    this.fieldRenderer = const FlutterCertificateCanvasFieldRenderer(),
+    super.key,
+  });
+
+  final CertificateCanvasFieldRenderer fieldRenderer;
 
   @override
   State<CertificateCanvasSnapshotHost> createState() =>
@@ -326,6 +412,7 @@ class CertificateCanvasSnapshotHostState
         templateBytes: templateBytes,
         template: template,
         fontFamilies: fontFamilies,
+        fieldRenderer: widget.fieldRenderer,
       );
       if (!mounted) throw StateError('The certificate screen was closed.');
       setState(() {

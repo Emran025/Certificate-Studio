@@ -65,6 +65,7 @@ void main() {
     expect(fields.first.direction, TextDirection.rtl);
     expect(fields.last.qr, isTrue);
     expect(fields.last.qrPayload, contains('cstudio://verify/'));
+    expect(find.byType(CertificateQrCode), findsOneWidget);
 
     final textPosition = tester.widget<Positioned>(
       find.ancestor(
@@ -98,6 +99,37 @@ void main() {
         staticText: 'Explicit label',
       ),
       'Explicit label',
+    );
+  });
+
+  testWidgets('legacy field renderer remains available on the same interface', (
+    tester,
+  ) async {
+    const field = CertificateCanvasField(
+      text: 'legacy QR preview',
+      fontFamily: 'Cairo',
+      fontFamilies: ['Cairo'],
+      fontSize: 28,
+      color: '#20332B',
+      alignment: 'left',
+      direction: TextDirection.ltr,
+      bold: false,
+      italic: false,
+      qr: true,
+    );
+    final legacy = const LegacyCertificateCanvasFieldRenderer().render(field);
+
+    await tester.pumpWidget(MaterialApp(home: Center(child: legacy)));
+
+    expect(find.byIcon(Icons.qr_code_2), findsOneWidget);
+    expect(find.byType(CertificateQrCode), findsNothing);
+    expect(
+      const LegacyCertificateCanvasFieldRenderer(),
+      isA<CertificateCanvasFieldRenderer>(),
+    );
+    expect(
+      const FlutterCertificateCanvasFieldRenderer(),
+      isA<CertificateCanvasFieldRenderer>(),
     );
   });
 }

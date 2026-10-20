@@ -8,12 +8,14 @@ class CertificateGenerationScreen extends StatefulWidget {
     required this.projectId,
     required this.projectName,
     required this.institutionId,
+    this.fieldRenderer = const FlutterCertificateCanvasFieldRenderer(),
   });
   final AppDatabase database;
   final KeyStorage keyStorage;
   final String projectId;
   final String projectName;
   final String institutionId;
+  final CertificateCanvasFieldRenderer fieldRenderer;
   @override
   State<CertificateGenerationScreen> createState() =>
       _CertificateGenerationScreenState();

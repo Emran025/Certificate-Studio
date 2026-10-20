@@ -487,6 +487,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
             canvasHeight: _canvasHeight,
             zoom: _zoom,
             fontFamilies: _fontFamilies,
+            fieldRenderer: widget.fieldRenderer,
             onSelect: (id) => setState(() => _selectedId = id),
             onMove: _moveField,
             onResize: _resizeField,

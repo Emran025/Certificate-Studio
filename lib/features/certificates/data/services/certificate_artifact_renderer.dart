@@ -557,6 +557,34 @@ class CertificateArtifactRenderer {
     );
   }
 
+  /// Embeds the Flutter canvas snapshot as a single lossless image on the PDF
+  /// page. Text and QR are intentionally not re-laid out by the PDF engine.
+  static Future<List<int>> renderPdfFromPng({
+    required List<int> imageBytes,
+    required Map<String, dynamic> record,
+    required Map<String, Object?> template,
+  }) async {
+    final canvasWidth = _number(template['width'], 1000);
+    final canvasHeight = _number(template['height'], 700);
+    final dpi = math.max(1.0, _number(template['dpi'], 96));
+    final pageWidth = canvasWidth / dpi * 72;
+    final pageHeight = canvasHeight / dpi * 72;
+    final image = pw.MemoryImage(Uint8List.fromList(imageBytes));
+    final document = pw.Document(title: 'Certificate');
+    document.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat(pageWidth, pageHeight),
+        margin: pw.EdgeInsets.zero,
+        build: (_) => pw.Stack(
+          children: [
+            pw.Positioned.fill(child: pw.Image(image, fit: pw.BoxFit.fill)),
+          ],
+        ),
+      ),
+    );
+    return [...await document.save(), ...utf8.encode(_embeddedMarker(record))];
+  }
+
   static String _embeddedMarker(Map<String, dynamic> record) =>
       'CSTUDIO_RECORD_V1:${base64UrlEncodeNoPadding(utf8.encode(canonicalJson(record)))}';
 }

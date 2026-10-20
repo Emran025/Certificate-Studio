@@ -64,9 +64,11 @@ class _Canvas extends StatelessWidget {
                 selected: field.id == selectedId,
                 previewText: field.qr
                     ? 'QR'
-                    : field.text.isNotEmpty
-                    ? field.text
-                    : '${previewData[field.source] ?? field.source}',
+                    : certificateCanvasText(
+                        values: previewData,
+                        source: field.source,
+                        staticText: field.text,
+                      ),
                 fontFamilies: fontFamilies,
                 onSelect: () => onSelect(field.id),
                 onMove: (delta) => onMove(field.id, delta),
@@ -114,48 +116,24 @@ class _CanvasField extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Container(
-            alignment: field.textAlignment,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: selected
-                  ? context.themeSelection.withValues(alpha: .45)
-                  : Colors.transparent,
-              border: Border.all(
-                color: selected ? context.themePrimary : Colors.transparent,
-                width: 2,
-              ),
-            ),
-            child: field.qr
-                ? const Center(child: Icon(Icons.qr_code_2, size: 96))
-                : Text(
-                    previewText,
-                    maxLines: 3,
-                    overflow: TextOverflow.clip,
-                    textDirection: field.textDirection,
-                    style: TextStyle(
-                      fontFamily: field.fontFamily,
-                      // Keep the chosen family first, then let Flutter use a
-                      // platform Arabic font for missing glyphs. This does not
-                      // alter layout constraints or the user's font choice.
-                      fontFamilyFallback: [
-                        ...fontFamilies.where(
-                          (family) => family != field.fontFamily,
-                        ),
-                        'Noto Naskh Arabic',
-                        'Noto Sans Arabic',
-                        'Arial',
-                      ],
-                      fontSize: field.fontSize,
-                      color: _hex(field.color),
-                      fontWeight: field.bold
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      fontStyle: field.italic
-                          ? FontStyle.italic
-                          : FontStyle.normal,
-                    ),
-                  ),
+          CertificateCanvasField(
+            text: previewText,
+            fontFamily: field.fontFamily,
+            fontFamilies: fontFamilies,
+            fontSize: field.fontSize,
+            color: field.color,
+            alignment: field.alignment,
+            direction: field.textDirection,
+            bold: field.bold,
+            italic: field.italic,
+            qr: field.qr,
+            qrPayload: 'certificate-studio-preview-verification',
+            qrSize: math
+                .max(1.0, math.min(field.width, field.height) - 20)
+                .toDouble(),
+            selected: selected,
+            selectionColor: context.themeSelection,
+            selectionBorderColor: context.themePrimary,
           ),
           if (selected) ...[
             _ResizeHandle(
@@ -179,10 +157,6 @@ class _CanvasField extends StatelessWidget {
       ),
     ),
   );
-  Color _hex(String value) {
-    final hex = value.replaceFirst('#', '');
-    return Color(int.tryParse('FF$hex', radix: 16) ?? 0xFF20332B);
-  }
 }
 
 class _ResizeHandle extends StatelessWidget {

@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
 import '../../data/services/template_bytes.dart';
+import '../widgets/certificate_canvas_visual.dart';
 import '../../../templates/presentation/template_file_support.dart';
 import '../../../../shared/themes/app_colors.dart';
 import '../../../../shared/themes/app_spacing.dart';

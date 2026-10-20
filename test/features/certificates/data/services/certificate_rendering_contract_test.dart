@@ -3,28 +3,48 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('production preserves the designer canvas and QR-only verification', () {
-    final renderer = File(
+  test('production PDF embeds the shared Flutter canvas and QR verification', () {
+    String readSource(String path) => File(path).readAsStringSync();
+
+    final renderer = readSource(
       'lib/features/certificates/data/services/certificate_artifact_renderer.dart',
-    ).readAsStringSync();
-    final designerCanvas = File(
-      'lib/features/certificates/presentation/widgets/designer_canvas.dart',
-    ).readAsStringSync();
-
-    expect(renderer, contains('final pageWidth = canvasWidth / dpi * 72;'));
-    expect(renderer, contains('final pageHeight = canvasHeight / dpi * 72;'));
-    expect(renderer, contains('pw.Image(background, fit: pw.BoxFit.contain)'));
-    expect(
-      renderer,
-      contains('_number(position[\'x\'], 0) / canvasWidth * pageWidth'),
     );
-    expect(renderer, contains('maxLines: 3'));
-    expect(renderer, contains('overflow: pw.TextOverflow.clip'));
-    expect(designerCanvas, contains('maxLines: 3'));
-    expect(designerCanvas, contains('overflow: TextOverflow.clip'));
+    final service = readSource(
+      'lib/features/certificates/data/services/certificate_generation_service.dart',
+    );
+    final designerCanvas = readSource(
+      'lib/features/certificates/presentation/widgets/designer_canvas.dart',
+    );
+    final canvasWidget = readSource(
+      'lib/features/certificates/presentation/widgets/certificate_canvas_visual.dart',
+    );
+    final generationScreen = readSource(
+      'lib/features/certificates/presentation/screens/certificate_generation_screen/02_certificategenerationscreenstate.dart',
+    );
 
+    final rasterPdfStart = renderer.indexOf(
+      'static Future<List<int>> renderPdfFromPng',
+    );
+    final embeddedRecordStart = renderer.indexOf(
+      'static String _embeddedMarker',
+      rasterPdfStart,
+    );
+    final rasterPdfRenderer = renderer.substring(
+      rasterPdfStart,
+      embeddedRecordStart,
+    );
+
+    expect(rasterPdfStart, isNonNegative);
+    expect(rasterPdfRenderer, contains('pw.Image(image, fit: pw.BoxFit.fill)'));
+    expect(rasterPdfRenderer, isNot(contains('pw.Text(')));
+    expect(rasterPdfRenderer, contains('_embeddedMarker(record)'));
+    expect(service, contains('canvasCapture != null'));
+    expect(generationScreen, contains('canvasCapture: _captureCanvas'));
+    expect(designerCanvas, contains('CertificateCanvasField('));
+    expect(canvasWidget, contains('maxLines: 3'));
+    expect(canvasWidget, contains('overflow: TextOverflow.clip'));
+    expect(canvasWidget, contains('fontFamilyFallback: ['));
+    expect(canvasWidget, contains('encodeVerificationQrPayload(record)'));
     expect(renderer, isNot(contains('Verification hash:')));
-    expect(renderer, contains('encodeVerificationQrPayload(record)'));
-    expect(renderer, contains('_embeddedMarker(record)'));
   });
 }

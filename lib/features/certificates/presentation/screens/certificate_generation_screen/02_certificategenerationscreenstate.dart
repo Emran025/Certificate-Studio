@@ -7,6 +7,30 @@ class _CertificateGenerationScreenState
   int _total = 0;
   CertificateGenerationResult? _result;
   List<Map<String, Object?>> _certificates = [];
+  final GlobalKey<CertificateCanvasSnapshotHostState> _canvasSnapshotKey =
+      GlobalKey<CertificateCanvasSnapshotHostState>();
+
+  Future<List<int>> _captureCanvas({
+    required Map<String, dynamic> values,
+    required List<Map<String, Object?>> fields,
+    required Map<String, dynamic> record,
+    required List<int>? templateBytes,
+    required Map<String, Object?> template,
+    required Map<String, List<int>> fontBytesByFamily,
+  }) async {
+    final host = _canvasSnapshotKey.currentState;
+    if (host == null) {
+      throw StateError('The Flutter certificate canvas is not mounted.');
+    }
+    return host.capture(
+      values: values,
+      fields: fields,
+      record: record,
+      templateBytes: templateBytes,
+      template: template,
+      fontBytesByFamily: fontBytesByFamily,
+    );
+  }
 
   Future<void> _generate() async {
     setState(() {
@@ -24,6 +48,7 @@ class _CertificateGenerationScreenState
           await CertificateGenerationService(
             widget.database,
             widget.keyStorage,
+            canvasCapture: _captureCanvas,
           ).generate(
             projectId: widget.projectId,
             institutionId: widget.institutionId,
@@ -70,184 +95,208 @@ class _CertificateGenerationScreenState
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: AppPageTable(
-      header: AppPageHeader(
-        title: context.l10n.text('Generate · ${widget.projectName}'),
-        subtitle: context.l10n.text(
-          'Create signed certificates for this project.',
-        ),
-        icon: Icons.workspace_premium_outlined,
-        actions: [
-          IconButton(
-            tooltip: context.l10n.text('Back'),
-            onPressed: () => Navigator.of(context).pop(),
-            icon: Icon(
-              context.l10n.text('Back') == "Back"
-                  ? Icons.arrow_back
-                  : Icons.arrow_forward,
+  Widget build(BuildContext context) => Stack(
+    clipBehavior: Clip.none,
+    children: [
+      Positioned(
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        child: OverflowBox(
+          alignment: Alignment.topLeft,
+          minWidth: 0,
+          maxWidth: double.infinity,
+          minHeight: 0,
+          maxHeight: double.infinity,
+          child: IgnorePointer(
+            child: ExcludeSemantics(
+              child: CertificateCanvasSnapshotHost(key: _canvasSnapshotKey),
             ),
           ),
-        ],
+        ),
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.text('Generate certificates'),
-                  style: Theme.of(context).textTheme.headlineMedium,
+      Scaffold(
+        body: AppPageTable(
+          header: AppPageHeader(
+            title: context.l10n.text('Generate · ${widget.projectName}'),
+            subtitle: context.l10n.text(
+              'Create signed certificates for this project.',
+            ),
+            icon: Icons.workspace_premium_outlined,
+            actions: [
+              IconButton(
+                tooltip: context.l10n.text('Back'),
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Icon(
+                  context.l10n.text('Back') == "Back"
+                      ? Icons.arrow_back
+                      : Icons.arrow_forward,
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  context.l10n.text(
-                    'Create signed PDF and high-resolution PNG certificates with offline verification records.',
-                  ),
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                AppSurfaceCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 900),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.l10n.text('Generate certificates'),
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      context.l10n.text(
+                        'Create signed PDF and high-resolution PNG certificates with offline verification records.',
+                      ),
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    AppSurfaceCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.verified_outlined, size: 30),
+                          Row(
+                            children: [
+                              const Icon(Icons.verified_outlined, size: 30),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: Text(
+                                  _running
+                                      ? context.l10n.text(
+                                          'Generating certificates…',
+                                        )
+                                      : context.l10n.text('Ready to generate'),
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                              ),
+                              if (!_running)
+                                FilledButton.icon(
+                                  onPressed: _generate,
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: Text(context.l10n.text('Generate')),
+                                ),
+                            ],
+                          ),
+                          if (_running) ...[
+                            const SizedBox(height: AppSpacing.lg),
+                            LinearProgressIndicator(
+                              value: _total == 0 ? null : _completed / _total,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              context.l10n.text(
+                                '$_completed of $_total recipients processed',
+                              ),
+                            ),
+                          ],
+                          if (_result case final result?) ...[
+                            const SizedBox(height: AppSpacing.lg),
+                            Row(
+                              children: [
+                                _Metric(
+                                  label: context.l10n.text('Generated'),
+                                  value: '${result.generated}',
+                                ),
+                                _Metric(
+                                  label: context.l10n.text('Failed'),
+                                  value: '${result.failed}',
+                                ),
+                                _Metric(
+                                  label: context.l10n.text('Total'),
+                                  value: '${result.total}',
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              'Job ${result.jobId} · ${result.status}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            FilledButton.icon(
+                              onPressed: result.generated == 0
+                                  ? null
+                                  : () => Navigator.of(context).push<void>(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            CertificateLibraryScreen(
+                                              database: widget.database,
+                                              keyStorage: widget.keyStorage,
+                                              projectId: widget.projectId,
+                                              title: context.l10n.text(
+                                                'Generated certificates',
+                                              ),
+                                            ),
+                                      ),
+                                    ),
+                              icon: const Icon(Icons.open_in_new),
+                              label: Text(
+                                context.l10n.text('Open certificate library'),
+                              ),
+                            ),
+                            if (result.errors.isNotEmpty) ...[
+                              const SizedBox(height: AppSpacing.md),
+                              for (final error in result.errors)
+                                Text(
+                                  error,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                                ),
+                            ],
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    AppSurfaceCard(
+                      child: Row(
+                        children: [
+                          const Icon(Icons.collections_bookmark_outlined),
                           const SizedBox(width: AppSpacing.md),
                           Expanded(
                             child: Text(
-                              _running
+                              _certificates.isEmpty
                                   ? context.l10n.text(
-                                      'Generating certificates…',
+                                      'No certificates generated yet. Import recipient data, design the layout, then generate.',
                                     )
-                                  : context.l10n.text('Ready to generate'),
-                              style: Theme.of(context).textTheme.titleLarge,
+                                  : context.l10n.text(
+                                      '${_certificates.length} generated certificates available in the library.',
+                                    ),
                             ),
                           ),
-                          if (!_running)
-                            FilledButton.icon(
-                              onPressed: _generate,
-                              icon: const Icon(Icons.play_arrow),
-                              label: Text(context.l10n.text('Generate')),
-                            ),
-                        ],
-                      ),
-                      if (_running) ...[
-                        const SizedBox(height: AppSpacing.lg),
-                        LinearProgressIndicator(
-                          value: _total == 0 ? null : _completed / _total,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          context.l10n.text(
-                            '$_completed of $_total recipients processed',
-                          ),
-                        ),
-                      ],
-                      if (_result case final result?) ...[
-                        const SizedBox(height: AppSpacing.lg),
-                        Row(
-                          children: [
-                            _Metric(
-                              label: context.l10n.text('Generated'),
-                              value: '${result.generated}',
-                            ),
-                            _Metric(
-                              label: context.l10n.text('Failed'),
-                              value: '${result.failed}',
-                            ),
-                            _Metric(
-                              label: context.l10n.text('Total'),
-                              value: '${result.total}',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          'Job ${result.jobId} · ${result.status}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        FilledButton.icon(
-                          onPressed: result.generated == 0
-                              ? null
-                              : () => Navigator.of(context).push<void>(
-                                  MaterialPageRoute(
-                                    builder: (_) => CertificateLibraryScreen(
-                                      database: widget.database,
-                                      keyStorage: widget.keyStorage,
-                                      projectId: widget.projectId,
-                                      title: context.l10n.text(
-                                        'Generated certificates',
+                          OutlinedButton(
+                            onPressed: _certificates.isEmpty
+                                ? null
+                                : () => Navigator.of(context).push<void>(
+                                    MaterialPageRoute(
+                                      builder: (_) => CertificateLibraryScreen(
+                                        database: widget.database,
+                                        keyStorage: widget.keyStorage,
+                                        projectId: widget.projectId,
+                                        title: context.l10n.text(
+                                          'Generated certificates',
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                          icon: const Icon(Icons.open_in_new),
-                          label: Text(
-                            context.l10n.text('Open certificate library'),
+                            child: Text(context.l10n.text('Browse')),
                           ),
-                        ),
-                        if (result.errors.isNotEmpty) ...[
-                          const SizedBox(height: AppSpacing.md),
-                          for (final error in result.errors)
-                            Text(
-                              error,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                            ),
                         ],
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                AppSurfaceCard(
-                  child: Row(
-                    children: [
-                      const Icon(Icons.collections_bookmark_outlined),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Text(
-                          _certificates.isEmpty
-                              ? context.l10n.text(
-                                  'No certificates generated yet. Import recipient data, design the layout, then generate.',
-                                )
-                              : context.l10n.text(
-                                  '${_certificates.length} generated certificates available in the library.',
-                                ),
-                        ),
                       ),
-                      OutlinedButton(
-                        onPressed: _certificates.isEmpty
-                            ? null
-                            : () => Navigator.of(context).push<void>(
-                                MaterialPageRoute(
-                                  builder: (_) => CertificateLibraryScreen(
-                                    database: widget.database,
-                                    keyStorage: widget.keyStorage,
-                                    projectId: widget.projectId,
-                                    title: context.l10n.text(
-                                      'Generated certificates',
-                                    ),
-                                  ),
-                                ),
-                              ),
-                        child: Text(context.l10n.text('Browse')),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
+    ],
   );
 }

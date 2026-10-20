@@ -13,6 +13,16 @@ import 'template_bytes.dart';
 import 'certificate_artifact_renderer.dart';
 import 'certificate_pdf_render_worker.dart';
 
+typedef CertificateCanvasCapture =
+    Future<List<int>> Function({
+      required Map<String, dynamic> values,
+      required List<Map<String, Object?>> fields,
+      required Map<String, dynamic> record,
+      required List<int>? templateBytes,
+      required Map<String, Object?> template,
+      required Map<String, List<int>> fontBytesByFamily,
+    });
+
 class CertificateGenerationResult {
   const CertificateGenerationResult({
     required this.jobId,
@@ -45,11 +55,13 @@ class CertificateGenerationService
     this.database,
     this.keyStorage, {
     CertificateArtifactStore? artifactStore,
+    this.canvasCapture,
   }) : artifactStore =
            artifactStore ?? SharedPreferencesCertificateArtifactStore();
   final AppDatabase database;
   final KeyStorage keyStorage;
   final CertificateArtifactStore artifactStore;
+  final CertificateCanvasCapture? canvasCapture;
   Future<List<int>>? _arabicFontBytes;
   final Map<String, Future<List<int>?>> _templateBytesCache = {};
   Future<Map<String, List<int>>>? _projectFontBytes;
@@ -196,17 +208,45 @@ class CertificateGenerationService
           // The QR payload is rendered into the artifact itself. Including an
           // artifact hash inside that payload would create a circular hash, so
           // the signed document record is intentionally the QR source of truth.
-          final pdfBytes = await _renderPdfInIsolate(
-            values,
-            fields,
-            signedRecord,
-            templateBytes,
-            template,
-          );
-          final pngBytes = CertificateArtifactRenderer.appendEmbeddedRecord(
-            await _rasterizePdf(pdfBytes),
-            signedRecord,
-          );
+          final List<int> pdfBytes;
+          final List<int> pngBytes;
+          if (canvasCapture != null) {
+            final defaultFontBytes = await _loadArabicFontBytes();
+            final fontBytesByFamily = await (_projectFontBytes ??=
+                _loadProjectFontBytes(defaultFontBytes));
+            final canvasBytes = await canvasCapture!(
+              values: values,
+              fields: fields,
+              record: signedRecord,
+              templateBytes: templateBytes,
+              template: template,
+              fontBytesByFamily: fontBytesByFamily,
+            );
+            pdfBytes = await CertificateArtifactRenderer.renderPdfFromPng(
+              imageBytes: canvasBytes,
+              record: signedRecord,
+              template: template,
+            );
+            pngBytes = CertificateArtifactRenderer.appendEmbeddedRecord(
+              canvasBytes,
+              signedRecord,
+            );
+          } else {
+            // The legacy branch remains available to non-UI callers and native
+            // tests. The app generation screen always injects the Flutter
+            // canvas capture above, so its PDF and PNG share one rendering.
+            pdfBytes = await _renderPdfInIsolate(
+              values,
+              fields,
+              signedRecord,
+              templateBytes,
+              template,
+            );
+            pngBytes = CertificateArtifactRenderer.appendEmbeddedRecord(
+              await _rasterizePdf(pdfBytes),
+              signedRecord,
+            );
+          }
           final savedArtifacts = await Future.wait([
             artifactStore.save(
               certificateId: certificateId,

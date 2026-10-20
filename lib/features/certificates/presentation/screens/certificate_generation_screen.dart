@@ -8,6 +8,7 @@ import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
 import 'certificate_library_screen.dart';
 import '../../data/services/certificate_generation_service.dart';
+import '../widgets/certificate_canvas_visual.dart';
 
 part 'certificate_generation_screen/01_certificategenerationscreen.dart';
 part 'certificate_generation_screen/02_certificategenerationscreenstate.dart';

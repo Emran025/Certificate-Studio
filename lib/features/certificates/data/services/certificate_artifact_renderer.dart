@@ -17,6 +17,49 @@ class CertificateArtifactRenderer {
     Map<String, dynamic> record,
   ) => [...artifactBytes, ...utf8.encode(_embeddedMarker(record))];
 
+  /// Replaces the Flutter-painted QR with integer-pixel modules so export
+  /// filtering cannot blur the verification code during rasterization.
+  static List<int> redrawQrOnPng({
+    required List<int> imageBytes,
+    required Map<String, dynamic> record,
+    required List<Map<String, Object?>> fields,
+    required Map<String, Object?> template,
+  }) {
+    final canvas = img.decodeImage(Uint8List.fromList(imageBytes));
+    if (canvas == null) return imageBytes;
+    Map<String, Object?>? qrField;
+    for (final field in fields) {
+      if (_fieldIsVisible(field) && _isQrField(field)) {
+        qrField = field;
+        break;
+      }
+    }
+    if (qrField == null) return imageBytes;
+
+    final canvasWidth = _number(template['width'], 1000);
+    final canvasHeight = _number(template['height'], 700);
+    final position = _jsonMap(qrField['position_json']);
+    final fieldX = _number(position['x'], 0);
+    final fieldY = _number(position['y'], 0);
+    final fieldWidth = _number(position['width'], 220);
+    final fieldHeight = _number(position['height'], 220);
+    final qrLogicalSize = math.max(
+      1.0,
+      math.min(fieldWidth, fieldHeight) - 20,
+    );
+    final scaleX = canvas.width / canvasWidth;
+    final scaleY = canvas.height / canvasHeight;
+    final qrScale = math.min(scaleX, scaleY);
+    _drawQr(
+      canvas,
+      encodeVerificationQrPayload(record),
+      x: ((fieldX + (fieldWidth - qrLogicalSize) / 2) * scaleX).round(),
+      y: ((fieldY + (fieldHeight - qrLogicalSize) / 2) * scaleY).round(),
+      size: (qrLogicalSize * qrScale).floor(),
+    );
+    return img.encodePng(canvas);
+  }
+
   /// Prepares the immutable background once per generation job. Rendering a
   /// certificate must remain pixel-compatible, but decoding and enhancing the
   /// same template for every record is unnecessary work.
@@ -362,13 +405,15 @@ class CertificateArtifactRenderer {
   }) {
     final matrix = Encoder.encode(payload, ErrorCorrectionLevel.l).matrix!;
     const quietModules = 4;
-    final module = (size / (matrix.width + quietModules * 2)).floor().clamp(
-      1,
-      20,
-    );
+    final module = (size / (matrix.width + quietModules * 2))
+        .floor()
+        .clamp(1, 1000);
     final totalSize = (matrix.width + quietModules * 2) * module;
-    final originX = x.clamp(0, canvas.width - totalSize);
-    final originY = y.clamp(0, canvas.height - totalSize);
+    if (totalSize > canvas.width || totalSize > canvas.height) return;
+    final originX =
+        (x + (size - totalSize) / 2).round().clamp(0, canvas.width - totalSize);
+    final originY =
+        (y + (size - totalSize) / 2).round().clamp(0, canvas.height - totalSize);
     img.fillRect(
       canvas,
       x1: originX,

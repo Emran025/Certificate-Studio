@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:certificate_studio/features/certificates/data/services/certificate_artifact_renderer.dart';
+import 'package:certificate_studio/features/verification/domain/certificate_qr_decoder.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 
@@ -61,5 +62,31 @@ void main() {
     expect(pdfText, startsWith('%PDF-'));
     expect(pdfText, endsWith(marker));
     expect(pdfText, isNot(contains('Verification hash:')));
+  });
+
+  test('redraws QR with hard pixel modules readable from the exported PNG', () {
+    final canvas = img.Image(width: 600, height: 400);
+    img.fill(canvas, color: img.ColorRgb8(20, 80, 120));
+    final record = <String, dynamic>{'certificate_id': 'qr-test-record'};
+    final fields = <Map<String, Object?>>[
+      {
+        'position_json': jsonEncode({
+          'x': 20,
+          'y': 5,
+          'width': 80,
+          'height': 80,
+        }),
+        'style_json': jsonEncode({'kind': 'qr'}),
+      },
+    ];
+
+    final output = CertificateArtifactRenderer.redrawQrOnPng(
+      imageBytes: img.encodePng(canvas),
+      record: record,
+      fields: fields,
+      template: {'width': 150, 'height': 100, 'dpi': 96},
+    );
+
+    expect(decodeQrRecord(output)?['certificate_id'], 'qr-test-record');
   });
 }

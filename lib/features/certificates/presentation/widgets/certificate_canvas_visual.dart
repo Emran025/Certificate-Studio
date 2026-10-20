@@ -539,7 +539,7 @@ double certificateCapturePixelRatio({
   const minimumPixelsPerModule = 3.0;
   final qrRequired =
       (matrixWidth + quietZoneModules) * minimumPixelsPerModule / qrSize;
-  const maxImageSide = 12000.0;
+  const maxImageSide = 6000.0;
   final maxPixelRatio = maxImageSide / math.max(canvasWidth, canvasHeight);
   return math
       .min(math.max(baseline, qrRequired), maxPixelRatio)

@@ -41,6 +41,8 @@ void main() {
     expect(service, contains('canvasCapture != null'));
     expect(service, contains('preparePdfBackground('));
     expect(service, contains('targetPixelRatio: 300 / templateDpi'));
+    expect(service, contains('await Isolate.run('));
+    expect(service, contains('CertificateArtifactRenderer.redrawQrOnPng('));
     expect(
       service.indexOf('final captureBackgroundBytes') <
           service.indexOf('for (var index = 0; index < records.length; index++)'),
@@ -54,7 +56,7 @@ void main() {
     expect(canvasWidget, contains('encodeVerificationQrPayload(record)'));
     expect(canvasWidget, contains('certificateCapturePixelRatio('));
     expect(canvasWidget, contains('minimumPixelsPerModule = 3.0'));
-    expect(canvasWidget, contains('maxImageSide = 12000.0'));
+    expect(canvasWidget, contains('maxImageSide = 6000.0'));
     expect(renderer, isNot(contains('Verification hash:')));
   });
 }

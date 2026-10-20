@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:flutter/services.dart';
@@ -158,11 +159,13 @@ class CertificateGenerationService
     final templateDpi = _number(template['dpi'], 96).clamp(1, 1200);
     final captureBackgroundBytes = canvasCapture == null || templateBytes == null
         ? templateBytes
-        : CertificateArtifactRenderer.preparePdfBackground(
-                templateBytes,
-                targetPixelRatio: 300 / templateDpi,
-                canvasWidth: _number(template['width'], 1000),
-                canvasHeight: _number(template['height'], 700),
+        : await Isolate.run(
+                () => CertificateArtifactRenderer.preparePdfBackground(
+                  templateBytes,
+                  targetPixelRatio: 300 / templateDpi,
+                  canvasWidth: _number(template['width'], 1000),
+                  canvasHeight: _number(template['height'], 700),
+                ),
               ) ??
               templateBytes;
 
@@ -234,7 +237,7 @@ class CertificateGenerationService
             final defaultFontBytes = await _loadArabicFontBytes();
             final fontBytesByFamily = await (_projectFontBytes ??=
                 _loadProjectFontBytes(defaultFontBytes));
-            final canvasBytes = await canvasCapture!(
+            final capturedBytes = await canvasCapture!(
               values: values,
               fields: fields,
               record: signedRecord,
@@ -242,6 +245,21 @@ class CertificateGenerationService
               template: template,
               fontBytesByFamily: fontBytesByFamily,
             );
+            final canvasBytes = fields.any(
+                  (field) {
+                    final style = _decodeJsonMap(field['style_json']);
+                    return style['kind'] == 'qr' && style['visible'] != false;
+                  },
+                )
+                ? await Isolate.run(
+                    () => CertificateArtifactRenderer.redrawQrOnPng(
+                      imageBytes: capturedBytes,
+                      record: signedRecord,
+                      fields: fields,
+                      template: template,
+                    ),
+                  )
+                : capturedBytes;
             pdfBytes = await CertificateArtifactRenderer.renderPdfFromPng(
               imageBytes: canvasBytes,
               record: signedRecord,

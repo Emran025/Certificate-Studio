@@ -89,6 +89,51 @@ void main() {
     expect(result.errors, isNotEmpty);
   });
 
+  test(
+    'does not generate a certificate with a missing selected background',
+    () async {
+      final database = InMemoryAppDatabase();
+      await database.open();
+      final now = DateTime.now().toUtc().toIso8601String();
+      await database.insert(DatabaseTables.templates, {
+        'id': 'template-missing',
+        'name': 'Missing background',
+        'file_path': '/missing/template-background.png',
+        'width': 1000,
+        'height': 700,
+        'dpi': 96,
+        'format': 'png',
+        'created_at': now,
+        'updated_at': now,
+      });
+      await database.insert(DatabaseTables.projects, {
+        'id': 'project-missing-background',
+        'institution_id': 'institution-1',
+        'name': 'Missing background project',
+        'template_id': 'template-missing',
+        'project_key_reference': 'project-missing-background',
+        'version': 1,
+        'created_at': now,
+        'updated_at': now,
+      });
+
+      await expectLater(
+        CertificateGenerationService(database, InMemoryKeyStorage()).generate(
+          projectId: 'project-missing-background',
+          institutionId: 'institution-1',
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('background is unavailable'),
+          ),
+        ),
+      );
+      expect(await database.query(DatabaseTables.certificates), isEmpty);
+    },
+  );
+
   if (runNativeGenerationTests) {
     test(
       'applies persisted column mappings to generated certificate fields',

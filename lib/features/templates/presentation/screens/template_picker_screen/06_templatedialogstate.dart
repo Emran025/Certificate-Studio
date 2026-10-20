@@ -173,20 +173,38 @@ class _TemplateDialogState extends State<_TemplateDialog> {
 
   Future<void> _chooseBackground() async {
     final file = await FilePicker.pickFile(type: FileType.image);
-    final path = file?.path;
-    if (path == null || path.isEmpty || !mounted) return;
-    setState(() {
-      _path.text = path;
-      _selectedFileName = file!.name;
+    if (file == null || !mounted) return;
+    try {
+      final bytes = await file.readAsBytes();
+      if (bytes.isEmpty) throw StateError('The selected image is empty.');
+
       final extension = file.extension?.toLowerCase();
-      if (extension == 'jpg' || extension == 'jpeg') {
-        _format = 'jpg';
-      } else if (extension == 'webp') {
-        _format = 'webp';
-      } else {
-        _format = 'png';
+      final format = switch (extension) {
+        'jpg' || 'jpeg' => 'jpg',
+        'webp' => 'webp',
+        'png' => 'png',
+        _ => throw StateError('Choose a PNG, JPG, or WEBP image.'),
+      };
+      final storedPath = await saveProjectBackground(
+        fileName: 'template-${DateTime.now().microsecondsSinceEpoch}.$format',
+        bytes: bytes,
+      );
+      final path = storedPath ?? file.path;
+      if (path == null || path.isEmpty) {
+        throw StateError('The selected image could not be stored.');
       }
-    });
+      if (!mounted) return;
+      setState(() {
+        _path.text = path;
+        _selectedFileName = file.name;
+        _format = format;
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save template background: $error')),
+      );
+    }
   }
 
   Widget _field(

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:certificate_studio/features/certificates/presentation/widgets/certificate_canvas_visual.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 
 void main() {
   testWidgets('renders Arabic text and QR on the template-sized canvas', (
@@ -45,7 +46,7 @@ void main() {
               },
             ],
             record: {'certificate_id': 'test-certificate'},
-            templateBytes: null,
+            templateBytes: _backgroundPng(),
             template: {'width': 400, 'height': 200, 'dpi': 96},
             fontFamilies: const ['Cairo'],
           ),
@@ -56,6 +57,12 @@ void main() {
     final canvasFinder = find.byType(CertificateCanvasExportView);
     expect(tester.getSize(canvasFinder), const Size(400, 200));
     expect(find.text('سارة أحمد'), findsOneWidget);
+    expect(find.byType(Image), findsOneWidget);
+    expect(tester.widget<Image>(find.byType(Image)).fit, BoxFit.contain);
+    expect(
+      tester.widget<Text>(find.text('سارة أحمد')).style?.decoration,
+      TextDecoration.none,
+    );
 
     final fields = tester
         .widgetList<CertificateCanvasField>(find.byType(CertificateCanvasField))
@@ -132,4 +139,10 @@ void main() {
       isA<CertificateCanvasFieldRenderer>(),
     );
   });
+}
+
+List<int> _backgroundPng() {
+  final image = img.Image(width: 2, height: 2);
+  img.fill(image, color: img.ColorRgb8(255, 0, 0));
+  return img.encodePng(image);
 }

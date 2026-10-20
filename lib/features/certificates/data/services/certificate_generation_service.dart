@@ -128,6 +128,12 @@ class CertificateGenerationService
         : templates.first;
     final templatePath = template['file_path'] as String? ?? '';
     final templateBytes = await _cachedTemplateBytes(templatePath);
+    if (templateId != null && templateBytes == null) {
+      throw StateError(
+        'The selected certificate background is unavailable. '
+        'Edit the template, choose its image again, and retry generation.',
+      );
+    }
     final projectSettings = _decodeProjectSettings(project['settings_json']);
     final mapping = _decodeMapping(projectSettings['mapping']);
     final issueDate = DateTime.now().toUtc().toIso8601String().split('T').first;

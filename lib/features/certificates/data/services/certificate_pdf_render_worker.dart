@@ -59,10 +59,15 @@ void _pdfRenderWorkerEntry(Map<String, Object?> init) {
       (key, value) => MapEntry(key.toString(), List<int>.from(value as List)),
     ),
   );
+  final template = Map<String, Object?>.from(init['template'] as Map);
+  final dpi = _number(template['dpi'], 96).clamp(1, 1200);
   final background = CertificateArtifactRenderer.preparePdfBackground(
     init['templateBytes'] == null
         ? null
         : List<int>.from(init['templateBytes'] as List),
+    targetPixelRatio: 300 / dpi,
+    canvasWidth: _number(template['width'], 1000),
+    canvasHeight: _number(template['height'], 700),
   );
   commands.listen((message) async {
     if (message is! List || message.length < 2) return;
@@ -87,3 +92,6 @@ void _pdfRenderWorkerEntry(Map<String, Object?> init) {
     }
   });
 }
+
+double _number(Object? value, double fallback) =>
+    value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;

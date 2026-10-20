@@ -171,6 +171,49 @@ void main() {
     background.dispose();
     codec.dispose();
   });
+
+  test('raises output density only for a QR field that needs it', () {
+    final record = <String, dynamic>{'certificate_id': 'certificate-1'};
+    final smallQr = <String, Object?>{
+      'position_json': jsonEncode({'width': 30, 'height': 30}),
+      'style_json': jsonEncode({'kind': 'qr'}),
+    };
+    final largeQr = <String, Object?>{
+      'position_json': jsonEncode({'width': 500, 'height': 500}),
+      'style_json': jsonEncode({'kind': 'qr'}),
+    };
+
+    expect(
+      certificateCapturePixelRatio(
+        templateDpi: 300,
+        canvasWidth: 1000,
+        canvasHeight: 700,
+        fields: const [],
+        record: record,
+      ),
+      1,
+    );
+    expect(
+      certificateCapturePixelRatio(
+        templateDpi: 300,
+        canvasWidth: 1000,
+        canvasHeight: 700,
+        fields: [largeQr],
+        record: record,
+      ),
+      1,
+    );
+    expect(
+      certificateCapturePixelRatio(
+        templateDpi: 300,
+        canvasWidth: 1000,
+        canvasHeight: 700,
+        fields: [smallQr],
+        record: record,
+      ),
+      greaterThan(1),
+    );
+  });
 }
 
 List<int> _backgroundPng() {

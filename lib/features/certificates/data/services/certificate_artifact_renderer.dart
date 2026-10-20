@@ -20,15 +20,29 @@ class CertificateArtifactRenderer {
   /// Prepares the immutable background once per generation job. Rendering a
   /// certificate must remain pixel-compatible, but decoding and enhancing the
   /// same template for every record is unnecessary work.
-  static List<int>? preparePdfBackground(List<int>? templateBytes) {
+  static List<int>? preparePdfBackground(
+    List<int>? templateBytes, {
+    double targetPixelRatio = 1,
+    double? canvasWidth,
+    double? canvasHeight,
+  }) {
     if (templateBytes == null) return null;
     final source = img.decodeImage(Uint8List.fromList(templateBytes));
     if (source == null) return null;
+    var scale = targetPixelRatio;
+    if (canvasWidth != null && canvasHeight != null) {
+      final containScale = math.min(
+        canvasWidth / source.width,
+        canvasHeight / source.height,
+      ).toDouble();
+      scale *= containScale;
+    }
+    if (scale <= 1) return templateBytes;
     return _enhanceBackground(
       templateBytes,
       width: source.width,
       height: source.height,
-      scale: 3,
+      scale: scale,
     );
   }
 
@@ -62,18 +76,15 @@ class CertificateArtifactRenderer {
     final canvasWidth = _number(template['width'], 1000);
     final canvasHeight = _number(template['height'], 700);
     final dpi = _number(template['dpi'], 96);
-    final sourceImage = templateBytes == null
-        ? null
-        : img.decodeImage(Uint8List.fromList(templateBytes));
     final enhancedBackground =
         preparedBackgroundBytes ??
         (templateBytes == null
             ? null
-            : _enhanceBackground(
+            : preparePdfBackground(
                 templateBytes,
-                width: sourceImage?.width ?? canvasWidth.round(),
-                height: sourceImage?.height ?? canvasHeight.round(),
-                scale: 3,
+                targetPixelRatio: 300 / math.max(1.0, dpi),
+                canvasWidth: canvasWidth,
+                canvasHeight: canvasHeight,
               ));
     final background = enhancedBackground == null
         ? null
@@ -237,7 +248,7 @@ class CertificateArtifactRenderer {
     List<int> sourceBytes, {
     required int width,
     required int height,
-    required int scale,
+    required double scale,
   }) {
     final source = img.decodeImage(Uint8List.fromList(sourceBytes));
     if (source == null || source.width <= 0 || source.height <= 0) {
@@ -249,10 +260,10 @@ class CertificateArtifactRenderer {
     const maxDimension = 6000;
     final requestedScale = math
         .min(
-          scale.toDouble(),
+          scale,
           maxDimension / math.max(source.width, source.height),
         )
-        .clamp(1.0, scale.toDouble());
+        .clamp(1.0, scale);
     final targetWidth = (width * requestedScale).round();
     final targetHeight = (height * requestedScale).round();
     final fitScale = math.min(

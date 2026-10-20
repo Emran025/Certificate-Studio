@@ -134,12 +134,6 @@ class CertificateGenerationService
         'Edit the template, choose its image again, and retry generation.',
       );
     }
-    // Match the legacy export quality path: prepare the selected background at
-    // up to 3x once per job before it is painted into each certificate canvas.
-    final captureBackgroundBytes = canvasCapture == null || templateBytes == null
-        ? templateBytes
-        : CertificateArtifactRenderer.preparePdfBackground(templateBytes) ??
-              templateBytes;
     final projectSettings = _decodeProjectSettings(project['settings_json']);
     final mapping = _decodeMapping(projectSettings['mapping']);
     final issueDate = DateTime.now().toUtc().toIso8601String().split('T').first;
@@ -157,6 +151,20 @@ class CertificateGenerationService
         ],
       );
     }
+
+    // Prepare the source image once for the whole batch. Existing high-density
+    // backgrounds are reused unchanged; lower-density images are enhanced only
+    // to the effective 300-DPI resolution required by the designer canvas.
+    final templateDpi = _number(template['dpi'], 96).clamp(1, 1200);
+    final captureBackgroundBytes = canvasCapture == null || templateBytes == null
+        ? templateBytes
+        : CertificateArtifactRenderer.preparePdfBackground(
+                templateBytes,
+                targetPixelRatio: 300 / templateDpi,
+                canvasWidth: _number(template['width'], 1000),
+                canvasHeight: _number(template['height'], 700),
+              ) ??
+              templateBytes;
 
     final errors = <String>[];
     var generated = 0;

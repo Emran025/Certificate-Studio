@@ -39,15 +39,22 @@ void main() {
     expect(rasterPdfRenderer, isNot(contains('pw.Text(')));
     expect(rasterPdfRenderer, contains('_embeddedMarker(record)'));
     expect(service, contains('canvasCapture != null'));
-    expect(service, contains('preparePdfBackground(templateBytes)'));
+    expect(service, contains('preparePdfBackground('));
+    expect(service, contains('targetPixelRatio: 300 / templateDpi'));
+    expect(
+      service.indexOf('final captureBackgroundBytes') <
+          service.indexOf('for (var index = 0; index < records.length; index++)'),
+      isTrue,
+    );
     expect(generationScreen, contains('canvasCapture: _captureCanvas'));
     expect(designerCanvas, contains('CertificateCanvasField('));
     expect(canvasWidget, contains('maxLines: 3'));
     expect(canvasWidget, contains('overflow: TextOverflow.clip'));
     expect(canvasWidget, contains('fontFamilyFallback: ['));
     expect(canvasWidget, contains('encodeVerificationQrPayload(record)'));
-    expect(canvasWidget, contains('pixelRatio: requestedPixelRatio'));
-    expect(canvasWidget, isNot(contains('maxImageSide')));
+    expect(canvasWidget, contains('certificateCapturePixelRatio('));
+    expect(canvasWidget, contains('minimumPixelsPerModule = 3.0'));
+    expect(canvasWidget, contains('maxImageSide = 12000.0'));
     expect(renderer, isNot(contains('Verification hash:')));
   });
 }

@@ -444,13 +444,19 @@ class CertificateCanvasSnapshotHostState
         await WidgetsBinding.instance.endOfFrame;
       }
 
-      final templateDpi = _number(template['dpi'], 96).clamp(1, 1200);
-      const targetDpi = 300.0;
-      final requestedPixelRatio = targetDpi / templateDpi;
-      // Keep the same full 300-DPI raster scale as the PDF export path. A side
-      // cap here used to downsample the complete certificate, including QR
-      // modules, before saving the PNG.
-      image = await renderObject.toImage(pixelRatio: requestedPixelRatio);
+      final templateDpi = _number(template['dpi'], 96)
+          .clamp(1, 1200)
+          .toDouble();
+      final pixelRatio = certificateCapturePixelRatio(
+        templateDpi: templateDpi,
+        canvasWidth: _number(template['width'], 1000),
+        canvasHeight: _number(template['height'], 700),
+        fields: fields,
+        record: record,
+      );
+      // Use 300 DPI by default. Increase only when the actual QR module size
+      // and its saved field dimensions require additional pixels for scanning.
+      image = await renderObject.toImage(pixelRatio: pixelRatio);
       final data = await image.toByteData(format: ui.ImageByteFormat.png);
       if (data == null) throw StateError('Unable to encode canvas snapshot.');
       return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
@@ -496,6 +502,49 @@ Map<String, dynamic> _jsonMap(Object? raw) {
 
 double _number(Object? value, double fallback) =>
     value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
+
+double certificateCapturePixelRatio({
+  required double templateDpi,
+  required double canvasWidth,
+  required double canvasHeight,
+  required List<Map<String, Object?>> fields,
+  required Map<String, dynamic> record,
+}) {
+  final baseline = 300 / templateDpi.clamp(1, 1200).toDouble();
+  Map<String, Object?>? qrField;
+  for (final field in fields) {
+    final style = _jsonMap(field['style_json']);
+    if (style['kind'] == 'qr' && style['visible'] != false) {
+      qrField = field;
+      break;
+    }
+  }
+  if (qrField == null) return baseline;
+
+  final position = _jsonMap(qrField['position_json']);
+  final qrSize = math.max(
+    1.0,
+    math.min(
+          _number(position['width'], 220),
+          _number(position['height'], 220),
+        ) -
+        20,
+  );
+  final matrixWidth =
+      Encoder.encode(
+        encodeVerificationQrPayload(record),
+        ErrorCorrectionLevel.l,
+      ).matrix!.width;
+  const quietZoneModules = 8;
+  const minimumPixelsPerModule = 3.0;
+  final qrRequired =
+      (matrixWidth + quietZoneModules) * minimumPixelsPerModule / qrSize;
+  const maxImageSide = 12000.0;
+  final maxPixelRatio = maxImageSide / math.max(canvasWidth, canvasHeight);
+  return math
+      .min(math.max(baseline, qrRequired), maxPixelRatio)
+      .toDouble();
+}
 
 Color _certificateColor(String value) {
   final hex = value.replaceFirst('#', '');

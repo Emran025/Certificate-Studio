@@ -7,18 +7,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 
 void main() {
-  test('prepares the selected background at 3x export resolution', () {
-    final source = img.Image(width: 20, height: 10);
-    img.fill(source, color: img.ColorRgb8(220, 180, 40));
+  test(
+    'only enhances the background when its source resolution is insufficient',
+    () {
+      final source = img.Image(width: 20, height: 10);
+      img.fill(source, color: img.ColorRgb8(220, 180, 40));
+      final sourceBytes = img.encodePng(source);
 
-    final prepared = CertificateArtifactRenderer.preparePdfBackground(
-      img.encodePng(source),
-    );
-    final decoded = img.decodeImage(Uint8List.fromList(prepared!));
+      final prepared = CertificateArtifactRenderer.preparePdfBackground(
+        sourceBytes,
+        targetPixelRatio: 3,
+        canvasWidth: 20,
+        canvasHeight: 10,
+      );
+      final decoded = img.decodeImage(Uint8List.fromList(prepared!));
 
-    expect(decoded?.width, 60);
-    expect(decoded?.height, 30);
-  });
+      expect(decoded?.width, 60);
+      expect(decoded?.height, 30);
+
+      final alreadySharp = img.Image(width: 60, height: 30);
+      img.fill(alreadySharp, color: img.ColorRgb8(220, 180, 40));
+      final originalBytes = img.encodePng(alreadySharp);
+      expect(
+        CertificateArtifactRenderer.preparePdfBackground(
+          originalBytes,
+          targetPixelRatio: 3,
+          canvasWidth: 20,
+          canvasHeight: 10,
+        ),
+        same(originalBytes),
+      );
+    },
+  );
 
   test('raster PDF preserves its embedded signed verification record', () async {
     final canvas = img.Image(width: 4, height: 3);

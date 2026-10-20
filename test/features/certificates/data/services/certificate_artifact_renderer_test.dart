@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:certificate_studio/features/certificates/data/services/certificate_artifact_renderer.dart';
@@ -6,6 +7,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 
 void main() {
+  test('prepares the selected background at 3x export resolution', () {
+    final source = img.Image(width: 20, height: 10);
+    img.fill(source, color: img.ColorRgb8(220, 180, 40));
+
+    final prepared = CertificateArtifactRenderer.preparePdfBackground(
+      img.encodePng(source),
+    );
+    final decoded = img.decodeImage(Uint8List.fromList(prepared!));
+
+    expect(decoded?.width, 60);
+    expect(decoded?.height, 30);
+  });
+
   test('raster PDF preserves its embedded signed verification record', () async {
     final canvas = img.Image(width: 4, height: 3);
     img.fill(canvas, color: img.ColorRgb8(255, 255, 255));

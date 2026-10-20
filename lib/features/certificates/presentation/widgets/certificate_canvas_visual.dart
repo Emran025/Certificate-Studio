@@ -444,17 +444,13 @@ class CertificateCanvasSnapshotHostState
         await WidgetsBinding.instance.endOfFrame;
       }
 
-      final canvasWidth = _number(template['width'], 1000);
-      final canvasHeight = _number(template['height'], 700);
       final templateDpi = _number(template['dpi'], 96).clamp(1, 1200);
       const targetDpi = 300.0;
-      const maxImageSide = 6000.0;
       final requestedPixelRatio = targetDpi / templateDpi;
-      final pixelRatio = math.min(
-        requestedPixelRatio,
-        maxImageSide / math.max(canvasWidth, canvasHeight),
-      );
-      image = await renderObject.toImage(pixelRatio: pixelRatio);
+      // Keep the same full 300-DPI raster scale as the PDF export path. A side
+      // cap here used to downsample the complete certificate, including QR
+      // modules, before saving the PNG.
+      image = await renderObject.toImage(pixelRatio: requestedPixelRatio);
       final data = await image.toByteData(format: ui.ImageByteFormat.png);
       if (data == null) throw StateError('Unable to encode canvas snapshot.');
       return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);

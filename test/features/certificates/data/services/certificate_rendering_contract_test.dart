@@ -39,12 +39,15 @@ void main() {
     expect(rasterPdfRenderer, isNot(contains('pw.Text(')));
     expect(rasterPdfRenderer, contains('_embeddedMarker(record)'));
     expect(service, contains('canvasCapture != null'));
+    expect(service, contains('preparePdfBackground(templateBytes)'));
     expect(generationScreen, contains('canvasCapture: _captureCanvas'));
     expect(designerCanvas, contains('CertificateCanvasField('));
     expect(canvasWidget, contains('maxLines: 3'));
     expect(canvasWidget, contains('overflow: TextOverflow.clip'));
     expect(canvasWidget, contains('fontFamilyFallback: ['));
     expect(canvasWidget, contains('encodeVerificationQrPayload(record)'));
+    expect(canvasWidget, contains('pixelRatio: requestedPixelRatio'));
+    expect(canvasWidget, isNot(contains('maxImageSide')));
     expect(renderer, isNot(contains('Verification hash:')));
   });
 }

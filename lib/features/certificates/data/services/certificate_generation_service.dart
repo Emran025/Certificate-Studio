@@ -134,6 +134,12 @@ class CertificateGenerationService
         'Edit the template, choose its image again, and retry generation.',
       );
     }
+    // Match the legacy export quality path: prepare the selected background at
+    // up to 3x once per job before it is painted into each certificate canvas.
+    final captureBackgroundBytes = canvasCapture == null || templateBytes == null
+        ? templateBytes
+        : CertificateArtifactRenderer.preparePdfBackground(templateBytes) ??
+              templateBytes;
     final projectSettings = _decodeProjectSettings(project['settings_json']);
     final mapping = _decodeMapping(projectSettings['mapping']);
     final issueDate = DateTime.now().toUtc().toIso8601String().split('T').first;
@@ -224,7 +230,7 @@ class CertificateGenerationService
               values: values,
               fields: fields,
               record: signedRecord,
-              templateBytes: templateBytes,
+              templateBytes: captureBackgroundBytes,
               template: template,
               fontBytesByFamily: fontBytesByFamily,
             );

@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:certificate_studio/features/certificates/presentation/widgets/certificate_canvas_visual.dart';
 import 'package:flutter/material.dart';
@@ -138,6 +140,36 @@ void main() {
       const FlutterCertificateCanvasFieldRenderer(),
       isA<CertificateCanvasFieldRenderer>(),
     );
+  });
+
+  testWidgets('uses the decoded background image for deterministic capture', (
+    tester,
+  ) async {
+    final codec = await ui.instantiateImageCodec(
+      Uint8List.fromList(_backgroundPng()),
+    );
+    final background = (await codec.getNextFrame()).image;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: CertificateCanvasExportView(
+            values: const {},
+            fields: const [],
+            record: const {},
+            templateBytes: null,
+            template: const {'width': 400, 'height': 200, 'dpi': 96},
+            fontFamilies: const ['Cairo'],
+            backgroundImage: background,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(RawImage), findsOneWidget);
+    expect(tester.widget<RawImage>(find.byType(RawImage)).fit, BoxFit.contain);
+    await tester.pumpWidget(const SizedBox.shrink());
+    background.dispose();
+    codec.dispose();
   });
 }
 

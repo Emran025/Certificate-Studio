@@ -235,6 +235,7 @@ class CertificateCanvasExportView extends StatelessWidget {
     required this.templateBytes,
     required this.template,
     required this.fontFamilies,
+    this.backgroundImage,
     this.fieldRenderer = const FlutterCertificateCanvasFieldRenderer(),
     super.key,
   });
@@ -245,6 +246,7 @@ class CertificateCanvasExportView extends StatelessWidget {
   final List<int>? templateBytes;
   final Map<String, Object?> template;
   final List<String> fontFamilies;
+  final ui.Image? backgroundImage;
   final CertificateCanvasFieldRenderer fieldRenderer;
 
   @override
@@ -260,15 +262,21 @@ class CertificateCanvasExportView extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(
-            child: background == null || background.isEmpty
-                ? const ColoredBox(color: Colors.white)
-                : Image.memory(
-                    Uint8List.fromList(background),
-                    width: double.infinity,
-                    height: double.infinity,
+            child: backgroundImage != null
+                ? RawImage(
+                    image: backgroundImage,
                     fit: BoxFit.contain,
-                    gaplessPlayback: true,
-                  ),
+                    filterQuality: FilterQuality.high,
+                  )
+                : background == null || background.isEmpty
+                    ? const ColoredBox(color: Colors.white)
+                    : Image.memory(
+                        Uint8List.fromList(background),
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.contain,
+                        gaplessPlayback: true,
+                      ),
           ),
           for (final field in fields)
             if (_fieldIsVisible(field))
@@ -391,12 +399,17 @@ class CertificateCanvasSnapshotHostState
     }
     _capturing = true;
     ui.Image? image;
+    ui.Image? decodedBackground;
     try {
       if (templateBytes != null && templateBytes.isNotEmpty) {
-        await precacheImage(
-          MemoryImage(Uint8List.fromList(templateBytes)),
-          context,
+        final codec = await ui.instantiateImageCodec(
+          Uint8List.fromList(templateBytes),
         );
+        try {
+          decodedBackground = (await codec.getNextFrame()).image;
+        } finally {
+          codec.dispose();
+        }
       }
       if (!mounted) throw StateError('The certificate screen was closed.');
       await _loadFonts(fontBytesByFamily);
@@ -414,6 +427,7 @@ class CertificateCanvasSnapshotHostState
         templateBytes: templateBytes,
         template: template,
         fontFamilies: fontFamilies,
+        backgroundImage: decodedBackground,
         fieldRenderer: widget.fieldRenderer,
       );
       if (!mounted) throw StateError('The certificate screen was closed.');
@@ -448,7 +462,9 @@ class CertificateCanvasSnapshotHostState
       image?.dispose();
       if (mounted && _captureChild != null) {
         setState(() => _captureChild = null);
+        await WidgetsBinding.instance.endOfFrame;
       }
+      decodedBackground?.dispose();
       _capturing = false;
     }
   }

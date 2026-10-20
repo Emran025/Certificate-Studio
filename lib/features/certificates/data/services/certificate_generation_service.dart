@@ -431,6 +431,9 @@ class CertificateGenerationService
 
   Future<void> _yieldToUi() => Future<void>.delayed(Duration.zero);
 
+  double _number(Object? value, double fallback) =>
+      value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
+
   Future<CertificateKeyPair> _keyPair(String projectId) async {
     final stored = await keyStorage.read('project.$projectId.key');
     final seed = stored == null ? generateMasterKey() : _hexDecode(stored);

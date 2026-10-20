@@ -27,6 +27,9 @@ abstract final class DatabaseTables {
 abstract final class DatabaseSchema {
   /// Version 10 persists the imported record column definitions.
   static const version = 10;
+  static const certificateFieldFontsVersion = 9;
+  static const certificateFieldFontIndex =
+      'CREATE INDEX idx_certificate_fields_font ON certificate_fields (font_id)';
 
   /// The complete schema used for a new database. Existing databases must use
   /// [DatabaseMigrations] instead of replaying this list.
@@ -141,12 +144,24 @@ abstract final class DatabaseSchema {
     )''',
   ];
 
+  /// Returns indexes valid for a target schema version. The field-font index
+  /// must wait until migration 9 has added `font_id` to existing databases.
+  static Iterable<String> indexesAvailableAt(int schemaVersion) sync* {
+    for (final statement in indexes) {
+      if (schemaVersion < certificateFieldFontsVersion &&
+          statement == certificateFieldFontIndex) {
+        continue;
+      }
+      yield statement;
+    }
+  }
+
   static const indexes = <String>[
     'CREATE INDEX idx_projects_institution ON projects (institution_id)',
     'CREATE INDEX idx_projects_template ON projects (template_id)',
     'CREATE INDEX idx_records_project ON records (project_id)',
     'CREATE INDEX idx_certificate_fields_project ON certificate_fields (project_id)',
-    'CREATE INDEX idx_certificate_fields_font ON certificate_fields (font_id)',
+    certificateFieldFontIndex,
     'CREATE INDEX idx_certificates_project ON certificates (project_id)',
     'CREATE INDEX idx_certificates_status ON certificates (status)',
     'CREATE INDEX idx_verification_records_project ON verification_records (project_id)',

@@ -87,6 +87,13 @@ void main() {
     );
   });
 
+  test('defers certificate font index until the font-id migration', () {
+    final fontIndex = DatabaseSchema.certificateFieldFontIndex;
+
+    expect(DatabaseSchema.indexesAvailableAt(7), isNot(contains(fontIndex)));
+    expect(DatabaseSchema.indexesAvailableAt(9), contains(fontIndex));
+  });
+
   test('persists and updates an institution', () async {
     final repository = InstitutionRepositoryImpl(
       InstitutionDataSourceImpl(database),

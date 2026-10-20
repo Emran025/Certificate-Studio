@@ -417,7 +417,8 @@ class PersistentAppDatabase implements AppDatabase {
     );
     _database.execute('DROP TABLE IF EXISTS signature_assets');
 
-    for (final statement in DatabaseSchema.indexes) {
+    // This rebuild runs in migration 7, before migration 9 adds font_id.
+    for (final statement in DatabaseSchema.indexesAvailableAt(7)) {
       _database.execute(
         statement.replaceAll('CREATE INDEX ', 'CREATE INDEX IF NOT EXISTS '),
       );

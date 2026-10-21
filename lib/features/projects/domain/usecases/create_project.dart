@@ -3,7 +3,14 @@ import '../repositories/project_repository.dart';
 import '../services/project_key_service.dart';
 
 class CreateProjectParams {
-  const CreateProjectParams({required this.name, required this.institutionId, this.organizationName, this.description, this.courseName, this.projectType = 'course'});
+  const CreateProjectParams({
+    required this.name,
+    required this.institutionId,
+    this.organizationName,
+    this.description,
+    this.courseName,
+    this.projectType = 'course',
+  });
 
   final String name;
   final String institutionId;
@@ -22,10 +29,18 @@ class CreateProject {
   Future<Project> call(CreateProjectParams params) async {
     final trimmedName = params.name.trim();
     if (trimmedName.isEmpty) {
-      throw ArgumentError.value(params.name, 'name', 'Project name is required.');
+      throw ArgumentError.value(
+        params.name,
+        'name',
+        'Project name is required.',
+      );
     }
     if (params.institutionId.trim().isEmpty) {
-      throw ArgumentError.value(params.institutionId, 'institutionId', 'Institution is required.');
+      throw ArgumentError.value(
+        params.institutionId,
+        'institutionId',
+        'Institution is required.',
+      );
     }
 
     final now = DateTime.now().toUtc();
@@ -46,5 +61,6 @@ class CreateProject {
     return _repository.save(project);
   }
 
-  String? _optional(String? value) => value == null || value.trim().isEmpty ? null : value.trim();
+  String? _optional(String? value) =>
+      value == null || value.trim().isEmpty ? null : value.trim();
 }

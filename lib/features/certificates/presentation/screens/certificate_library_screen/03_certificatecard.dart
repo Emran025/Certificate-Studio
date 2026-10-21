@@ -43,8 +43,8 @@ class _CertificateCard extends StatelessWidget {
                 right: 8,
                 child: AppStatusBadge(
                   label: context.l10n.text(certificate.status),
-                  color: AppColors.success,
-                  backgroundColor: AppColors.successSurface,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  backgroundColor: context.themeSelection,
                 ),
               ),
             ],

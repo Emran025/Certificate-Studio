@@ -28,7 +28,8 @@ class CertificateExportService implements CertificateExportServiceContract {
   CertificateExportService({
     CertificateArtifactStore? artifactStore,
     this.database,
-  }) : artifactStore = artifactStore ?? SharedPreferencesCertificateArtifactStore();
+  }) : artifactStore =
+           artifactStore ?? SharedPreferencesCertificateArtifactStore();
 
   final CertificateArtifactStore artifactStore;
   final AppDatabase? database;
@@ -63,7 +64,8 @@ class CertificateExportService implements CertificateExportServiceContract {
   }) async {
     final archive = Archive();
     for (final certificate in certificates) {
-      final name = fileNameFor?.call(certificate) ??
+      final name =
+          fileNameFor?.call(certificate) ??
           (certificate['id']?.toString() ?? 'certificate');
       final files = <ArchiveFile>[];
       for (final extension in extensions) {
@@ -78,18 +80,22 @@ class CertificateExportService implements CertificateExportServiceContract {
       if (style == CertificateExportBundleStyle.perCertificate) {
         if (files.isEmpty) continue;
         final signature = await _signatureFor(certificate);
-        files.add(ArchiveFile(
-          '$name/signature.txt',
-          signature.length,
-          signature.codeUnits,
-        ));
+        files.add(
+          ArchiveFile(
+            '$name/signature.txt',
+            signature.length,
+            signature.codeUnits,
+          ),
+        );
         final nested = Archive();
         for (final file in files) {
-          nested.addFile(ArchiveFile(
-            file.name.substring(file.name.indexOf('/') + 1),
-            file.size,
-            file.content,
-          ));
+          nested.addFile(
+            ArchiveFile(
+              file.name.substring(file.name.indexOf('/') + 1),
+              file.size,
+              file.content,
+            ),
+          );
         }
         final encoded = ZipEncoder().encode(nested);
         if (encoded != null && encoded.isNotEmpty) {

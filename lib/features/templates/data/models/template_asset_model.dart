@@ -11,7 +11,8 @@ class TemplateAssetModel extends TemplateAsset {
     required super.format,
   });
 
-  factory TemplateAssetModel.fromRow(Map<String, Object?> row) => TemplateAssetModel(
+  factory TemplateAssetModel.fromRow(Map<String, Object?> row) =>
+      TemplateAssetModel(
         id: row['id']! as String,
         name: row['name']! as String,
         filePath: row['file_path']! as String,
@@ -22,14 +23,14 @@ class TemplateAssetModel extends TemplateAsset {
       );
 
   Map<String, Object?> toRow({required String now}) => {
-        'id': id,
-        'name': name,
-        'file_path': filePath,
-        'width': width,
-        'height': height,
-        'dpi': dpi,
-        'format': format,
-        'created_at': now,
-        'updated_at': now,
-      };
+    'id': id,
+    'name': name,
+    'file_path': filePath,
+    'width': width,
+    'height': height,
+    'dpi': dpi,
+    'format': format,
+    'created_at': now,
+    'updated_at': now,
+  };
 }

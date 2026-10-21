@@ -111,13 +111,11 @@ class Image extends Widget {
     BoxConstraints constraints, {
     bool parentUsesSize = false,
   }) {
-    final w =
-        width ??
+    final w = width ??
         (constraints.hasBoundedWidth
             ? constraints.maxWidth
             : constraints.constrainWidth(image.width!.toDouble()));
-    final h =
-        height ??
+    final h = height ??
         (constraints.hasBoundedHeight
             ? constraints.maxHeight
             : constraints.constrainHeight(image.height!.toDouble()));
@@ -154,8 +152,8 @@ class Shape extends Widget {
     this.width,
     this.height,
     this.fit = BoxFit.contain,
-  }) : assert(width == null || width > 0.0),
-       assert(height == null || height > 0.0);
+  })  : assert(width == null || width > 0.0),
+        assert(height == null || height > 0.0);
 
   final String shape;
 

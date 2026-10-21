@@ -11,7 +11,9 @@ class CertificateRepositoryImpl implements CertificateRepository {
     final rows = await _dataSource.getCertificateRows(projectId: projectId);
     final records = <CertificateRecord>[];
     for (final row in rows.reversed) {
-      final record = await _dataSource.getRecord(row['record_id']?.toString() ?? '');
+      final record = await _dataSource.getRecord(
+        row['record_id']?.toString() ?? '',
+      );
       records.add(CertificateRecordModel.fromRows(row, record));
     }
     return records;

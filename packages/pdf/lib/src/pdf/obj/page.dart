@@ -54,11 +54,11 @@ class PdfPage extends PdfObject<PdfDict> with PdfGraphicStream {
     int? objser,
     int objgen = 0,
   }) : super(
-         pdfDocument,
-         params: PdfDict.values({'/Type': const PdfName('/Page')}),
-         objser: objser,
-         objgen: objgen,
-       ) {
+          pdfDocument,
+          params: PdfDict.values({'/Type': const PdfName('/Page')}),
+          objser: objser,
+          objgen: objgen,
+        ) {
     if (index != null) {
       pdfDocument.pdfPageList.pages.insert(index, this);
     } else {

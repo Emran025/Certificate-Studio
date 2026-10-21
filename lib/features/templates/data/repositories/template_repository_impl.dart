@@ -30,19 +30,18 @@ class TemplateRepositoryImpl implements TemplateRepository {
     );
     return model;
   }
+
   @override
-  Future<void> update(TemplateAsset template) => _dataSource.updateTemplate(
-        template.id,
-        {
-          'name': template.name,
-          'file_path': template.filePath,
-          'width': template.width,
-          'height': template.height,
-          'dpi': template.dpi,
-          'format': template.format,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        },
-      );
+  Future<void> update(TemplateAsset template) =>
+      _dataSource.updateTemplate(template.id, {
+        'name': template.name,
+        'file_path': template.filePath,
+        'width': template.width,
+        'height': template.height,
+        'dpi': template.dpi,
+        'format': template.format,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
   @override
   Future<void> selectForProject(String projectId, String templateId) =>
       _dataSource.selectForProject(projectId, templateId);

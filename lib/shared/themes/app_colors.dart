@@ -65,6 +65,15 @@ abstract final class AppColors {
   static const infoSurface = Color(0xFFEAF3F7);
 
   static const shadow = Color(0x140F241A);
+
+  static Color accentForBrightness(Color color, Brightness brightness) {
+    if (brightness == Brightness.light) return color;
+
+    final hsl = HSLColor.fromColor(color);
+    return hsl
+        .withLightness(hsl.lightness < 0.72 ? 0.72 : hsl.lightness)
+        .toColor();
+  }
 }
 
 abstract final class AppGradients {

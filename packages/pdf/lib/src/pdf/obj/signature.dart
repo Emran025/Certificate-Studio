@@ -43,9 +43,9 @@ class PdfSignature extends PdfObject<PdfDict> {
     List<Uint8List>? cert,
     List<Uint8List>? ocsp,
   }) : super(
-         pdfDocument,
-         params: PdfDict.values({'/Type': const PdfName('/Sig')}),
-       ) {
+          pdfDocument,
+          params: PdfDict.values({'/Type': const PdfName('/Sig')}),
+        ) {
     if (crl != null) {
       for (final o in crl) {
         this.crl.add(PdfObjectStream(pdfDocument)..buf.putBytes(o));
@@ -70,8 +70,8 @@ class PdfSignature extends PdfObject<PdfDict> {
   int get flagsValue => flags.isEmpty
       ? 0
       : flags
-            .map<int>((PdfSigFlags e) => 1 << e.index)
-            .reduce((int a, int b) => a | b);
+          .map<int>((PdfSigFlags e) => 1 << e.index)
+          .reduce((int a, int b) => a | b);
 
   final crl = <PdfObjectStream>[];
 

@@ -15,7 +15,8 @@ abstract final class AppTheme {
 
   static ThemeData _build(Brightness brightness, {Color? accentColor}) {
     final isDark = brightness == Brightness.dark;
-    final primary = accentColor ?? AppColors.primary;
+    final sourcePrimary = accentColor ?? AppColors.primary;
+    final primary = AppColors.accentForBrightness(sourcePrimary, brightness);
     final border = (isDark ? const Color(0xFF2D3945) : AppColors.border);
     final surface = isDark ? const Color(0xFF17202A) : AppColors.surface;
     final background = isDark ? const Color(0xFF101820) : AppColors.background;
@@ -26,10 +27,13 @@ abstract final class AppTheme {
     final colorScheme = generatedScheme.copyWith(
       primary: primary,
       onPrimary: _onColor(primary),
-      primaryContainer: _primaryContainer(primary, brightness),
-      onPrimaryContainer: _onColor(_primaryContainer(primary, brightness)),
+      primaryContainer: _primaryContainer(sourcePrimary, brightness),
+      onPrimaryContainer: _onColor(
+        _primaryContainer(sourcePrimary, brightness),
+      ),
       surface: surface,
       onSurface: isDark ? Colors.white : AppColors.textPrimary,
+      onSurfaceVariant: isDark ? primary : generatedScheme.onSurfaceVariant,
       error: AppColors.error,
       onError: _onColor(AppColors.error),
     );
@@ -108,15 +112,15 @@ abstract final class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: _buttonStyle(
           textTheme: textTheme,
-          backgroundColor: primary,
-          foregroundColor: AppColors.textOnPrimary,
+          backgroundColor: sourcePrimary,
+          foregroundColor: _onColor(sourcePrimary),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: _buttonStyle(
           textTheme: textTheme,
-          backgroundColor: primary,
-          foregroundColor: AppColors.textOnPrimary,
+          backgroundColor: sourcePrimary,
+          foregroundColor: _onColor(sourcePrimary),
           elevation: 0,
         ),
       ),

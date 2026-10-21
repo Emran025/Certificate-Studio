@@ -25,8 +25,8 @@ import 'stream.dart';
 typedef DeflateCallback = List<int> Function(List<int> data);
 
 /// Callback used to encrypt the value of a [PdfDictStream] or a [PdfEncStream]
-typedef PdfEncryptCallback =
-    Uint8List Function(Uint8List input, PdfObjectBase object);
+typedef PdfEncryptCallback = Uint8List Function(
+    Uint8List input, PdfObjectBase object);
 
 /// PDF version to generate
 enum PdfVersion {

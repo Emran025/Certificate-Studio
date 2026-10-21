@@ -269,14 +269,14 @@ class CertificateCanvasExportView extends StatelessWidget {
                     filterQuality: FilterQuality.high,
                   )
                 : background == null || background.isEmpty
-                    ? const ColoredBox(color: Colors.white)
-                    : Image.memory(
-                        Uint8List.fromList(background),
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.contain,
-                        gaplessPlayback: true,
-                      ),
+                ? const ColoredBox(color: Colors.white)
+                : Image.memory(
+                    Uint8List.fromList(background),
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.contain,
+                    gaplessPlayback: true,
+                  ),
           ),
           for (final field in fields)
             if (_fieldIsVisible(field))
@@ -444,9 +444,10 @@ class CertificateCanvasSnapshotHostState
         await WidgetsBinding.instance.endOfFrame;
       }
 
-      final templateDpi = _number(template['dpi'], 96)
-          .clamp(1, 1200)
-          .toDouble();
+      final templateDpi = _number(
+        template['dpi'],
+        96,
+      ).clamp(1, 1200).toDouble();
       final pixelRatio = certificateCapturePixelRatio(
         templateDpi: templateDpi,
         canvasWidth: _number(template['width'], 1000),
@@ -530,20 +531,17 @@ double certificateCapturePixelRatio({
         ) -
         20,
   );
-  final matrixWidth =
-      Encoder.encode(
-        encodeVerificationQrPayload(record),
-        ErrorCorrectionLevel.l,
-      ).matrix!.width;
+  final matrixWidth = Encoder.encode(
+    encodeVerificationQrPayload(record),
+    ErrorCorrectionLevel.l,
+  ).matrix!.width;
   const quietZoneModules = 8;
   const minimumPixelsPerModule = 3.0;
   final qrRequired =
       (matrixWidth + quietZoneModules) * minimumPixelsPerModule / qrSize;
   const maxImageSide = 6000.0;
   final maxPixelRatio = maxImageSide / math.max(canvasWidth, canvasHeight);
-  return math
-      .min(math.max(baseline, qrRequired), maxPixelRatio)
-      .toDouble();
+  return math.min(math.max(baseline, qrRequired), maxPixelRatio).toDouble();
 }
 
 Color _certificateColor(String value) {

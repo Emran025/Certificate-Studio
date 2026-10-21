@@ -26,12 +26,12 @@ import 'page.dart';
 class PdfPageList extends PdfObject<PdfDict> {
   /// This constructs a [PdfPageList] object.
   PdfPageList(PdfDocument pdfDocument, {int objgen = 0, int? objser})
-    : super(
-        pdfDocument,
-        params: PdfDict.values({'/Type': const PdfName('/Pages')}),
-        objgen: objgen,
-        objser: objser,
-      );
+      : super(
+          pdfDocument,
+          params: PdfDict.values({'/Type': const PdfName('/Pages')}),
+          objgen: objgen,
+          objser: objser,
+        );
 
   /// This holds the pages
   final pages = <PdfPage>[];

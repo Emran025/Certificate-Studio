@@ -86,7 +86,7 @@ abstract class _Span {
 
 class _TextDecoration {
   _TextDecoration(this.style, this.annotation, this.startSpan, this.endSpan)
-    : assert(startSpan <= endSpan);
+      : assert(startSpan <= endSpan);
 
   static const double _space = -0.15;
 
@@ -397,12 +397,11 @@ class _WidgetSpan extends _Span {
   }
 }
 
-typedef VisitorCallback =
-    bool Function(
-      InlineSpan span,
-      TextStyle? parentStyle,
-      AnnotationBuilder? annotation,
-    );
+typedef VisitorCallback = bool Function(
+  InlineSpan span,
+  TextStyle? parentStyle,
+  AnnotationBuilder? annotation,
+);
 
 @immutable
 abstract class InlineSpan {
@@ -459,12 +458,13 @@ class WidgetSpan extends InlineSpan {
     TextStyle? style,
     double? baseline,
     AnnotationBuilder? annotation,
-  }) => WidgetSpan(
-    child: child,
-    style: style ?? this.style,
-    baseline: baseline ?? this.baseline,
-    annotation: annotation ?? this.annotation,
-  );
+  }) =>
+      WidgetSpan(
+        child: child,
+        style: style ?? this.style,
+        baseline: baseline ?? this.baseline,
+        annotation: annotation ?? this.annotation,
+      );
 
   /// Calls `visitor` on this [WidgetSpan]. There are no children spans to walk.
   @override
@@ -498,13 +498,14 @@ class TextSpan extends InlineSpan {
     TextStyle? style,
     double? baseline,
     AnnotationBuilder? annotation,
-  }) => TextSpan(
-    style: style ?? this.style,
-    text: text,
-    baseline: baseline ?? this.baseline,
-    children: children,
-    annotation: annotation ?? this.annotation,
-  );
+  }) =>
+      TextSpan(
+        style: style ?? this.style,
+        text: text,
+        baseline: baseline ?? this.baseline,
+        children: children,
+        annotation: annotation ?? this.annotation,
+      );
 
   @override
   bool visitChildren(
@@ -953,13 +954,12 @@ class RichText extends Widget with SpanningWidget {
           final space =
               font.stringMetrics(' ') * (style.fontSize! * textScaleFactor);
 
-          final spanLines =
-              (useArabic && _textDirection == TextDirection.rtl
-                      ? arabic.convert(span.text!)
-                      : useBidi && _textDirection == TextDirection.rtl
+          final spanLines = (useArabic && _textDirection == TextDirection.rtl
+                  ? arabic.convert(span.text!)
+                  : useBidi && _textDirection == TextDirection.rtl
                       ? bidi.logicalToVisual(span.text!)
                       : span.text)!
-                  .split('\n');
+              .split('\n');
 
           for (var line = 0; line < spanLines.length; line++) {
             final words = spanLines[line].split(RegExp(r'\s'));
@@ -967,17 +967,14 @@ class RichText extends Widget with SpanningWidget {
               final word = words[index];
 
               if (word.isEmpty) {
-                offsetX +=
-                    space.advanceWidth * style.wordSpacing! +
+                offsetX += space.advanceWidth * style.wordSpacing! +
                     style.letterSpacing!;
                 continue;
               }
 
-              final metrics =
-                  font.stringMetrics(
+              final metrics = font.stringMetrics(
                     word,
-                    letterSpacing:
-                        style.letterSpacing! /
+                    letterSpacing: style.letterSpacing! /
                         (style.fontSize! * textScaleFactor),
                   ) *
                   (style.fontSize! * textScaleFactor);
@@ -992,8 +989,7 @@ class RichText extends Widget with SpanningWidget {
                       if (offsetX +
                               ((font.stringMetrics(
                                         '$fits$syllable-',
-                                        letterSpacing:
-                                            style.letterSpacing! /
+                                        letterSpacing: style.letterSpacing! /
                                             (style.fontSize! * textScaleFactor),
                                       ) *
                                       (style.fontSize! * textScaleFactor))
@@ -1081,8 +1077,7 @@ class RichText extends Widget with SpanningWidget {
                 ),
               );
 
-              offsetX +=
-                  metrics.advanceWidth +
+              offsetX += metrics.advanceWidth +
                   space.advanceWidth * style.wordSpacing! +
                   style.letterSpacing!;
             }
@@ -1339,8 +1334,7 @@ class RichText extends Widget with SpanningWidget {
     var pos = (low + high) ~/ 2;
 
     while (low + 1 < high) {
-      final metrics =
-          font.stringMetrics(
+      final metrics = font.stringMetrics(
             word.substring(0, pos),
             letterSpacing:
                 style.letterSpacing! / (style.fontSize! * textScaleFactor),
@@ -1389,13 +1383,13 @@ class Text extends RichText {
     int? maxLines,
     TextOverflow? overflow,
   }) : super(
-         text: TextSpan(text: text, style: style),
-         textAlign: textAlign,
-         softWrap: softWrap,
-         tightBounds: tightBounds,
-         textDirection: textDirection,
-         textScaleFactor: textScaleFactor,
-         maxLines: maxLines,
-         overflow: overflow,
-       );
+          text: TextSpan(text: text, style: style),
+          textAlign: textAlign,
+          softWrap: softWrap,
+          tightBounds: tightBounds,
+          textDirection: textDirection,
+          textScaleFactor: textScaleFactor,
+          maxLines: maxLines,
+          overflow: overflow,
+        );
 }

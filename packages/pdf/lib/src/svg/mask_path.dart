@@ -44,8 +44,8 @@ class SvgMaskPath {
       if (maskPath != null) {
         final maskBrush = SvgBrush.fromXml(maskPath, brush, painter);
         children = maskPath.children.whereType<XmlElement>().map<SvgOperation?>(
-          (c) => SvgOperation.fromXml(c, painter, maskBrush),
-        );
+              (c) => SvgOperation.fromXml(c, painter, maskBrush),
+            );
         return SvgMaskPath(children, painter);
       }
     }

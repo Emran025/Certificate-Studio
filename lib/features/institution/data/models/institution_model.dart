@@ -32,17 +32,17 @@ class InstitutionModel extends Institution {
   }
 
   Map<String, Object?> toRow() => {
-        'id': id,
-        'institution_id': institutionId,
-        'name': name,
-        'name_ar': nameAr,
-        'name_en': nameEn,
-        'logo_path': logoPath,
-        'contact_json': jsonEncode(contact),
-        'settings_json': jsonEncode(settings),
-        'created_at': createdAt.toUtc().toIso8601String(),
-        'updated_at': updatedAt.toUtc().toIso8601String(),
-      };
+    'id': id,
+    'institution_id': institutionId,
+    'name': name,
+    'name_ar': nameAr,
+    'name_en': nameEn,
+    'logo_path': logoPath,
+    'contact_json': jsonEncode(contact),
+    'settings_json': jsonEncode(settings),
+    'created_at': createdAt.toUtc().toIso8601String(),
+    'updated_at': updatedAt.toUtc().toIso8601String(),
+  };
 
   static Map<String, Object?> _decodeMap(String? value) {
     if (value == null || value.isEmpty) return const {};

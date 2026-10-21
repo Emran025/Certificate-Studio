@@ -34,19 +34,19 @@ class PdfPageLabel {
   PdfPageLabel(this.prefix, {this.style, this.subsequent});
 
   PdfPageLabel.arabic({this.prefix, this.subsequent})
-    : style = PdfPageLabelStyle.arabic;
+      : style = PdfPageLabelStyle.arabic;
 
   PdfPageLabel.romanUpper({this.prefix, this.subsequent})
-    : style = PdfPageLabelStyle.romanUpper;
+      : style = PdfPageLabelStyle.romanUpper;
 
   PdfPageLabel.romanLower({this.prefix, this.subsequent})
-    : style = PdfPageLabelStyle.romanLower;
+      : style = PdfPageLabelStyle.romanLower;
 
   PdfPageLabel.lettersUpper({this.prefix, this.subsequent})
-    : style = PdfPageLabelStyle.lettersUpper;
+      : style = PdfPageLabelStyle.lettersUpper;
 
   PdfPageLabel.lettersLower({this.prefix, this.subsequent})
-    : style = PdfPageLabelStyle.lettersLower;
+      : style = PdfPageLabelStyle.lettersLower;
 
   final PdfPageLabelStyle? style;
   final String? prefix;
@@ -150,7 +150,7 @@ class PdfPageLabel {
 class PdfPageLabels extends PdfObject<PdfDict> {
   /// Constructs a Pdf PageLabels object.
   PdfPageLabels(PdfDocument pdfDocument)
-    : super(pdfDocument, params: PdfDict());
+      : super(pdfDocument, params: PdfDict());
 
   final labels = <int, PdfPageLabel>{};
 

@@ -35,9 +35,10 @@ class TemplatePickerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-    create: (_) =>
-        TemplatePickerBloc(TemplateRepositoryImpl(TemplateDataSourceImpl(database)), projectId)
-          ..add(const TemplatesRequested()),
+    create: (_) => TemplatePickerBloc(
+      TemplateRepositoryImpl(TemplateDataSourceImpl(database)),
+      projectId,
+    )..add(const TemplatesRequested()),
     child: BlocBuilder<TemplatePickerBloc, TemplatePickerState>(
       builder: (context, state) {
         if (state.status == TemplatePickerStatus.loading ||
@@ -62,6 +63,11 @@ class TemplatePickerScreen extends StatelessWidget {
                     ),
               icon: Icons.image_outlined,
               actions: [
+                FilledButton.icon(
+                  onPressed: () => _addTemplate(context),
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                  label: Text(context.l10n.text('Add template')),
+                ),
                 if (projectMode)
                   IconButton(
                     tooltip: context.l10n.text('back'),
@@ -72,11 +78,6 @@ class TemplatePickerScreen extends StatelessWidget {
                           : Icons.arrow_back,
                     ),
                   ),
-                FilledButton.icon(
-                  onPressed: () => _addTemplate(context),
-                  icon: const Icon(Icons.add_photo_alternate_outlined),
-                  label: Text(context.l10n.text('Add template')),
-                ),
               ],
             ),
             child: state.templates.isEmpty

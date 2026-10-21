@@ -36,9 +36,9 @@ class Positioned extends SingleChildWidget {
     double? right,
     this.bottom,
     required Widget child,
-  }) : _left = left,
-       _right = right,
-       super(child: child);
+  })  : _left = left,
+        _right = right,
+        super(child: child);
 
   /// Creates a Positioned object with left, top, right, and bottom set to 0.0
   /// unless a value for them is passed.
@@ -48,9 +48,9 @@ class Positioned extends SingleChildWidget {
     double? right = 0.0,
     this.bottom = 0.0,
     required Widget child,
-  }) : _left = left,
-       _right = right,
-       super(child: child);
+  })  : _left = left,
+        _right = right,
+        super(child: child);
 
   /// Creates a widget that controls where a child of a [Stack] is positioned.
   factory Positioned.directional({

@@ -10,14 +10,15 @@ class FontAssetModel extends FontAsset {
   });
 
   factory FontAssetModel.fromRow(Map<String, Object?> row) => FontAssetModel(
-        id: row['id']! as String,
-        name: row['name']! as String,
-        family: row['family']! as String,
-        filePath: row['file_path']! as String,
-        format: row['format']! as String,
-      );
+    id: row['id']! as String,
+    name: row['name']! as String,
+    family: row['family']! as String,
+    filePath: row['file_path']! as String,
+    format: row['format']! as String,
+  );
 
-  Map<String, Object?> toRow({required List<int> bytes, required String now}) => {
+  Map<String, Object?> toRow({required List<int> bytes, required String now}) =>
+      {
         'id': id,
         'name': name,
         'family': family,

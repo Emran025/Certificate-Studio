@@ -11,10 +11,10 @@ import '../object.dart';
 
 class PdfaColorProfile extends PdfObject<PdfDictStream> {
   PdfaColorProfile(PdfDocument pdfDocument, this.icc)
-    : super(
-        pdfDocument,
-        params: PdfDictStream(compress: false, encrypt: false),
-      ) {
+      : super(
+          pdfDocument,
+          params: PdfDictStream(compress: false, encrypt: false),
+        ) {
     pdfDocument.catalog.colorProfile = this;
   }
 

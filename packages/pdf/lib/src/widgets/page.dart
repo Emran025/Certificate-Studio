@@ -43,27 +43,26 @@ class Page {
     EdgeInsetsGeometry? margin,
     bool clip = false,
     TextDirection? textDirection,
-  }) : assert(
-         pageTheme == null ||
-             (pageFormat == null &&
-                 theme == null &&
-                 orientation == null &&
-                 margin == null &&
-                 clip == false &&
-                 textDirection == null),
-         'Don\'t set both pageTheme and other settings',
-       ),
-       pageTheme =
-           pageTheme ??
-           PageTheme(
-             pageFormat: pageFormat,
-             orientation: orientation,
-             margin: margin,
-             theme: theme,
-             clip: clip,
-             textDirection: textDirection,
-           ),
-       _build = build;
+  })  : assert(
+          pageTheme == null ||
+              (pageFormat == null &&
+                  theme == null &&
+                  orientation == null &&
+                  margin == null &&
+                  clip == false &&
+                  textDirection == null),
+          'Don\'t set both pageTheme and other settings',
+        ),
+        pageTheme = pageTheme ??
+            PageTheme(
+              pageFormat: pageFormat,
+              orientation: orientation,
+              margin: margin,
+              theme: theme,
+              clip: clip,
+              textDirection: textDirection,
+            ),
+        _build = build;
 
   final PageTheme pageTheme;
 
@@ -134,16 +133,15 @@ class Page {
           );
 
     final calculatedTheme = theme ?? document.theme ?? ThemeData.base();
-    final context =
-        Context(
-          document: document.document,
-          page: _pdfPage!,
-          canvas: canvas,
-        ).inheritFromAll(<Inherited>[
-          calculatedTheme,
-          if (pageTheme.textDirection != null)
-            InheritedDirectionality(pageTheme.textDirection),
-        ]);
+    final context = Context(
+      document: document.document,
+      page: _pdfPage!,
+      canvas: canvas,
+    ).inheritFromAll(<Inherited>[
+      calculatedTheme,
+      if (pageTheme.textDirection != null)
+        InheritedDirectionality(pageTheme.textDirection),
+    ]);
 
     Widget? background;
     Widget? content;

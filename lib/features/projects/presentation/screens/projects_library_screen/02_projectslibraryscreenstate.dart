@@ -47,16 +47,12 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
       _bloc.add(const ProjectsRequested());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            context.l10n.text('Project imported successfully.'),
-          ),
+          content: Text(context.l10n.text('Project imported successfully.')),
         ),
       );
     } on Object catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.text('Import failed: $error'))),
       );
     }

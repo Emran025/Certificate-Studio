@@ -7,7 +7,12 @@ import 'hash.dart';
 const qrScheme = 'cstudio://verify/v2/';
 const legacyQrScheme = 'cstudio://verify/v1/';
 
-enum VerificationStatus { valid, invalidPayload, invalidDocument, invalidSignature }
+enum VerificationStatus {
+  valid,
+  invalidPayload,
+  invalidDocument,
+  invalidSignature
+}
 
 class VerificationResult {
   const VerificationResult(this.status, {this.record});
@@ -23,12 +28,15 @@ String encodeVerificationQrPayload(Map<String, dynamic> record) {
   if (record['fields'] == null || record['public_key'] == null) {
     return '$legacyQrScheme${base64UrlEncodeNoPadding(canonicalJsonBytes(record))}';
   }
-  final certificateId = Uri.encodeComponent(record['certificate_id']?.toString() ?? '');
+  final certificateId =
+      Uri.encodeComponent(record['certificate_id']?.toString() ?? '');
   final projectId = Uri.encodeComponent(record['project_id']?.toString() ?? '');
-  final documentHash = Uri.encodeComponent(record['document_hash']?.toString() ?? '');
+  final documentHash =
+      Uri.encodeComponent(record['document_hash']?.toString() ?? '');
   final signature = Uri.encodeComponent(record['signature']?.toString() ?? '');
   final fields = record['fields'];
-  final values = fields is Map ? fields.values.take(2).toList() : const <dynamic>[];
+  final values =
+      fields is Map ? fields.values.take(2).toList() : const <dynamic>[];
   final firstValues = [
     for (var index = 0; index < 2; index++)
       Uri.encodeComponent(index < values.length ? '${values[index]}' : ''),
@@ -63,15 +71,21 @@ Map<String, dynamic> decodeVerificationQrPayload(String payload) {
   }
   final bytes = base64UrlDecode(payload.substring(legacyQrScheme.length));
   final value = jsonDecode(utf8.decode(bytes));
-  if (value is! Map) throw const FormatException('verification QR payload must be an object');
+  if (value is! Map)
+    throw const FormatException('verification QR payload must be an object');
   return Map<String, dynamic>.from(value);
 }
 
-Future<VerificationResult> verifyQrPayload(String payload, List<int> document, SimplePublicKey publicKey) async {
+Future<VerificationResult> verifyQrPayload(
+    String payload, List<int> document, SimplePublicKey publicKey) async {
   try {
     final record = decodeVerificationQrPayload(payload);
-    if (record['document_hash'] != await sha256Base64Url(document)) return VerificationResult(VerificationStatus.invalidDocument, record: record);
-    if (!await verifyVerificationRecord(record, document, publicKey)) return VerificationResult(VerificationStatus.invalidSignature, record: record);
+    if (record['document_hash'] != await sha256Base64Url(document))
+      return VerificationResult(VerificationStatus.invalidDocument,
+          record: record);
+    if (!await verifyVerificationRecord(record, document, publicKey))
+      return VerificationResult(VerificationStatus.invalidSignature,
+          record: record);
     return VerificationResult(VerificationStatus.valid, record: record);
   } on FormatException {
     return const VerificationResult(VerificationStatus.invalidPayload);

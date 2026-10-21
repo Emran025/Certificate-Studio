@@ -7,7 +7,9 @@ class _DataImportScreenState extends State<DataImportScreen> {
   @override
   void initState() {
     super.initState();
-    final repository = DataImportRepositoryImpl(DataImportDataSourceImpl(widget.database));
+    final repository = DataImportRepositoryImpl(
+      DataImportDataSourceImpl(widget.database),
+    );
     _bloc = DataImportBloc(
       projectId: widget.projectId,
       pasteTable: PasteTable(repository),

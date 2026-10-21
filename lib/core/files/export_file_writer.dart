@@ -1,5 +1,6 @@
 import 'export_file_writer_io.dart'
-    if (dart.library.html) 'export_file_writer_web.dart' as platform;
+    if (dart.library.html) 'export_file_writer_web.dart'
+    as platform;
 
 Future<String?> saveExportBytes({
   required String dialogTitle,

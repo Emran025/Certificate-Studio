@@ -105,7 +105,8 @@ class _CertificateDetails extends StatelessWidget {
               _Detail(
                 icon: Icons.fingerprint,
                 label: context.l10n.text('Document hash'),
-                value: certificate.documentHash ??
+                value:
+                    certificate.documentHash ??
                     context.l10n.text('Unavailable'),
                 showDivider: false,
               ),

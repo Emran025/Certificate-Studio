@@ -43,10 +43,7 @@ class CertificateArtifactRenderer {
     final fieldY = _number(position['y'], 0);
     final fieldWidth = _number(position['width'], 220);
     final fieldHeight = _number(position['height'], 220);
-    final qrLogicalSize = math.max(
-      1.0,
-      math.min(fieldWidth, fieldHeight) - 20,
-    );
+    final qrLogicalSize = math.max(1.0, math.min(fieldWidth, fieldHeight) - 20);
     final scaleX = canvas.width / canvasWidth;
     final scaleY = canvas.height / canvasHeight;
     final qrScale = math.min(scaleX, scaleY);
@@ -74,10 +71,9 @@ class CertificateArtifactRenderer {
     if (source == null) return null;
     var scale = targetPixelRatio;
     if (canvasWidth != null && canvasHeight != null) {
-      final containScale = math.min(
-        canvasWidth / source.width,
-        canvasHeight / source.height,
-      ).toDouble();
+      final containScale = math
+          .min(canvasWidth / source.width, canvasHeight / source.height)
+          .toDouble();
       scale *= containScale;
     }
     if (scale <= 1) return templateBytes;
@@ -302,10 +298,7 @@ class CertificateArtifactRenderer {
     // template from freezing the UI during generation.
     const maxDimension = 6000;
     final requestedScale = math
-        .min(
-          scale,
-          maxDimension / math.max(source.width, source.height),
-        )
+        .min(scale, maxDimension / math.max(source.width, source.height))
         .clamp(1.0, scale);
     final targetWidth = (width * requestedScale).round();
     final targetHeight = (height * requestedScale).round();
@@ -405,15 +398,20 @@ class CertificateArtifactRenderer {
   }) {
     final matrix = Encoder.encode(payload, ErrorCorrectionLevel.l).matrix!;
     const quietModules = 4;
-    final module = (size / (matrix.width + quietModules * 2))
-        .floor()
-        .clamp(1, 1000);
+    final module = (size / (matrix.width + quietModules * 2)).floor().clamp(
+      1,
+      1000,
+    );
     final totalSize = (matrix.width + quietModules * 2) * module;
     if (totalSize > canvas.width || totalSize > canvas.height) return;
-    final originX =
-        (x + (size - totalSize) / 2).round().clamp(0, canvas.width - totalSize);
-    final originY =
-        (y + (size - totalSize) / 2).round().clamp(0, canvas.height - totalSize);
+    final originX = (x + (size - totalSize) / 2).round().clamp(
+      0,
+      canvas.width - totalSize,
+    );
+    final originY = (y + (size - totalSize) / 2).round().clamp(
+      0,
+      canvas.height - totalSize,
+    );
     img.fillRect(
       canvas,
       x1: originX,

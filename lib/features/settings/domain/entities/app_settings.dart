@@ -16,8 +16,8 @@ class AppSettings {
     int? accentColorValue,
     String? languageCode,
   }) => AppSettings(
-        themeMode: themeMode ?? this.themeMode,
-        accentColorValue: accentColorValue ?? this.accentColorValue,
-        languageCode: languageCode ?? this.languageCode,
-      );
+    themeMode: themeMode ?? this.themeMode,
+    accentColorValue: accentColorValue ?? this.accentColorValue,
+    languageCode: languageCode ?? this.languageCode,
+  );
 }

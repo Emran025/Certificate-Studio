@@ -48,9 +48,9 @@ class IconThemeData {
 
   /// Creates an icon them with some reasonable default values.
   const IconThemeData.fallback(this.font)
-    : color = PdfColors.black,
-      opacity = 1.0,
-      size = 24.0;
+      : color = PdfColors.black,
+        opacity = 1.0,
+        size = 24.0;
 
   /// Creates a copy of this icon theme but with the given fields replaced with
   /// the new values.
@@ -86,7 +86,7 @@ class IconThemeData {
 class Icon extends StatelessWidget {
   /// Creates an icon.
   Icon(this.icon, {this.size, this.color, this.textDirection, this.font})
-    : super();
+      : super();
 
   /// The icon to display. The available icons are described in [Icons].
   final IconData icon;

@@ -157,7 +157,8 @@ class CertificateGenerationService
     // backgrounds are reused unchanged; lower-density images are enhanced only
     // to the effective 300-DPI resolution required by the designer canvas.
     final templateDpi = _number(template['dpi'], 96).clamp(1, 1200);
-    final captureBackgroundBytes = canvasCapture == null || templateBytes == null
+    final captureBackgroundBytes =
+        canvasCapture == null || templateBytes == null
         ? templateBytes
         : await Isolate.run(
                 () => CertificateArtifactRenderer.preparePdfBackground(
@@ -245,12 +246,11 @@ class CertificateGenerationService
               template: template,
               fontBytesByFamily: fontBytesByFamily,
             );
-            final canvasBytes = fields.any(
-                  (field) {
-                    final style = _decodeJsonMap(field['style_json']);
-                    return style['kind'] == 'qr' && style['visible'] != false;
-                  },
-                )
+            final canvasBytes =
+                fields.any((field) {
+                  final style = _decodeJsonMap(field['style_json']);
+                  return style['kind'] == 'qr' && style['visible'] != false;
+                })
                 ? await Isolate.run(
                     () => CertificateArtifactRenderer.redrawQrOnPng(
                       imageBytes: capturedBytes,

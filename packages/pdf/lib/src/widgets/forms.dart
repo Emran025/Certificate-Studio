@@ -155,21 +155,20 @@ class Checkbox extends SingleChildWidget with AnnotationAppearance {
     double height = 13,
     BoxDecoration? decoration,
     this.replaces,
-  }) : radius = decoration?.shape == BoxShape.circle
-           ? Radius.circular(math.max(height, width) / 2)
-           : decoration?.borderRadius?.uniform ?? Radius.zero,
-       super(
-         child: Container(
-           width: width,
-           height: height,
-           margin: const EdgeInsets.all(1),
-           decoration:
-               decoration ??
-               BoxDecoration(
-                 border: Border.all(color: PdfColors.grey600, width: 2),
-               ),
-         ),
-       );
+  })  : radius = decoration?.shape == BoxShape.circle
+            ? Radius.circular(math.max(height, width) / 2)
+            : decoration?.borderRadius?.uniform ?? Radius.zero,
+        super(
+          child: Container(
+            width: width,
+            height: height,
+            margin: const EdgeInsets.all(1),
+            decoration: decoration ??
+                BoxDecoration(
+                  border: Border.all(color: PdfColors.grey600, width: 2),
+                ),
+          ),
+        );
 
   final bool value;
 
@@ -251,51 +250,47 @@ class FlatButton extends SingleChildWidget with AnnotationAppearance {
     required Widget child,
     required this.name,
     this.replaces,
-  }) : _childDown = Container(
-         child: DefaultTextStyle(
-           style: TextStyle(color: textColor),
-           child: child,
-         ),
-         decoration:
-             decoration ??
-             BoxDecoration(
-               color: colorDown,
-               borderRadius: const BorderRadius.all(Radius.circular(2)),
-             ),
-         padding:
-             padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-       ),
-       _childRollover = Container(
-         child: DefaultTextStyle(
-           style: TextStyle(color: textColor),
-           child: child,
-         ),
-         decoration:
-             decoration ??
-             BoxDecoration(
-               color: colorRollover,
-               borderRadius: const BorderRadius.all(Radius.circular(2)),
-             ),
-         padding:
-             padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-       ),
-       super(
-         child: Container(
-           child: DefaultTextStyle(
-             style: TextStyle(color: textColor),
-             child: child,
-           ),
-           decoration:
-               decoration ??
-               BoxDecoration(
-                 color: color,
-                 borderRadius: const BorderRadius.all(Radius.circular(2)),
-               ),
-           padding:
-               padding ??
-               const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-         ),
-       );
+  })  : _childDown = Container(
+          child: DefaultTextStyle(
+            style: TextStyle(color: textColor),
+            child: child,
+          ),
+          decoration: decoration ??
+              BoxDecoration(
+                color: colorDown,
+                borderRadius: const BorderRadius.all(Radius.circular(2)),
+              ),
+          padding: padding ??
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+        ),
+        _childRollover = Container(
+          child: DefaultTextStyle(
+            style: TextStyle(color: textColor),
+            child: child,
+          ),
+          decoration: decoration ??
+              BoxDecoration(
+                color: colorRollover,
+                borderRadius: const BorderRadius.all(Radius.circular(2)),
+              ),
+          padding: padding ??
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+        ),
+        super(
+          child: Container(
+            child: DefaultTextStyle(
+              style: TextStyle(color: textColor),
+              child: child,
+            ),
+            decoration: decoration ??
+                BoxDecoration(
+                  color: color,
+                  borderRadius: const BorderRadius.all(Radius.circular(2)),
+                ),
+            padding: padding ??
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+          ),
+        );
 
   final String name;
 
@@ -448,8 +443,8 @@ class Signature extends SingleChildWidget with AnnotationAppearance {
     this.cert,
     this.ocsp,
     this.replaces,
-  }) : value = value ?? crypto,
-       super(child: child);
+  })  : value = value ?? crypto,
+        super(child: child);
 
   /// Field name
   final String name;

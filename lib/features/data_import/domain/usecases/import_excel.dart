@@ -12,12 +12,15 @@ class ImportExcel {
   }) async {
     final table = _repository.parseExcel(bytes);
     if (table.columns.isEmpty) {
-      throw const FormatException('The workbook does not contain a header row.');
+      throw const FormatException(
+        'The workbook does not contain a header row.',
+      );
     }
     if (table.rows.isEmpty) {
-      throw const FormatException('The workbook does not contain any recipient rows.');
+      throw const FormatException(
+        'The workbook does not contain any recipient rows.',
+      );
     }
     return _repository.saveForProject(projectId, table);
   }
 }
-

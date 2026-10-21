@@ -6,13 +6,20 @@ class PasteTable {
 
   final DataImportRepository _repository;
 
-  Future<ImportedTable> call({required String projectId, required String rawText}) async {
+  Future<ImportedTable> call({
+    required String projectId,
+    required String rawText,
+  }) async {
     final table = _repository.parseTable(rawText);
     if (table.columns.isEmpty) {
-      throw const FormatException('Paste a table with a header row and at least one column.');
+      throw const FormatException(
+        'Paste a table with a header row and at least one column.',
+      );
     }
     if (table.rows.isEmpty) {
-      throw const FormatException('The table does not contain any recipient rows.');
+      throw const FormatException(
+        'The table does not contain any recipient rows.',
+      );
     }
     return _repository.saveForProject(projectId, table);
   }

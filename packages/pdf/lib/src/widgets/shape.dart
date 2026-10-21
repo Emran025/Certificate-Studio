@@ -164,9 +164,8 @@ class Polygon extends Widget {
     canvas.setLineWidth(strokeWidth);
 
     // Flip the points on the Y axis.
-    final flippedPoints = points
-        .map((e) => PdfPoint(e.x, box!.height - e.y))
-        .toList();
+    final flippedPoints =
+        points.map((e) => PdfPoint(e.x, box!.height - e.y)).toList();
 
     canvas.moveTo(flippedPoints[0].x, flippedPoints[0].y);
     for (var i = 0; i < flippedPoints.length; i++) {

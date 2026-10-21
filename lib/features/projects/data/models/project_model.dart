@@ -44,25 +44,26 @@ class ProjectModel extends Project {
   }
 
   Map<String, Object?> toRow() => {
-        'id': id,
-        'institution_id': institutionId,
-        'name': name,
-        'course_name': courseName,
-        'description': description,
-        'start_date': startDate?.toUtc().toIso8601String(),
-        'end_date': endDate?.toUtc().toIso8601String(),
-        'trainer_name': trainerName,
-        'organization_name': organizationName,
-        'logo_path': logoPath,
-        'template_id': templateId,
-        'settings_json': jsonEncode(settings),
-        'project_key_reference': projectKeyReference,
-        'version': version,
-        'created_at': createdAt.toUtc().toIso8601String(),
-        'updated_at': updatedAt.toUtc().toIso8601String(),
-      };
+    'id': id,
+    'institution_id': institutionId,
+    'name': name,
+    'course_name': courseName,
+    'description': description,
+    'start_date': startDate?.toUtc().toIso8601String(),
+    'end_date': endDate?.toUtc().toIso8601String(),
+    'trainer_name': trainerName,
+    'organization_name': organizationName,
+    'logo_path': logoPath,
+    'template_id': templateId,
+    'settings_json': jsonEncode(settings),
+    'project_key_reference': projectKeyReference,
+    'version': version,
+    'created_at': createdAt.toUtc().toIso8601String(),
+    'updated_at': updatedAt.toUtc().toIso8601String(),
+  };
 
-  static DateTime? _parseDate(String? value) => value == null ? null : DateTime.parse(value);
+  static DateTime? _parseDate(String? value) =>
+      value == null ? null : DateTime.parse(value);
 
   static Map<String, Object?> _decodeMap(String? value) {
     if (value == null || value.isEmpty) return const {};

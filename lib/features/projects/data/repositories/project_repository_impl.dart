@@ -8,14 +8,15 @@ class ProjectRepositoryImpl implements ProjectRepository {
   final ProjectDataSource _dataSource;
   @override
   Future<List<Project>> getAll({String? institutionId}) async =>
-      (await _dataSource.getProjects(institutionId: institutionId))
-          .map(ProjectModel.fromRow)
-          .toList(growable: false);
+      (await _dataSource.getProjects(
+        institutionId: institutionId,
+      )).map(ProjectModel.fromRow).toList(growable: false);
   @override
   Future<Project?> getById(String id) async {
     final row = await _dataSource.getProject(id);
     return row == null ? null : ProjectModel.fromRow(row);
   }
+
   @override
   Future<Project> save(Project project) async {
     final model = ProjectModel(
@@ -39,6 +40,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
     await _dataSource.saveProject(model.toRow());
     return model;
   }
+
   @override
   Future<void> delete(String id) => _dataSource.deleteProject(id);
   @override

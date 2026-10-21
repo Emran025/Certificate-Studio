@@ -44,11 +44,11 @@ class PointDataSet<T extends PointChartValue> extends Dataset {
     this.buildValue,
     this.valuePosition = ValuePosition.auto,
   }) : super(
-         legend: legend,
-         color: color,
-         borderColor: borderColor,
-         borderWidth: borderWidth,
-       );
+          legend: legend,
+          color: color,
+          borderColor: borderColor,
+          borderWidth: borderWidth,
+        );
 
   final List<T> data;
 
@@ -145,9 +145,8 @@ class PointDataSet<T extends PointChartValue> extends Dataset {
         final PdfPoint offset;
         var pos = valuePosition;
         if (pos == ValuePosition.auto) {
-          final next = index < data.length
-              ? grid.toChart(data[index++].point)
-              : null;
+          final next =
+              index < data.length ? grid.toChart(data[index++].point) : null;
           pos = automaticValuePosition(p, size, previous, next);
         }
 

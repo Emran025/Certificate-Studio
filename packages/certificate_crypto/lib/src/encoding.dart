@@ -1,7 +1,9 @@
 import 'dart:convert';
 
-String base64UrlEncodeNoPadding(List<int> bytes) => base64Url.encode(bytes).replaceAll('=', '');
-List<int> base64UrlDecode(String value) => base64Url.decode(base64Url.normalize(value));
+String base64UrlEncodeNoPadding(List<int> bytes) =>
+    base64Url.encode(bytes).replaceAll('=', '');
+List<int> base64UrlDecode(String value) =>
+    base64Url.decode(base64Url.normalize(value));
 
 String canonicalJson(Object? value) {
   final buffer = StringBuffer();
@@ -19,7 +21,8 @@ String canonicalJson(Object? value) {
       buffer.write(']');
     } else if (value is Map) {
       final keys = value.keys.whereType<String>().toList()..sort();
-      if (keys.length != value.length) throw ArgumentError('canonical maps require string keys');
+      if (keys.length != value.length)
+        throw ArgumentError('canonical maps require string keys');
       buffer.write('{');
       for (var i = 0; i < keys.length; i++) {
         if (i > 0) buffer.write(',');
@@ -29,10 +32,14 @@ String canonicalJson(Object? value) {
       }
       buffer.write('}');
     } else {
-      throw ArgumentError('unsupported canonical JSON value: ${value.runtimeType}');
+      throw ArgumentError(
+          'unsupported canonical JSON value: ${value.runtimeType}');
     }
   }
+
   writeValue(value);
   return buffer.toString();
 }
-List<int> canonicalJsonBytes(Object? value) => utf8.encode(canonicalJson(value));
+
+List<int> canonicalJsonBytes(Object? value) =>
+    utf8.encode(canonicalJson(value));

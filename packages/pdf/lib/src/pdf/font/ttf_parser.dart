@@ -603,11 +603,9 @@ class TtfParser {
     final numSizes = bytes.getUint32(baseOffset + 4);
     var bitmapSize = baseOffset + 8;
 
-    for (
-      var bitmapSizeIndex = 0;
-      bitmapSizeIndex < numSizes;
-      bitmapSizeIndex++
-    ) {
+    for (var bitmapSizeIndex = 0;
+        bitmapSizeIndex < numSizes;
+        bitmapSizeIndex++) {
       // BitmapSize Record
       final indexSubTableArrayOffset = baseOffset + bytes.getUint32(bitmapSize);
       // final indexTablesSize = bytes.getUint32(bitmapSize + 4);
@@ -624,11 +622,9 @@ class TtfParser {
       // final flags = bytes.getUint8(bitmapSize + 16 + 12 * 2 + 7);
 
       var subTableArrayOffset = indexSubTableArrayOffset;
-      for (
-        var indexSubTable = 0;
-        indexSubTable < numberOfIndexSubTables;
-        indexSubTable++
-      ) {
+      for (var indexSubTable = 0;
+          indexSubTable < numberOfIndexSubTables;
+          indexSubTable++) {
         // IndexSubTableArray
         final firstGlyphIndex = bytes.getUint16(subTableArrayOffset);
         final lastGlyphIndex = bytes.getUint16(subTableArrayOffset + 2);
@@ -647,8 +643,7 @@ class TtfParser {
           // IndexSubTable1
 
           for (var glyph = firstGlyphIndex; glyph <= lastGlyphIndex; glyph++) {
-            final sbitOffset =
-                imageDataOffset +
+            final sbitOffset = imageDataOffset +
                 bytes.getUint32(
                   additionalOffsetToIndexSubtable +
                       (glyph - firstGlyphIndex + 2) * 4,

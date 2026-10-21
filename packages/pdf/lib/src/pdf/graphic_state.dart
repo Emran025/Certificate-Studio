@@ -91,8 +91,8 @@ class PdfGraphicState {
     this.blendMode,
     this.softMask,
     this.transferFunction,
-  }) : fillOpacity = fillOpacity ?? opacity,
-       strokeOpacity = strokeOpacity ?? opacity;
+  })  : fillOpacity = fillOpacity ?? opacity,
+        strokeOpacity = strokeOpacity ?? opacity;
 
   /// Fill opacity to apply to this graphic state
   final double? fillOpacity;
@@ -167,7 +167,7 @@ class PdfGraphicState {
 class PdfGraphicStates extends PdfObject<PdfDict> {
   /// Create a new Graphic States object
   PdfGraphicStates(PdfDocument pdfDocument)
-    : super(pdfDocument, params: PdfDict());
+      : super(pdfDocument, params: PdfDict());
 
   final List<PdfGraphicState> _states = <PdfGraphicState>[];
 

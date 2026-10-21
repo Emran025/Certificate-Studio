@@ -26,7 +26,7 @@ import 'shading.dart';
 
 abstract class PdfPattern extends PdfObject<PdfDict> {
   PdfPattern(PdfDocument pdfDocument, this.patternType, this.matrix)
-    : super(pdfDocument, params: PdfDict());
+      : super(pdfDocument, params: PdfDict());
 
   /// Name of the Pattern object
   String get name => '/P$objser';

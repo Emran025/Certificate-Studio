@@ -56,13 +56,15 @@ class SvgText extends SvgOperation {
       'dx',
       _brush,
       defaultValue: 0,
-    )!.sizeValue;
+    )!
+        .sizeValue;
     final dy = SvgParser.getNumeric(
       element,
       'dy',
       _brush,
       defaultValue: 0,
-    )!.sizeValue;
+    )!
+        .sizeValue;
     final x = SvgParser.getNumeric(element, 'x', _brush)?.sizeValue;
     final y = SvgParser.getNumeric(element, 'y', _brush)?.sizeValue;
 

@@ -259,9 +259,8 @@ class AnnotationPolygon extends AnnotationBuilder {
 
   @override
   PdfAnnot build(Context context, PdfRect? box) {
-    final globalPoints = points
-        .map((e) => context.localToGlobalPoint(e))
-        .toList();
+    final globalPoints =
+        points.map((e) => context.localToGlobalPoint(e)).toList();
 
     final rect = context.localToGlobal(
       PdfRect(
@@ -333,9 +332,8 @@ class AnnotationInk extends AnnotationBuilder {
         )
         .toList(growable: false);
 
-    final allPoints = points
-        .expand((pointList) => pointList)
-        .toList(growable: false);
+    final allPoints =
+        points.expand((pointList) => pointList).toList(growable: false);
 
     final minX = allPoints.map((point) => point.x).reduce(min);
     final minY = allPoints.map((point) => point.y).reduce(min);
@@ -477,12 +475,12 @@ class Annotation extends SingleChildWidget {
 
 class Link extends Annotation {
   Link({required Widget child, required String destination})
-    : super(child: child, builder: AnnotationLink(destination));
+      : super(child: child, builder: AnnotationLink(destination));
 }
 
 class UrlLink extends Annotation {
   UrlLink({required Widget child, required String destination})
-    : super(child: child, builder: AnnotationUrl(destination));
+      : super(child: child, builder: AnnotationUrl(destination));
 }
 
 class SquareAnnotation extends Annotation {
@@ -496,23 +494,22 @@ class SquareAnnotation extends Annotation {
     String? subject,
     String? content,
   }) : super(
-         child:
-             child ??
-             Rectangle(
-               fillColor: interiorColor,
-               strokeWidth: border?.width ?? 1.0,
-               strokeColor: color,
-             ),
-         builder: AnnotationSquare(
-           color: color,
-           interiorColor: interiorColor,
-           border: border,
-           author: author,
-           date: date,
-           content: content,
-           subject: subject,
-         ),
-       );
+          child: child ??
+              Rectangle(
+                fillColor: interiorColor,
+                strokeWidth: border?.width ?? 1.0,
+                strokeColor: color,
+              ),
+          builder: AnnotationSquare(
+            color: color,
+            interiorColor: interiorColor,
+            border: border,
+            author: author,
+            date: date,
+            content: content,
+            subject: subject,
+          ),
+        );
 }
 
 class CircleAnnotation extends Annotation {
@@ -526,23 +523,22 @@ class CircleAnnotation extends Annotation {
     String? subject,
     String? content,
   }) : super(
-         child:
-             child ??
-             Circle(
-               fillColor: interiorColor,
-               strokeWidth: border?.width ?? 1.0,
-               strokeColor: color,
-             ),
-         builder: AnnotationCircle(
-           color: color,
-           interiorColor: interiorColor,
-           border: border,
-           author: author,
-           date: date,
-           content: content,
-           subject: subject,
-         ),
-       );
+          child: child ??
+              Circle(
+                fillColor: interiorColor,
+                strokeWidth: border?.width ?? 1.0,
+                strokeColor: color,
+              ),
+          builder: AnnotationCircle(
+            color: color,
+            interiorColor: interiorColor,
+            border: border,
+            author: author,
+            date: date,
+            content: content,
+            subject: subject,
+          ),
+        );
 }
 
 class PolygonAnnotation extends Annotation {
@@ -557,25 +553,24 @@ class PolygonAnnotation extends Annotation {
     String? subject,
     String? content,
   }) : super(
-         child:
-             child ??
-             Polygon(
-               points: points,
-               strokeColor: color,
-               fillColor: interiorColor,
-               strokeWidth: border?.width ?? 1.0,
-             ),
-         builder: AnnotationPolygon(
-           points,
-           color: color,
-           interiorColor: interiorColor,
-           border: border,
-           author: author,
-           date: date,
-           content: content,
-           subject: subject,
-         ),
-       );
+          child: child ??
+              Polygon(
+                points: points,
+                strokeColor: color,
+                fillColor: interiorColor,
+                strokeWidth: border?.width ?? 1.0,
+              ),
+          builder: AnnotationPolygon(
+            points,
+            color: color,
+            interiorColor: interiorColor,
+            border: border,
+            author: author,
+            date: date,
+            content: content,
+            subject: subject,
+          ),
+        );
 }
 
 class PolyLineAnnotation extends Annotation {
@@ -588,22 +583,22 @@ class PolyLineAnnotation extends Annotation {
     String? content,
     String? subject,
   }) : super(
-         child: Polygon(
-           points: points,
-           strokeColor: color,
-           close: false,
-           strokeWidth: border?.width ?? 1.0,
-         ),
-         builder: AnnotationPolygon(
-           points,
-           color: color,
-           border: border,
-           author: author,
-           date: date,
-           content: content,
-           subject: subject,
-         ),
-       );
+          child: Polygon(
+            points: points,
+            strokeColor: color,
+            close: false,
+            strokeWidth: border?.width ?? 1.0,
+          ),
+          builder: AnnotationPolygon(
+            points,
+            color: color,
+            border: border,
+            author: author,
+            date: date,
+            content: content,
+            subject: subject,
+          ),
+        );
 }
 
 class InkAnnotation extends Annotation {
@@ -617,23 +612,22 @@ class InkAnnotation extends Annotation {
     String? content,
     String? subject,
   }) : super(
-         child:
-             child ??
-             InkList(
-               points: points,
-               strokeColor: color,
-               strokeWidth: border?.width ?? 1.0,
-             ),
-         builder: AnnotationInk(
-           points,
-           color: color,
-           border: border,
-           author: author,
-           date: date,
-           content: content,
-           subject: subject,
-         ),
-       );
+          child: child ??
+              InkList(
+                points: points,
+                strokeColor: color,
+                strokeWidth: border?.width ?? 1.0,
+              ),
+          builder: AnnotationInk(
+            points,
+            color: color,
+            border: border,
+            author: author,
+            date: date,
+            content: content,
+            subject: subject,
+          ),
+        );
 }
 
 class Outline extends Anchor {
@@ -644,8 +638,8 @@ class Outline extends Anchor {
     this.level = 0,
     this.color,
     this.style = PdfOutlineStyle.normal,
-  }) : assert(level >= 0),
-       super(child: child, name: name, setX: true);
+  })  : assert(level >= 0),
+        super(child: child, name: name, setX: true);
 
   final String title;
 

@@ -3,17 +3,26 @@ import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
 
 abstract interface class CertificateArtifactStore {
-  Future<String> save({required String certificateId, required String extension, required List<int> bytes});
+  Future<String> save({
+    required String certificateId,
+    required String extension,
+    required List<int> bytes,
+  });
   Future<Uint8List?> read(String reference);
   Future<void> delete(String reference);
 }
 
-class SharedPreferencesCertificateArtifactStore implements CertificateArtifactStore {
+class SharedPreferencesCertificateArtifactStore
+    implements CertificateArtifactStore {
   SharedPreferencesCertificateArtifactStore({this._preferences});
   SharedPreferences? _preferences;
 
   @override
-  Future<String> save({required String certificateId, required String extension, required List<int> bytes}) async {
+  Future<String> save({
+    required String certificateId,
+    required String extension,
+    required List<int> bytes,
+  }) async {
     final preferences = _preferences ??= await SharedPreferences.getInstance();
     final reference = 'artifact://certificates/$certificateId.$extension';
     await preferences.setString(_key(reference), base64Encode(bytes));
@@ -40,7 +49,11 @@ class InMemoryCertificateArtifactStore implements CertificateArtifactStore {
   final Map<String, Uint8List> artifacts = {};
 
   @override
-  Future<String> save({required String certificateId, required String extension, required List<int> bytes}) async {
+  Future<String> save({
+    required String certificateId,
+    required String extension,
+    required List<int> bytes,
+  }) async {
     final reference = 'artifact://certificates/$certificateId.$extension';
     artifacts[reference] = Uint8List.fromList(bytes);
     return reference;

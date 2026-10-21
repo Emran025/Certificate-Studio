@@ -145,10 +145,14 @@ void main() {
   testWidgets('uses the decoded background image for deterministic capture', (
     tester,
   ) async {
-    final codec = await ui.instantiateImageCodec(
-      Uint8List.fromList(_backgroundPng()),
-    );
-    final background = (await codec.getNextFrame()).image;
+    late ui.Codec codec;
+    late ui.Image background;
+    await tester.runAsync(() async {
+      codec = await ui.instantiateImageCodec(
+        Uint8List.fromList(_backgroundPng()),
+      );
+      background = (await codec.getNextFrame()).image;
+    });
     await tester.pumpWidget(
       MaterialApp(
         home: Center(

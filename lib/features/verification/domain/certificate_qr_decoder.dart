@@ -12,16 +12,19 @@ Map<String, dynamic>? decodeQrRecord(List<int> bytes) {
     final hints = DecodeHints()
       ..put(DecodeHintType.tryHarder)
       ..put(DecodeHintType.possibleFormats, [BarcodeFormat.qrCode]);
-    final grayscale = img.grayscale(decoded);
+    // These image package filters mutate their input. Give each preprocessing
+    // path its own copy so later invert/contrast passes cannot corrupt earlier
+    // variants before the decoder gets a chance to inspect them.
+    final grayscale = img.grayscale(decoded.clone());
     final variants = <img.Image>[
       decoded,
       grayscale,
-      img.adjustColor(grayscale, contrast: 1.35),
-      img.invert(grayscale),
-      img.copyResize(grayscale, width: decoded.width * 2),
-      img.copyRotate(grayscale, angle: 90),
-      img.copyRotate(grayscale, angle: 180),
-      img.copyRotate(grayscale, angle: 270),
+      img.adjustColor(grayscale.clone(), contrast: 1.35),
+      img.invert(grayscale.clone()),
+      img.copyResize(grayscale.clone(), width: decoded.width * 2),
+      img.copyRotate(grayscale.clone(), angle: 90),
+      img.copyRotate(grayscale.clone(), angle: 180),
+      img.copyRotate(grayscale.clone(), angle: 270),
     ];
     // A certificate QR is often small relative to the page. Decode
     // overlapping tiles as well as the full page so text and background

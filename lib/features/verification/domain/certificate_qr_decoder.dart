@@ -26,11 +26,13 @@ Map<String, dynamic>? decodeQrRecord(List<int> bytes) {
     // A certificate QR is often small relative to the page. Decode
     // overlapping tiles as well as the full page so text and background
     // detail cannot prevent the detector from finding its finder patterns.
-    final tileWidth = (decoded.width * .55)
+    // Keep enough context around a certificate QR. Smaller tiles can cut off
+    // finder patterns or the quiet zone when the QR occupies a large field.
+    final tileWidth = (decoded.width * .75)
         .round()
         .clamp(96, decoded.width)
         .toInt();
-    final tileHeight = (decoded.height * .55)
+    final tileHeight = (decoded.height * .75)
         .round()
         .clamp(96, decoded.height)
         .toInt();

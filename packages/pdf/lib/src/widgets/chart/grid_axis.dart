@@ -46,18 +46,18 @@ abstract class GridAxis extends Widget {
     bool? axisTick,
     this.angle = 0,
     this.buildLabel,
-  }) : format = format ?? _defaultFormat,
-       color = color ?? PdfColors.black,
-       width = width ?? 1,
-       divisions = divisions ?? false,
-       divisionsWidth = divisionsWidth ?? .5,
-       divisionsColor = divisionsColor ?? PdfColors.grey,
-       _marginStart = marginStart ?? 0,
-       _marginEnd = marginEnd ?? 0,
-       ticks = ticks ?? false,
-       _axisTick = axisTick,
-       divisionsDashed = divisionsDashed ?? false,
-       direction = Axis.horizontal;
+  })  : format = format ?? _defaultFormat,
+        color = color ?? PdfColors.black,
+        width = width ?? 1,
+        divisions = divisions ?? false,
+        divisionsWidth = divisionsWidth ?? .5,
+        divisionsColor = divisionsColor ?? PdfColors.grey,
+        _marginStart = marginStart ?? 0,
+        _marginEnd = marginEnd ?? 0,
+        ticks = ticks ?? false,
+        _axisTick = axisTick,
+        divisionsDashed = divisionsDashed ?? false,
+        direction = Axis.horizontal;
 
   Axis direction;
 
@@ -126,24 +126,24 @@ class FixedAxis<T extends num> extends GridAxis {
     bool? axisTick,
     double angle = 0,
     GridAxisBuildLabel? buildLabel,
-  }) : assert(_isSortedAscending(values)),
-       super(
-         format: format,
-         textStyle: textStyle,
-         margin: margin,
-         marginStart: marginStart,
-         marginEnd: marginEnd,
-         color: color,
-         width: width,
-         divisions: divisions,
-         divisionsWidth: divisionsWidth,
-         divisionsColor: divisionsColor,
-         divisionsDashed: divisionsDashed,
-         ticks: ticks,
-         axisTick: axisTick,
-         angle: angle,
-         buildLabel: buildLabel,
-       );
+  })  : assert(_isSortedAscending(values)),
+        super(
+          format: format,
+          textStyle: textStyle,
+          margin: margin,
+          marginStart: marginStart,
+          marginEnd: marginEnd,
+          color: color,
+          width: width,
+          divisions: divisions,
+          divisionsWidth: divisionsWidth,
+          divisionsColor: divisionsColor,
+          divisionsDashed: divisionsDashed,
+          ticks: ticks,
+          axisTick: axisTick,
+          angle: angle,
+          buildLabel: buildLabel,
+        );
 
   static FixedAxis<int> fromStrings(
     List<String> values, {

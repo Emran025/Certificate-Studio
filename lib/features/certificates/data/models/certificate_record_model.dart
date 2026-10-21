@@ -45,12 +45,16 @@ class CertificateRecordModel extends CertificateRecord {
 
     final document = _decodeMap(certificateRow['document_json']);
     final fields = document['fields'];
-    return fields is Map ? Map<String, dynamic>.from(fields) : <String, dynamic>{};
+    return fields is Map
+        ? Map<String, dynamic>.from(fields)
+        : <String, dynamic>{};
   }
 
   static Map<String, dynamic> _decodeMap(Object? raw) {
     if (raw is! String || raw.isEmpty) return <String, dynamic>{};
     final decoded = jsonDecode(raw);
-    return decoded is Map ? Map<String, dynamic>.from(decoded) : <String, dynamic>{};
+    return decoded is Map
+        ? Map<String, dynamic>.from(decoded)
+        : <String, dynamic>{};
   }
 }

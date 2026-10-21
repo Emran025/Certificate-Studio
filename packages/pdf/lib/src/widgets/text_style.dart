@@ -125,42 +125,38 @@ class TextStyle {
     this.decorationStyle,
     this.decorationThickness,
     this.renderingMode,
-  }) : assert(inherit || color != null),
-       assert(inherit || fontNormal != null),
-       assert(inherit || fontBold != null),
-       assert(inherit || fontItalic != null),
-       assert(inherit || fontBoldItalic != null),
-       assert(inherit || fontSize != null),
-       assert(inherit || fontWeight != null),
-       assert(inherit || fontStyle != null),
-       assert(inherit || letterSpacing != null),
-       assert(inherit || wordSpacing != null),
-       assert(inherit || lineSpacing != null),
-       assert(inherit || height != null),
-       assert(inherit || decoration != null),
-       assert(inherit || decorationStyle != null),
-       assert(inherit || decorationThickness != null),
-       assert(inherit || renderingMode != null),
-       fontNormal =
-           fontNormal ??
-           (fontStyle != FontStyle.italic && fontWeight != FontWeight.bold
-               ? font
-               : null),
-       fontBold =
-           fontBold ??
-           (fontStyle != FontStyle.italic && fontWeight == FontWeight.bold
-               ? font
-               : null),
-       fontItalic =
-           fontItalic ??
-           (fontStyle == FontStyle.italic && fontWeight != FontWeight.bold
-               ? font
-               : null),
-       fontBoldItalic =
-           fontBoldItalic ??
-           (fontStyle == FontStyle.italic && fontWeight == FontWeight.bold
-               ? font
-               : null);
+  })  : assert(inherit || color != null),
+        assert(inherit || fontNormal != null),
+        assert(inherit || fontBold != null),
+        assert(inherit || fontItalic != null),
+        assert(inherit || fontBoldItalic != null),
+        assert(inherit || fontSize != null),
+        assert(inherit || fontWeight != null),
+        assert(inherit || fontStyle != null),
+        assert(inherit || letterSpacing != null),
+        assert(inherit || wordSpacing != null),
+        assert(inherit || lineSpacing != null),
+        assert(inherit || height != null),
+        assert(inherit || decoration != null),
+        assert(inherit || decorationStyle != null),
+        assert(inherit || decorationThickness != null),
+        assert(inherit || renderingMode != null),
+        fontNormal = fontNormal ??
+            (fontStyle != FontStyle.italic && fontWeight != FontWeight.bold
+                ? font
+                : null),
+        fontBold = fontBold ??
+            (fontStyle != FontStyle.italic && fontWeight == FontWeight.bold
+                ? font
+                : null),
+        fontItalic = fontItalic ??
+            (fontStyle == FontStyle.italic && fontWeight != FontWeight.bold
+                ? font
+                : null),
+        fontBoldItalic = fontBoldItalic ??
+            (fontStyle == FontStyle.italic && fontWeight == FontWeight.bold
+                ? font
+                : null);
 
   factory TextStyle.defaultStyle() {
     return TextStyle(
@@ -320,9 +316,8 @@ class TextStyle {
       fontBold: fontBold ?? this.fontBold,
       fontItalic: fontItalic ?? this.fontItalic,
       fontBoldItalic: fontBoldItalic ?? this.fontBoldItalic,
-      fontSize: fontSize == null
-          ? null
-          : fontSize! * fontSizeFactor + fontSizeDelta,
+      fontSize:
+          fontSize == null ? null : fontSize! * fontSizeFactor + fontSizeDelta,
       fontWeight: fontWeight,
       fontStyle: fontStyle,
       letterSpacing: letterSpacing == null

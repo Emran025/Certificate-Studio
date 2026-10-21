@@ -39,8 +39,8 @@ import 'unicode_cmap.dart';
 class PdfTtfFont extends PdfFont {
   /// Constructs a [PdfTtfFont]
   PdfTtfFont(PdfDocument pdfDocument, ByteData bytes, {bool protect = false})
-    : font = TtfParser(bytes),
-      super.create(pdfDocument, subtype: '/TrueType') {
+      : font = TtfParser(bytes),
+        super.create(pdfDocument, subtype: '/TrueType') {
     file = PdfObjectStream(pdfDocument, isBinary: true);
     unicodeCMap = PdfUnicodeCmap(pdfDocument, protect);
     descriptor = PdfFontDescriptor(this, file);

@@ -43,8 +43,8 @@ class SvgClipPath {
       final clipPath = painter.parser.findById(id);
       if (clipPath != null) {
         children = clipPath.children.whereType<XmlElement>().map<SvgOperation?>(
-          (c) => SvgOperation.fromXml(c, painter, brush),
-        );
+              (c) => SvgOperation.fromXml(c, painter, brush),
+            );
         return SvgClipPath(children, false, painter);
       }
     }

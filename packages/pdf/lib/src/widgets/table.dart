@@ -185,11 +185,9 @@ class IntrinsicColumnWidth extends TableColumnWidth {
 
     child.layout(context, const BoxConstraints());
     assert(child.box != null);
-    final calculatedWidth = child.box!.width == double.infinity
-        ? 0.0
-        : child.box!.width;
-    final childFlex =
-        flex ??
+    final calculatedWidth =
+        child.box!.width == double.infinity ? 0.0 : child.box!.width;
+    final childFlex = flex ??
         (child is Expanded
             ? child.flex.toDouble()
             : (child.box!.width == double.infinity ? 1 : 0));
@@ -243,8 +241,8 @@ class FractionColumnWidth extends TableColumnWidth {
 }
 
 typedef OnCellFormat = String Function(int index, dynamic data);
-typedef OnCellDecoration =
-    BoxDecoration Function(int index, dynamic data, int rowNum);
+typedef OnCellDecoration = BoxDecoration Function(
+    int index, dynamic data, int rowNum);
 
 /// A widget that uses the table layout algorithm for its children.
 class Table extends Widget with SpanningWidget {
@@ -292,34 +290,35 @@ class Table extends Widget with SpanningWidget {
     BoxDecoration? headerCellDecoration,
     BoxDecoration? rowDecoration,
     BoxDecoration? oddRowDecoration,
-  }) => TableHelper.fromTextArray(
-    context: context,
-    data: data,
-    cellPadding: cellPadding,
-    cellHeight: cellHeight,
-    cellAlignment: cellAlignment,
-    cellAlignments: cellAlignments,
-    cellStyle: cellStyle,
-    oddCellStyle: oddCellStyle,
-    cellFormat: cellFormat,
-    cellDecoration: cellDecoration,
-    headerCount: headerCount = 1,
-    headers: headers,
-    headerPadding: headerPadding,
-    headerHeight: headerHeight,
-    headerAlignment: headerAlignment,
-    headerAlignments: headerAlignments,
-    headerStyle: headerStyle,
-    headerFormat: headerFormat,
-    border: border,
-    columnWidths: columnWidths,
-    defaultColumnWidth: defaultColumnWidth,
-    tableWidth: tableWidth,
-    headerDecoration: headerDecoration,
-    headerCellDecoration: headerCellDecoration,
-    rowDecoration: rowDecoration,
-    oddRowDecoration: oddRowDecoration,
-  );
+  }) =>
+      TableHelper.fromTextArray(
+        context: context,
+        data: data,
+        cellPadding: cellPadding,
+        cellHeight: cellHeight,
+        cellAlignment: cellAlignment,
+        cellAlignments: cellAlignments,
+        cellStyle: cellStyle,
+        oddCellStyle: oddCellStyle,
+        cellFormat: cellFormat,
+        cellDecoration: cellDecoration,
+        headerCount: headerCount = 1,
+        headers: headers,
+        headerPadding: headerPadding,
+        headerHeight: headerHeight,
+        headerAlignment: headerAlignment,
+        headerAlignments: headerAlignments,
+        headerStyle: headerStyle,
+        headerFormat: headerFormat,
+        border: border,
+        columnWidths: columnWidths,
+        defaultColumnWidth: defaultColumnWidth,
+        tableWidth: tableWidth,
+        headerDecoration: headerDecoration,
+        headerCellDecoration: headerCellDecoration,
+        rowDecoration: rowDecoration,
+        oddRowDecoration: oddRowDecoration,
+      );
 
   @override
   bool get canSpan => true;
@@ -498,8 +497,7 @@ class Table extends Widget with SpanningWidget {
             childY = totalHeight - child.box!.bottom - _getHeight(heightIndex);
             break;
           case TableCellVerticalAlignment.middle:
-            childY =
-                totalHeight -
+            childY = totalHeight -
                 child.box!.bottom -
                 (_getHeight(heightIndex) + child.box!.height) / 2;
             break;

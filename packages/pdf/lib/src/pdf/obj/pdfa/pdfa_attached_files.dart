@@ -65,7 +65,7 @@ class PdfaAttachedFiles {
 
 class _AttachedFileNames extends PdfObject<PdfDict> {
   _AttachedFileNames(PdfDocument pdfDocument, this._files)
-    : super(pdfDocument, params: PdfDict());
+      : super(pdfDocument, params: PdfDict());
   final List<_AttachedFileSpec> _files;
 
   @override
@@ -79,7 +79,7 @@ class _AttachedFileNames extends PdfObject<PdfDict> {
 
 class _AttachedFileSpec extends PdfObject<PdfDict> {
   _AttachedFileSpec(PdfDocument pdfDocument, this._file, this.relationship)
-    : super(pdfDocument, params: PdfDict());
+      : super(pdfDocument, params: PdfDict());
   final _AttachedFile _file;
   final String relationship;
 
@@ -103,9 +103,9 @@ class _AttachedFile extends PdfObject<PdfDictStream> {
     this.content,
     this.subType,
   ) : super(
-        pdfDocument,
-        params: PdfDictStream(compress: false, encrypt: false),
-      );
+          pdfDocument,
+          params: PdfDictStream(compress: false, encrypt: false),
+        );
 
   final String fileName;
   final String content;

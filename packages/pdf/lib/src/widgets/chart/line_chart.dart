@@ -46,17 +46,17 @@ class LineDataSet<T extends PointChartValue> extends PointDataSet<T> {
     this.surfaceColor,
     this.isCurved = false,
     this.smoothness = 0.35,
-  }) : assert(drawLine || drawPoints || drawSurface),
-       super(
-         legend: legend,
-         color: pointColor ?? color,
-         data: data,
-         drawPoints: drawPoints,
-         pointSize: pointSize,
-         buildValue: buildValue,
-         shape: shape,
-         valuePosition: valuePosition,
-       );
+  })  : assert(drawLine || drawPoints || drawSurface),
+        super(
+          legend: legend,
+          color: pointColor ?? color,
+          data: data,
+          drawPoints: drawPoints,
+          pointSize: pointSize,
+          buildValue: buildValue,
+          shape: shape,
+          valuePosition: valuePosition,
+        );
 
   final bool drawLine;
   final PdfColor? lineColor;

@@ -25,8 +25,8 @@ import 'theme.dart';
 import 'widget.dart';
 
 typedef OnCell = Widget? Function(int index, dynamic data, int rowNum);
-typedef OnCellTextStyle =
-    TextStyle? Function(int index, dynamic data, int rowNum);
+typedef OnCellTextStyle = TextStyle? Function(
+    int index, dynamic data, int rowNum);
 
 mixin TableHelper {
   static TextAlign _textAlign(Alignment align) {
@@ -128,9 +128,8 @@ mixin TableHelper {
       rowNum++;
     }
 
-    final textDirection = context == null
-        ? TextDirection.ltr
-        : Directionality.of(context);
+    final textDirection =
+        context == null ? TextDirection.ltr : Directionality.of(context);
     for (final row in data) {
       final tableRow = <Widget>[];
       final isOdd = (rowNum - headerCount) % 2 != 0;
@@ -171,20 +170,19 @@ mixin TableHelper {
               child: cell is Widget
                   ? cell
                   : cellBuilder?.call(tableRow.length, cell, rowNum) ??
-                        Text(
-                          cellFormat == null
-                              ? cell.toString()
-                              : cellFormat(tableRow.length, cell),
-                          style:
-                              textStyleBuilder?.call(
-                                tableRow.length,
-                                cell,
-                                rowNum,
-                              ) ??
-                              (isOdd ? oddCellStyle : cellStyle),
-                          textAlign: _textAlign(align.resolve(textDirection)),
-                          textDirection: tableDirection,
-                        ),
+                      Text(
+                        cellFormat == null
+                            ? cell.toString()
+                            : cellFormat(tableRow.length, cell),
+                        style: textStyleBuilder?.call(
+                              tableRow.length,
+                              cell,
+                              rowNum,
+                            ) ??
+                            (isOdd ? oddCellStyle : cellStyle),
+                        textAlign: _textAlign(align.resolve(textDirection)),
+                        textDirection: tableDirection,
+                      ),
             ),
           );
         }

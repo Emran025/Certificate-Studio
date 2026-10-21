@@ -21,17 +21,17 @@ class PdfColor {
   /// Create a color with red, green, blue and alpha components
   /// values between 0 and 1
   const PdfColor(this.red, this.green, this.blue, [this.alpha = 1.0])
-    : assert(red >= 0 && red <= 1),
-      assert(green >= 0 && green <= 1),
-      assert(blue >= 0 && blue <= 1),
-      assert(alpha >= 0 && alpha <= 1);
+      : assert(red >= 0 && red <= 1),
+        assert(green >= 0 && green <= 1),
+        assert(blue >= 0 && blue <= 1),
+        assert(alpha >= 0 && alpha <= 1);
 
   /// Return a color with: 0xAARRGGBB
   const PdfColor.fromInt(int color)
-    : red = (color >> 16 & 0xff) / 255.0,
-      green = (color >> 8 & 0xff) / 255.0,
-      blue = (color & 0xff) / 255.0,
-      alpha = (color >> 24 & 0xff) / 255.0;
+      : red = (color >> 16 & 0xff) / 255.0,
+        green = (color >> 8 & 0xff) / 255.0,
+        blue = (color & 0xff) / 255.0,
+        alpha = (color >> 24 & 0xff) / 255.0;
 
   /// Can parse colors in the form:
   /// * #RRGGBBAA
@@ -301,7 +301,7 @@ class PdfColor {
 class PdfColorGrey extends PdfColor {
   /// Create a grey color
   const PdfColorGrey(double color, [double alpha = 1.0])
-    : super(color, color, color, alpha);
+      : super(color, color, color, alpha);
 }
 
 /// Represents an CMYK color
@@ -314,84 +314,80 @@ class PdfColorCmyk extends PdfColor {
     this.black, [
     double a = 1.0,
   ]) : super(
-         (1.0 - cyan) * (1.0 - black),
-         (1.0 - magenta) * (1.0 - black),
-         (1.0 - yellow) * (1.0 - black),
-         a,
-       );
+          (1.0 - cyan) * (1.0 - black),
+          (1.0 - magenta) * (1.0 - black),
+          (1.0 - yellow) * (1.0 - black),
+          a,
+        );
 
   /// Create a CMYK color from red ,green and blue components
   const PdfColorCmyk.fromRgb(double r, double g, double b, [double a = 1.0])
-    : black =
-          1.0 -
-          (r > g
-              ? r
-              : g > b
-              ? r > g
-                    ? r
-                    : g
-              : b),
-      cyan =
-          (1.0 -
-              r -
-              (1.0 -
-                  (r > g
-                      ? r
-                      : g > b
-                      ? r > g
-                            ? r
-                            : g
-                      : b))) /
-          (1.0 -
-              (1.0 -
-                  (r > g
-                      ? r
-                      : g > b
-                      ? r > g
-                            ? r
-                            : g
-                      : b))),
-      magenta =
-          (1.0 -
-              g -
-              (1.0 -
-                  (r > g
-                      ? r
-                      : g > b
-                      ? r > g
-                            ? r
-                            : g
-                      : b))) /
-          (1.0 -
-              (1.0 -
-                  (r > g
-                      ? r
-                      : g > b
-                      ? r > g
-                            ? r
-                            : g
-                      : b))),
-      yellow =
-          (1.0 -
-              b -
-              (1.0 -
-                  (r > g
-                      ? r
-                      : g > b
-                      ? r > g
-                            ? r
-                            : g
-                      : b))) /
-          (1.0 -
-              (1.0 -
-                  (r > g
-                      ? r
-                      : g > b
-                      ? r > g
-                            ? r
-                            : g
-                      : b))),
-      super(r, g, b, a);
+      : black = 1.0 -
+            (r > g
+                ? r
+                : g > b
+                    ? r > g
+                        ? r
+                        : g
+                    : b),
+        cyan = (1.0 -
+                r -
+                (1.0 -
+                    (r > g
+                        ? r
+                        : g > b
+                            ? r > g
+                                ? r
+                                : g
+                            : b))) /
+            (1.0 -
+                (1.0 -
+                    (r > g
+                        ? r
+                        : g > b
+                            ? r > g
+                                ? r
+                                : g
+                            : b))),
+        magenta = (1.0 -
+                g -
+                (1.0 -
+                    (r > g
+                        ? r
+                        : g > b
+                            ? r > g
+                                ? r
+                                : g
+                            : b))) /
+            (1.0 -
+                (1.0 -
+                    (r > g
+                        ? r
+                        : g > b
+                            ? r > g
+                                ? r
+                                : g
+                            : b))),
+        yellow = (1.0 -
+                b -
+                (1.0 -
+                    (r > g
+                        ? r
+                        : g > b
+                            ? r > g
+                                ? r
+                                : g
+                            : b))) /
+            (1.0 -
+                (1.0 -
+                    (r > g
+                        ? r
+                        : g > b
+                            ? r > g
+                                ? r
+                                : g
+                            : b))),
+        super(r, g, b, a);
 
   /// Cyan component
   final double cyan;
@@ -500,10 +496,10 @@ class PdfColorHsv extends PdfColor {
     double green,
     double blue,
     double alpha,
-  ) : assert(hue >= 0 && hue < 360),
-      assert(saturation >= 0 && saturation <= 1),
-      assert(value >= 0 && value <= 1),
-      super(red, green, blue, alpha);
+  )   : assert(hue >= 0 && hue < 360),
+        assert(saturation >= 0 && saturation <= 1),
+        assert(value >= 0 && value <= 1),
+        super(red, green, blue, alpha);
 
   /// Creates an HSV color from red, green, blue components
   factory PdfColorHsv.fromRgb(
@@ -559,48 +555,49 @@ class PdfColorHsv extends PdfColor {
   /// Get a similar color
   @override
   List<PdfColorHsv> get monochromatic => <PdfColorHsv>[
-    PdfColorHsv(
-      hue,
-      (saturation > 0.5 ? saturation - 0.2 : saturation + 0.2).clamp(0, 1),
-      (value > 0.5 ? value - 0.1 : value + 0.1).clamp(0, 1),
-    ),
-    PdfColorHsv(
-      hue,
-      (saturation > 0.5 ? saturation - 0.4 : saturation + 0.4).clamp(0, 1),
-      (value > 0.5 ? value - 0.2 : value + 0.2).clamp(0, 1),
-    ),
-    PdfColorHsv(
-      hue,
-      (saturation > 0.5 ? saturation - 0.15 : saturation + 0.15).clamp(0, 1),
-      (value > 0.5 ? value - 0.05 : value + 0.05).clamp(0, 1),
-    ),
-  ];
+        PdfColorHsv(
+          hue,
+          (saturation > 0.5 ? saturation - 0.2 : saturation + 0.2).clamp(0, 1),
+          (value > 0.5 ? value - 0.1 : value + 0.1).clamp(0, 1),
+        ),
+        PdfColorHsv(
+          hue,
+          (saturation > 0.5 ? saturation - 0.4 : saturation + 0.4).clamp(0, 1),
+          (value > 0.5 ? value - 0.2 : value + 0.2).clamp(0, 1),
+        ),
+        PdfColorHsv(
+          hue,
+          (saturation > 0.5 ? saturation - 0.15 : saturation + 0.15)
+              .clamp(0, 1),
+          (value > 0.5 ? value - 0.05 : value + 0.05).clamp(0, 1),
+        ),
+      ];
 
   /// Get two complementary colors with hue shifted by -120°
   @override
   List<PdfColorHsv> get splitcomplementary => <PdfColorHsv>[
-    PdfColorHsv((hue - 150) % 360, saturation, value, alpha),
-    PdfColorHsv((hue - 180) % 360, saturation, value, alpha),
-  ];
+        PdfColorHsv((hue - 150) % 360, saturation, value, alpha),
+        PdfColorHsv((hue - 180) % 360, saturation, value, alpha),
+      ];
 
   @override
   List<PdfColorHsv> get triadic => <PdfColorHsv>[
-    PdfColorHsv((hue + 80) % 360, saturation, value, alpha),
-    PdfColorHsv((hue - 120) % 360, saturation, value, alpha),
-  ];
+        PdfColorHsv((hue + 80) % 360, saturation, value, alpha),
+        PdfColorHsv((hue - 120) % 360, saturation, value, alpha),
+      ];
 
   @override
   List<PdfColorHsv> get tetradic => <PdfColorHsv>[
-    PdfColorHsv((hue + 120) % 360, saturation, value, alpha),
-    PdfColorHsv((hue - 150) % 360, saturation, value, alpha),
-    PdfColorHsv((hue + 60) % 360, saturation, value, alpha),
-  ];
+        PdfColorHsv((hue + 120) % 360, saturation, value, alpha),
+        PdfColorHsv((hue - 150) % 360, saturation, value, alpha),
+        PdfColorHsv((hue + 60) % 360, saturation, value, alpha),
+      ];
 
   @override
   List<PdfColorHsv> get analagous => <PdfColorHsv>[
-    PdfColorHsv((hue + 30) % 360, saturation, value, alpha),
-    PdfColorHsv((hue - 20) % 360, saturation, value, alpha),
-  ];
+        PdfColorHsv((hue + 30) % 360, saturation, value, alpha),
+        PdfColorHsv((hue - 20) % 360, saturation, value, alpha),
+      ];
 
   @override
   String toString() => '$runtimeType($hue, $saturation, $value, $alpha)';
@@ -666,10 +663,10 @@ class PdfColorHsl extends PdfColor {
     double red,
     double green,
     double blue,
-  ) : assert(hue >= 0 && hue < 360),
-      assert(saturation >= 0 && saturation <= 1),
-      assert(lightness >= 0 && lightness <= 1),
-      super(red, green, blue, alpha);
+  )   : assert(hue >= 0 && hue < 360),
+        assert(saturation >= 0 && saturation <= 1),
+        assert(lightness >= 0 && lightness <= 1),
+        super(red, green, blue, alpha);
 
   /// Creates an HSL color from red, green, and blue components
   factory PdfColorHsl.fromRgb(

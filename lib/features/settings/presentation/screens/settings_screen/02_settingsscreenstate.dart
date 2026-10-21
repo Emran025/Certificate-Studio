@@ -9,7 +9,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _settingsRepository = SettingsRepositoryImpl(SettingsDataSourceImpl(widget.database));
+    _settingsRepository = SettingsRepositoryImpl(
+      SettingsDataSourceImpl(widget.database),
+    );
     _transfer = WorkspaceTransferService(
       widget.database,
       keyStorage: widget.keyStorage,
@@ -201,9 +203,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       children: [
                         FilledButton.icon(
                           onPressed: () => _run(
-                            () => _transfer.exportProfile(
-                              widget.institutionId,
-                            ),
+                            () => _transfer.exportProfile(widget.institutionId),
                           ),
                           icon: const Icon(Icons.upload_file),
                           label: Text(

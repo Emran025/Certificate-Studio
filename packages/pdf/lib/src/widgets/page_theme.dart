@@ -33,9 +33,9 @@ class PageTheme {
     EdgeInsetsGeometry? margin,
     this.clip = false,
     this.textDirection,
-  }) : pageFormat = pageFormat ?? PdfPageFormat.standard,
-       orientation = orientation ?? PageOrientation.natural,
-       _margin = margin;
+  })  : pageFormat = pageFormat ?? PdfPageFormat.standard,
+        orientation = orientation ?? PageOrientation.natural,
+        _margin = margin;
 
   final PdfPageFormat pageFormat;
 
@@ -100,14 +100,15 @@ class PageTheme {
     EdgeInsets? margin,
     bool? clip,
     TextDirection? textDirection,
-  }) => PageTheme(
-    pageFormat: pageFormat ?? this.pageFormat,
-    buildBackground: buildBackground ?? this.buildBackground,
-    buildForeground: buildForeground ?? this.buildForeground,
-    theme: theme ?? this.theme,
-    orientation: orientation ?? this.orientation,
-    margin: margin ?? this.margin,
-    clip: clip ?? this.clip,
-    textDirection: textDirection ?? this.textDirection,
-  );
+  }) =>
+      PageTheme(
+        pageFormat: pageFormat ?? this.pageFormat,
+        buildBackground: buildBackground ?? this.buildBackground,
+        buildForeground: buildForeground ?? this.buildForeground,
+        theme: theme ?? this.theme,
+        orientation: orientation ?? this.orientation,
+        margin: margin ?? this.margin,
+        clip: clip ?? this.clip,
+        textDirection: textDirection ?? this.textDirection,
+      );
 }

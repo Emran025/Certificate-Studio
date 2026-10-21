@@ -285,9 +285,8 @@ class Wrap extends MultiChildWidget with SpanningWidget {
         runLeadingSpace = crossAxisFreeSpace / 2.0;
         break;
       case WrapAlignment.spaceBetween:
-        runBetweenSpace = runCount > 1
-            ? crossAxisFreeSpace / (runCount - 1)
-            : 0.0;
+        runBetweenSpace =
+            runCount > 1 ? crossAxisFreeSpace / (runCount - 1) : 0.0;
         break;
       case WrapAlignment.spaceAround:
         runBetweenSpace = crossAxisFreeSpace / runCount;
@@ -328,9 +327,8 @@ class Wrap extends MultiChildWidget with SpanningWidget {
           childLeadingSpace = mainAxisFreeSpace / 2.0;
           break;
         case WrapAlignment.spaceBetween:
-          childBetweenSpace = childCount > 1
-              ? mainAxisFreeSpace / (childCount - 1)
-              : 0.0;
+          childBetweenSpace =
+              childCount > 1 ? mainAxisFreeSpace / (childCount - 1) : 0.0;
           break;
         case WrapAlignment.spaceAround:
           childBetweenSpace = mainAxisFreeSpace / childCount;

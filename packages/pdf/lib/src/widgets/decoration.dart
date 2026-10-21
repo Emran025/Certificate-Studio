@@ -61,14 +61,13 @@ class DecorationImage extends DecorationGraphic {
       PdfRect.fromPoints(PdfPoint.zero, imageSize),
     );
     final destinationRect = alignment.inscribe(sizes.destination!, box);
-    final mat =
-        Matrix4.translationValues(
-            destinationRect.left,
-            destinationRect.bottom,
-            0,
-          )
-          ..scaleByDouble(scaleX, scaleY, 1, 1)
-          ..translateByDouble(-sourceRect.left, -sourceRect.bottom, 0, 1);
+    final mat = Matrix4.translationValues(
+      destinationRect.left,
+      destinationRect.bottom,
+      0,
+    )
+      ..scaleByDouble(scaleX, scaleY, 1, 1)
+      ..translateByDouble(-sourceRect.left, -sourceRect.bottom, 0, 1);
 
     context.canvas
       ..saveContext()

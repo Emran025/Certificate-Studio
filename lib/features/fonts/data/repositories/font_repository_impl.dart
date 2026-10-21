@@ -7,10 +7,9 @@ class FontRepositoryImpl implements FontRepository {
   FontRepositoryImpl(this._dataSource);
   final FontDataSource _dataSource;
   @override
-  Future<List<FontAsset>> getAll() async =>
-      (await _dataSource.getFonts())
-          .map(FontAssetModel.fromRow)
-          .toList(growable: false);
+  Future<List<FontAsset>> getAll() async => (await _dataSource.getFonts())
+      .map(FontAssetModel.fromRow)
+      .toList(growable: false);
   @override
   Future<String?> selectedForProject(String projectId) =>
       _dataSource.selectedForProject(projectId);
@@ -27,6 +26,7 @@ class FontRepositoryImpl implements FontRepository {
     await _dataSource.insertFont(model.toRow(bytes: bytes, now: now));
     return font;
   }
+
   @override
   Future<void> selectForProject(String projectId, String fontId) =>
       _dataSource.selectForProject(projectId, fontId);

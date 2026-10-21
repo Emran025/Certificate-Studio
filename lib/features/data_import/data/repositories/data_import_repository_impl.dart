@@ -107,9 +107,7 @@ class DataImportRepositoryImpl implements DataImportRepository {
       columns: columns,
       rows: [
         for (final row in maps)
-          {
-            for (final column in columns) column: row[column] ?? '',
-          },
+          {for (final column in columns) column: row[column] ?? ''},
       ],
     );
   }

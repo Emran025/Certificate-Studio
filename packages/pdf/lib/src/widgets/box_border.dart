@@ -189,27 +189,28 @@ class Border extends BoxBorder {
     PdfColor color = PdfColors.black,
     double width = 1.0,
     BorderStyle style = BorderStyle.solid,
-  }) => Border.fromBorderSide(
-    BorderSide(color: color, width: width, style: style),
-  );
+  }) =>
+      Border.fromBorderSide(
+        BorderSide(color: color, width: width, style: style),
+      );
 
   /// Creates a border whose sides are all the same.
   const Border.fromBorderSide(BorderSide side)
-    : top = side,
-      right = side,
-      bottom = side,
-      left = side,
-      super();
+      : top = side,
+        right = side,
+        bottom = side,
+        left = side,
+        super();
 
   /// Creates a border with symmetrical vertical and horizontal sides.
   const Border.symmetric({
     BorderSide vertical = BorderSide.none,
     BorderSide horizontal = BorderSide.none,
-  }) : left = vertical,
-       top = horizontal,
-       right = vertical,
-       bottom = horizontal,
-       super();
+  })  : left = vertical,
+        top = horizontal,
+        right = vertical,
+        bottom = horizontal,
+        super();
 
   @override
   final BorderSide top;

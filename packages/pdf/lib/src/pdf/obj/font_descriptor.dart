@@ -26,10 +26,10 @@ import 'ttffont.dart';
 class PdfFontDescriptor extends PdfObject<PdfDict> {
   /// Create a Font descriptor object
   PdfFontDescriptor(this.ttfFont, this.file)
-    : super(
-        ttfFont.pdfDocument,
-        params: PdfDict.values({'/Type': const PdfName('/FontDescriptor')}),
-      );
+      : super(
+          ttfFont.pdfDocument,
+          params: PdfDict.values({'/Type': const PdfName('/FontDescriptor')}),
+        );
 
   /// File data
   final PdfObjectStream file;

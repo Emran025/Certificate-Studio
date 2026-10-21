@@ -51,7 +51,7 @@ class ClipRect extends SingleChildWidget {
 
 class ClipRRect extends SingleChildWidget {
   ClipRRect({Widget? child, this.horizontalRadius = 0, this.verticalRadius = 0})
-    : super(child: child);
+      : super(child: child);
 
   final double horizontalRadius;
   final double verticalRadius;

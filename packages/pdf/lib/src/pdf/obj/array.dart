@@ -23,7 +23,7 @@ import 'object.dart';
 class PdfArrayObject extends PdfObject<PdfArray> {
   /// Creates an array object
   PdfArrayObject(PdfDocument pdfDocument, PdfArray array)
-    : super(pdfDocument, params: array);
+      : super(pdfDocument, params: array);
 
   /// The array
   PdfArray get array => params;

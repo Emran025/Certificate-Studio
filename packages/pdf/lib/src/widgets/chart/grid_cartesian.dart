@@ -25,8 +25,8 @@ import 'grid_axis.dart';
 
 class CartesianGrid extends ChartGrid {
   CartesianGrid({required GridAxis xAxis, required GridAxis yAxis})
-    : _xAxis = xAxis..direction = Axis.horizontal,
-      _yAxis = yAxis..direction = Axis.vertical;
+      : _xAxis = xAxis..direction = Axis.horizontal,
+        _yAxis = yAxis..direction = Axis.vertical;
 
   final GridAxis _xAxis;
   final GridAxis _yAxis;

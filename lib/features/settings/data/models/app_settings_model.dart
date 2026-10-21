@@ -21,10 +21,10 @@ class AppSettingsModel extends AppSettings {
   }
 
   Map<String, Object?> toJson() => {
-        'theme_mode': themeMode.name,
-        'accent_color': accentColorValue,
-        'language': languageCode,
-      };
+    'theme_mode': themeMode.name,
+    'accent_color': accentColorValue,
+    'language': languageCode,
+  };
 
   static int _accentColorFromJson(Object? value) {
     final stored = (value as num?)?.toInt();

@@ -15,15 +15,11 @@ class DataImportDataSourceImpl implements DataImportDataSource {
       await _database.deleteWhere(DatabaseTables.records, {
         'project_id': projectId,
       });
-      await _database.upsert(
-        DatabaseTables.settings,
-        {
-          'key': _columnsKey(projectId),
-          'value_json': jsonEncode(table.columns),
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        },
-        conflictColumn: 'key',
-      );
+      await _database.upsert(DatabaseTables.settings, {
+        'key': _columnsKey(projectId),
+        'value_json': jsonEncode(table.columns),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }, conflictColumn: 'key');
       for (var index = 0; index < table.rows.length; index++) {
         final values = table.rows[index];
         final classSource = values.entries
@@ -77,7 +73,9 @@ class DataImportDataSourceImpl implements DataImportDataSource {
     final raw = rows.first['value_json'];
     if (raw is! String || raw.isEmpty) return const [];
     final decoded = jsonDecode(raw);
-    return decoded is List ? [for (final value in decoded) value.toString()] : const [];
+    return decoded is List
+        ? [for (final value in decoded) value.toString()]
+        : const [];
   }
 
   String _columnsKey(String projectId) => 'records-columns:$projectId';

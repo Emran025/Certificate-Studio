@@ -135,21 +135,21 @@ class PieDataSet extends Dataset {
     Widget? legendWidget,
     this.legendOffset = 20,
     this.innerRadius = 0,
-  }) : assert(innerRadius >= 0),
-       assert(offset >= 0),
-       drawBorder = drawBorder ?? borderColor != null && color != borderColor,
-       assert(
-         (drawBorder ?? borderColor != null && color != borderColor) ||
-             drawSurface,
-       ),
-       _legendWidget = legendWidget,
-       legendLineColor = legendLineColor ?? color,
-       super(
-         legend: legend,
-         color: color,
-         borderColor: borderColor,
-         borderWidth: borderWidth,
-       );
+  })  : assert(innerRadius >= 0),
+        assert(offset >= 0),
+        drawBorder = drawBorder ?? borderColor != null && color != borderColor,
+        assert(
+          (drawBorder ?? borderColor != null && color != borderColor) ||
+              drawSurface,
+        ),
+        _legendWidget = legendWidget,
+        legendLineColor = legendLineColor ?? color,
+        super(
+          legend: legend,
+          color: color,
+          borderColor: borderColor,
+          borderWidth: borderWidth,
+        );
 
   final num value;
 
@@ -203,15 +203,14 @@ class PieDataSet extends Dataset {
 
     final lp = legendPosition == PieLegendPosition.auto
         ? (angleEnd - angleStart > pi / 6
-              ? PieLegendPosition.inside
-              : PieLegendPosition.outside)
+            ? PieLegendPosition.inside
+            : PieLegendPosition.outside)
         : legendPosition;
 
     // Find the legend position
     final bisect = _isFullCircle ? 1 / 4 * pi : (angleStart + angleEnd) / 2;
 
-    final _legendAlign =
-        legendAlign ??
+    final _legendAlign = legendAlign ??
         (lp == PieLegendPosition.inside
             ? TextAlign.center
             : (bisect > pi ? TextAlign.right : TextAlign.left));
@@ -224,8 +223,8 @@ class PieDataSet extends Dataset {
               style: TextStyle(
                 color: lp == PieLegendPosition.inside
                     ? color!.isLight
-                          ? PdfColors.white
-                          : PdfColors.black
+                        ? PdfColors.white
+                        : PdfColors.black
                     : null,
               ),
             ),

@@ -24,12 +24,12 @@ import '../format/object_base.dart';
 class PdfObject<T extends PdfDataType> extends PdfObjectBase<T> {
   /// Create a base Object used in the PDF file
   PdfObject(this.pdfDocument, {required T params, int objgen = 0, int? objser})
-    : super(
-        objser: objser ?? pdfDocument.genSerial(),
-        objgen: objgen,
-        params: params,
-        settings: pdfDocument.settings,
-      ) {
+      : super(
+          objser: objser ?? pdfDocument.genSerial(),
+          objgen: objgen,
+          params: params,
+          settings: pdfDocument.settings,
+        ) {
     pdfDocument.objects.add(this);
   }
 

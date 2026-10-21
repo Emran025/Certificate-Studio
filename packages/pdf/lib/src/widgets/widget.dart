@@ -34,21 +34,22 @@ class Context {
     required PdfDocument document,
     PdfPage? page,
     PdfGraphics? canvas,
-  }) => Context._(
-    document: document,
-    page: page,
-    canvas: canvas,
-    inherited: HashMap<Type, Inherited>(),
-  );
+  }) =>
+      Context._(
+        document: document,
+        page: page,
+        canvas: canvas,
+        inherited: HashMap<Type, Inherited>(),
+      );
 
   const Context._({
     required this.document,
     PdfPage? page,
     PdfGraphics? canvas,
     required HashMap<Type, Inherited> inherited,
-  }) : _page = page,
-       _canvas = canvas,
-       _inherited = inherited;
+  })  : _page = page,
+        _canvas = canvas,
+        _inherited = inherited;
 
   final PdfPage? _page;
 
@@ -425,8 +426,8 @@ class DelayedWidget extends SingleChildWidget {
 
 class Inseparable extends SingleChildWidget {
   Inseparable({required Widget child, bool canSpan = false})
-    : _canSpan = canSpan,
-      super(child: child);
+      : _canSpan = canSpan,
+        super(child: child);
 
   final bool _canSpan;
 

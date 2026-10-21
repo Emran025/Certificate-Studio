@@ -15,13 +15,16 @@ class SettingsRepositoryImpl implements SettingsRepository {
     final value = jsonDecode(raw);
     return AppSettingsModel.fromJson(Map<String, Object?>.from(value as Map));
   }
+
   @override
   Future<void> saveAppSettings(AppSettings settings) => _dataSource.saveValue(
-        _appSettingsKey,
-        jsonEncode(AppSettingsModel(
-          themeMode: settings.themeMode,
-          accentColorValue: settings.accentColorValue,
-          languageCode: settings.languageCode,
-        ).toJson()),
-      );
+    _appSettingsKey,
+    jsonEncode(
+      AppSettingsModel(
+        themeMode: settings.themeMode,
+        accentColorValue: settings.accentColorValue,
+        languageCode: settings.languageCode,
+      ).toJson(),
+    ),
+  );
 }

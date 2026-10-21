@@ -11,6 +11,7 @@ class InstitutionRepositoryImpl implements InstitutionRepository {
     final rows = await _dataSource.getCurrentRows();
     return rows.isEmpty ? null : InstitutionModel.fromRow(rows.first);
   }
+
   @override
   Future<Institution> save(Institution institution) async {
     final model = InstitutionModel(
@@ -28,6 +29,7 @@ class InstitutionRepositoryImpl implements InstitutionRepository {
     await _dataSource.save(model.toRow());
     return model;
   }
+
   @override
   Future<void> delete(String id) => _dataSource.delete(id);
 }

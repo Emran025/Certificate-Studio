@@ -27,12 +27,12 @@ class PdfPageFormat {
     double marginLeft = 0.0,
     double marginRight = 0.0,
     double? marginAll,
-  }) : assert(width > 0),
-       assert(height > 0),
-       marginTop = marginAll ?? marginTop,
-       marginBottom = marginAll ?? marginBottom,
-       marginLeft = marginAll ?? marginLeft,
-       marginRight = marginAll ?? marginRight;
+  })  : assert(width > 0),
+        assert(height > 0),
+        marginTop = marginAll ?? marginTop,
+        marginBottom = marginAll ?? marginBottom,
+        marginLeft = marginAll ?? marginLeft,
+        marginRight = marginAll ?? marginRight;
 
   static const PdfPageFormat a3 = PdfPageFormat(
     29.7 * cm,
@@ -140,12 +140,13 @@ class PdfPageFormat {
     required double top,
     required double right,
     required double bottom,
-  }) => copyWith(
-    marginLeft: math.max(marginLeft, left),
-    marginTop: math.max(marginTop, top),
-    marginRight: math.max(marginRight, right),
-    marginBottom: math.max(marginBottom, bottom),
-  );
+  }) =>
+      copyWith(
+        marginLeft: math.max(marginLeft, left),
+        marginTop: math.max(marginTop, top),
+        marginRight: math.max(marginRight, right),
+        marginBottom: math.max(marginBottom, bottom),
+      );
 
   @override
   String toString() {

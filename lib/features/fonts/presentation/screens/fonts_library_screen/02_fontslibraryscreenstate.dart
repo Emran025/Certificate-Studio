@@ -93,9 +93,10 @@ class _FontsLibraryScreenState extends State<FontsLibraryScreen> {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-    create: (_) =>
-        FontsLibraryBloc(FontRepositoryImpl(FontDataSourceImpl(widget.database)), widget.projectId)
-          ..add(const FontsRequested()),
+    create: (_) => FontsLibraryBloc(
+      FontRepositoryImpl(FontDataSourceImpl(widget.database)),
+      widget.projectId,
+    )..add(const FontsRequested()),
     child: BlocBuilder<FontsLibraryBloc, FontsLibraryState>(
       builder: (context, state) {
         if (state.status == FontsLibraryStatus.loaded &&

@@ -45,7 +45,9 @@ void main() {
     expect(service, contains('CertificateArtifactRenderer.redrawQrOnPng('));
     expect(
       service.indexOf('final captureBackgroundBytes') <
-          service.indexOf('for (var index = 0; index < records.length; index++)'),
+          service.indexOf(
+            'for (var index = 0; index < records.length; index++)',
+          ),
       isTrue,
     );
     expect(generationScreen, contains('canvasCapture: _captureCanvas'));

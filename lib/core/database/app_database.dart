@@ -24,7 +24,11 @@ abstract interface class AppDatabase {
   Future<void> update(String table, String id, Map<String, Object?> values);
   Future<void> delete(String table, String id);
   Future<void> deleteWhere(String table, Map<String, Object?> where);
-  Future<void> deleteWhereIn(String table, String column, Iterable<Object?> values);
+  Future<void> deleteWhereIn(
+    String table,
+    String column,
+    Iterable<Object?> values,
+  );
   void beginBatch();
   Future<void> endBatch();
 }
@@ -94,7 +98,9 @@ class InMemoryAppDatabase implements AppDatabase {
   }) async {
     _ensureReady(table);
     final key = values[conflictColumn];
-    final index = _tables[table]!.indexWhere((row) => row[conflictColumn] == key);
+    final index = _tables[table]!.indexWhere(
+      (row) => row[conflictColumn] == key,
+    );
     if (index < 0) {
       _tables[table]!.add(Map<String, Object?>.from(values));
     } else {
@@ -104,11 +110,16 @@ class InMemoryAppDatabase implements AppDatabase {
   }
 
   @override
-  Future<void> update(String table, String id, Map<String, Object?> values) async {
+  Future<void> update(
+    String table,
+    String id,
+    Map<String, Object?> values,
+  ) async {
     _ensureReady(table);
     final rows = _tables[table]!;
     final index = rows.indexWhere((row) => row['id'] == id || row['key'] == id);
-    if (index < 0) throw StateError('No record with id "$id" exists in $table.');
+    if (index < 0)
+      throw StateError('No record with id "$id" exists in $table.');
     rows[index] = {...rows[index], ...values};
   }
 
@@ -127,7 +138,11 @@ class InMemoryAppDatabase implements AppDatabase {
   }
 
   @override
-  Future<void> deleteWhereIn(String table, String column, Iterable<Object?> values) async {
+  Future<void> deleteWhereIn(
+    String table,
+    String column,
+    Iterable<Object?> values,
+  ) async {
     _ensureReady(table);
     final selected = values.toSet();
     if (selected.isEmpty) return;

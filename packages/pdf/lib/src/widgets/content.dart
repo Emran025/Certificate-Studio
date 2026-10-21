@@ -42,9 +42,9 @@ class Header extends StatelessWidget {
     String? title,
     this.outlineColor,
     this.outlineStyle = PdfOutlineStyle.normal,
-  }) : assert(level >= 0 && level <= 5),
-       assert(child != null || text != null),
-       title = title ?? text;
+  })  : assert(level >= 0 && level <= 5),
+        assert(child != null || text != null),
+        title = title ?? text;
 
   final String? title;
 
@@ -295,11 +295,10 @@ class Watermark extends StatelessWidget {
     this.fit = BoxFit.contain,
     this.angle = math.pi / 4,
   }) : child = Text(
-         text,
-         style:
-             style ??
-             TextStyle(color: PdfColors.grey200, fontWeight: FontWeight.bold),
-       );
+          text,
+          style: style ??
+              TextStyle(color: PdfColors.grey200, fontWeight: FontWeight.bold),
+        );
 
   final Widget child;
 

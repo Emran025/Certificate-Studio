@@ -76,12 +76,10 @@ class SvgBrush {
           'stroke-opacity',
           defaultValue: null,
         ),
-        strokeLineCap: strokeLineCap == null
-            ? null
-            : _strokeLineCap[strokeLineCap],
-        strokeLineJoin: strokeLineJoin == null
-            ? null
-            : _strokeLineJoin[strokeLineJoin],
+        strokeLineCap:
+            strokeLineCap == null ? null : _strokeLineCap[strokeLineCap],
+        strokeLineJoin:
+            strokeLineJoin == null ? null : _strokeLineJoin[strokeLineJoin],
         strokeMiterLimit: SvgParser.getDouble(
           element,
           'stroke-miterlimit',
@@ -94,11 +92,11 @@ class SvgBrush {
         strokeDashArray: strokeDashArray == null
             ? null
             : (strokeDashArray == 'none'
-                  ? []
-                  : SvgParser.splitNumeric(
-                      strokeDashArray,
-                      parent,
-                    ).map((e) => e.value).toList()),
+                ? []
+                : SvgParser.splitNumeric(
+                    strokeDashArray,
+                    parent,
+                  ).map((e) => e.value).toList()),
         strokeDashOffset: SvgParser.getNumeric(
           element,
           'stroke-dashoffset',

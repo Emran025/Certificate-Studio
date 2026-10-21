@@ -75,8 +75,8 @@ class PdfDocument {
     bool compress = true,
     bool verbose = false,
     PdfVersion version = PdfVersion.pdf_1_5,
-  }) : prev = null,
-       _objser = 1 {
+  })  : prev = null,
+        _objser = 1 {
     settings = PdfSettings(
       deflate: compress ? (deflate ?? defaultDeflate) : null,
       verbose: verbose,

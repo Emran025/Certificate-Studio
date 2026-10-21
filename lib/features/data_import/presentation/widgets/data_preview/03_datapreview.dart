@@ -189,107 +189,110 @@ class DataPreview extends StatelessWidget {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-              final compact = constraints.maxWidth < AppBreakpoints.tablet;
-              if (compact) {
-                return ListView.separated(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  itemCount: table.rows.take(50).length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(height: AppSpacing.sm),
-                  itemBuilder: (context, index) => _MobileRecordCard(
-                    row: table.rows[index],
-                    columns: table.columns,
-                    rowNumber: index + 1,
-                    disabled: disabled,
-                    onEdit: () => _editRow(context, index),
-                    onDelete: () => _deleteRow(index),
-                    onEditColumn: (column) => _editColumn(context, column),
-                    onDeleteColumn: (column) => _deleteColumn(context, column),
-                  ),
-                );
-              }
-              final tableWidth =
-                  constraints.maxWidth > (table.columns.length * 190.0 + 92.0)
-                  ? constraints.maxWidth
-                  : table.columns.length * 190.0 + 92.0;
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: tableWidth,
-                  child: DataTable(
-                    horizontalMargin: AppSpacing.md,
-                    columnSpacing: AppSpacing.md,
-                    headingRowColor: WidgetStatePropertyAll(
-                      Theme.of(context).colorScheme.primaryContainer,
+                final compact = constraints.maxWidth < AppBreakpoints.tablet;
+                if (compact) {
+                  return ListView.separated(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    itemCount: table.rows.take(50).length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppSpacing.sm),
+                    itemBuilder: (context, index) => _MobileRecordCard(
+                      row: table.rows[index],
+                      columns: table.columns,
+                      rowNumber: index + 1,
+                      disabled: disabled,
+                      onEdit: () => _editRow(context, index),
+                      onDelete: () => _deleteRow(index),
+                      onEditColumn: (column) => _editColumn(context, column),
+                      onDeleteColumn: (column) =>
+                          _deleteColumn(context, column),
                     ),
-                    columns: [
-                      for (final column in table.columns)
-                        DataColumn(
-                          label: _ColumnHeader(
-                            column: column,
-                            onEdit: disabled
-                                ? null
-                                : () => _editColumn(context, column),
-                            onDelete: disabled
-                                ? null
-                                : () => _deleteColumn(context, column),
-                          ),
-                        ),
-                      DataColumn(
-                        label: Wrap(
-                          spacing: AppSpacing.xxs,
-                          children: [
-                            IconButton(
-                              tooltip: context.l10n.text('Add field'),
-                              onPressed: disabled
-                                  ? null
-                                  : () => _editColumn(context),
-                              icon: const Icon(Icons.add_box_outlined),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            IconButton(
-                              tooltip: context.l10n.text('Add record row'),
-                              onPressed: disabled
-                                  ? null
-                                  : () => _editRow(context, null),
-                              icon: const Icon(Icons.person_add_alt_1),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ],
-                        ),
+                  );
+                }
+                final tableWidth =
+                    constraints.maxWidth > (table.columns.length * 190.0 + 92.0)
+                    ? constraints.maxWidth
+                    : table.columns.length * 190.0 + 92.0;
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: DataTable(
+                      horizontalMargin: AppSpacing.md,
+                      columnSpacing: AppSpacing.md,
+                      headingRowColor: WidgetStatePropertyAll(
+                        Theme.of(context).colorScheme.primaryContainer,
                       ),
-                    ],
-                    rows: [
-                      for (
-                        var index = 0;
-                        index < table.rows.take(50).length;
-                        index++
-                      )
-                        DataRow(
-                          cells: [
-                            for (final column in table.columns)
-                              DataCell(
-                                Text(table.rows[index][column] ?? ''),
-                                onTap: disabled
-                                    ? null
-                                    : () => _editRow(context, index),
-                              ),
-                            DataCell(
+                      columns: [
+                        for (final column in table.columns)
+                          DataColumn(
+                            label: _ColumnHeader(
+                              column: column,
+                              onEdit: disabled
+                                  ? null
+                                  : () => _editColumn(context, column),
+                              onDelete: disabled
+                                  ? null
+                                  : () => _deleteColumn(context, column),
+                            ),
+                          ),
+                        DataColumn(
+                          label: Wrap(
+                            spacing: AppSpacing.xxs,
+                            children: [
                               IconButton(
-                                tooltip: context.l10n.text('Delete record row'),
+                                tooltip: context.l10n.text('Add field'),
                                 onPressed: disabled
                                     ? null
-                                    : () => _deleteRow(index),
-                                icon: const Icon(Icons.delete_outline),
+                                    : () => _editColumn(context),
+                                icon: const Icon(Icons.add_box_outlined),
                                 visualDensity: VisualDensity.compact,
                               ),
-                            ),
-                          ],
+                              IconButton(
+                                tooltip: context.l10n.text('Add record row'),
+                                onPressed: disabled
+                                    ? null
+                                    : () => _editRow(context, null),
+                                icon: const Icon(Icons.person_add_alt_1),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ],
+                          ),
                         ),
-                    ],
+                      ],
+                      rows: [
+                        for (
+                          var index = 0;
+                          index < table.rows.take(50).length;
+                          index++
+                        )
+                          DataRow(
+                            cells: [
+                              for (final column in table.columns)
+                                DataCell(
+                                  Text(table.rows[index][column] ?? ''),
+                                  onTap: disabled
+                                      ? null
+                                      : () => _editRow(context, index),
+                                ),
+                              DataCell(
+                                IconButton(
+                                  tooltip: context.l10n.text(
+                                    'Delete record row',
+                                  ),
+                                  onPressed: disabled
+                                      ? null
+                                      : () => _deleteRow(index),
+                                  icon: const Icon(Icons.delete_outline),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-              );
+                );
               },
             ),
           ),

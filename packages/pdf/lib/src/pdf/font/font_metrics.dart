@@ -34,10 +34,10 @@ class PdfFontMetrics {
     double? descent,
     double? advanceWidth,
     double? leftBearing,
-  }) : ascent = ascent ?? bottom,
-       descent = descent ?? top,
-       advanceWidth = advanceWidth ?? right - left,
-       leftBearing = leftBearing ?? left;
+  })  : ascent = ascent ?? bottom,
+        descent = descent ?? top,
+        advanceWidth = advanceWidth ?? right - left,
+        leftBearing = leftBearing ?? left;
 
   /// Add another metric
   factory PdfFontMetrics.append(

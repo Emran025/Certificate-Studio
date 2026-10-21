@@ -28,9 +28,9 @@ class LimitedBox extends SingleChildWidget {
     this.maxWidth = double.infinity,
     this.maxHeight = double.infinity,
     Widget? child,
-  }) : assert(maxWidth >= 0.0),
-       assert(maxHeight >= 0.0),
-       super(child: child);
+  })  : assert(maxWidth >= 0.0),
+        assert(maxHeight >= 0.0),
+        super(child: child);
 
   final double maxWidth;
 
@@ -168,10 +168,10 @@ class Transform extends SingleChildWidget {
     this.origin,
     this.alignment = Alignment.center,
     Widget? child,
-  }) : transform = Matrix4.rotationZ(angle),
-       adjustLayout = false,
-       unconstrained = false,
-       super(child: child);
+  })  : transform = Matrix4.rotationZ(angle),
+        adjustLayout = false,
+        unconstrained = false,
+        super(child: child);
 
   /// Creates a widget that transforms its child using a rotation around the
   /// center and relayout the bounding box.
@@ -179,20 +179,20 @@ class Transform extends SingleChildWidget {
     required double angle,
     Widget? child,
     this.unconstrained = false,
-  }) : transform = Matrix4.rotationZ(angle),
-       adjustLayout = true,
-       alignment = null,
-       origin = null,
-       super(child: child);
+  })  : transform = Matrix4.rotationZ(angle),
+        adjustLayout = true,
+        alignment = null,
+        origin = null,
+        super(child: child);
 
   /// Creates a widget that transforms its child using a translation.
   Transform.translate({required PdfPoint offset, Widget? child})
-    : transform = Matrix4.translationValues(offset.x, offset.y, 0),
-      origin = null,
-      alignment = null,
-      adjustLayout = false,
-      unconstrained = false,
-      super(child: child);
+      : transform = Matrix4.translationValues(offset.x, offset.y, 0),
+        origin = null,
+        alignment = null,
+        adjustLayout = false,
+        unconstrained = false,
+        super(child: child);
 
   /// Creates a widget that scales its child uniformly.
   Transform.scale({
@@ -200,10 +200,10 @@ class Transform extends SingleChildWidget {
     this.origin,
     this.alignment = Alignment.center,
     Widget? child,
-  }) : transform = Matrix4.diagonal3Values(scale, scale, 1),
-       adjustLayout = false,
-       unconstrained = false,
-       super(child: child);
+  })  : transform = Matrix4.diagonal3Values(scale, scale, 1),
+        adjustLayout = false,
+        unconstrained = false,
+        super(child: child);
 
   /// The matrix to transform the child by during painting.
   final Matrix4 transform;
@@ -327,9 +327,9 @@ class Align extends SingleChildWidget {
     this.widthFactor,
     this.heightFactor,
     Widget? child,
-  }) : assert(widthFactor == null || widthFactor >= 0.0),
-       assert(heightFactor == null || heightFactor >= 0.0),
-       super(child: child);
+  })  : assert(widthFactor == null || widthFactor >= 0.0),
+        assert(heightFactor == null || heightFactor >= 0.0),
+        super(child: child);
 
   /// How to align the child.
   final AlignmentGeometry alignment;
@@ -493,7 +493,7 @@ class Align extends SingleChildWidget {
 /// A widget that imposes additional constraints on its child.
 class ConstrainedBox extends SingleChildWidget {
   ConstrainedBox({required this.constraints, Widget? child})
-    : super(child: child);
+      : super(child: child);
 
   /// The additional constraints to impose on the child.
   final BoxConstraints constraints;
@@ -529,7 +529,8 @@ class ConstrainedBox extends SingleChildWidget {
 
 class Center extends Align {
   Center({double? widthFactor, double? heightFactor, Widget? child})
-    : super(widthFactor: widthFactor, heightFactor: heightFactor, child: child);
+      : super(
+            widthFactor: widthFactor, heightFactor: heightFactor, child: child);
 }
 
 /// Scales and positions its child within itself according to [fit].
@@ -584,14 +585,13 @@ class FittedBox extends SingleChildWidget {
         box!,
       );
 
-      final mat =
-          Matrix4.translationValues(
-              destinationRect.left,
-              destinationRect.bottom,
-              0,
-            )
-            ..scaleByDouble(scaleX, scaleY, 1, 1)
-            ..translateByDouble(-sourceRect.left, -sourceRect.bottom, 0, 1);
+      final mat = Matrix4.translationValues(
+        destinationRect.left,
+        destinationRect.bottom,
+        0,
+      )
+        ..scaleByDouble(scaleX, scaleY, 1, 1)
+        ..translateByDouble(-sourceRect.left, -sourceRect.bottom, 0, 1);
 
       context.canvas
         ..saveContext()
@@ -729,21 +729,23 @@ class SizedBox extends StatelessWidget {
 
   /// Creates a box that will become as large as its parent allows.
   SizedBox.expand({this.child})
-    : width = double.infinity,
-      height = double.infinity;
+      : width = double.infinity,
+        height = double.infinity;
 
   /// Creates a box that will become as small as its parent allows.
-  SizedBox.shrink({this.child}) : width = 0.0, height = 0.0;
+  SizedBox.shrink({this.child})
+      : width = 0.0,
+        height = 0.0;
 
   /// Creates a box with the specified size.
   SizedBox.fromSize({this.child, PdfPoint? size})
-    : width = size?.x,
-      height = size?.y;
+      : width = size?.x,
+        height = size?.y;
 
   /// Creates a box whose width and height are equal.
   SizedBox.square({this.child, double? dimension})
-    : width = dimension,
-      height = dimension;
+      : width = dimension,
+        height = dimension;
 
   /// If non-null, requires the child to have exactly this width.
   final double? width;
@@ -779,8 +781,8 @@ class Builder extends StatelessWidget {
 }
 
 /// The signature of the [LayoutBuilder] builder function.
-typedef LayoutWidgetBuilder =
-    Widget Function(Context context, BoxConstraints? constraints);
+typedef LayoutWidgetBuilder = Widget Function(
+    Context context, BoxConstraints? constraints);
 
 /// Builds a widget tree that can depend on the parent widget's size.
 class LayoutBuilder extends StatelessWidget {
@@ -909,10 +911,10 @@ class Divider extends StatelessWidget {
     this.endIndent,
     this.color,
     this.borderStyle,
-  }) : assert(height == null || height >= 0.0),
-       assert(thickness == null || thickness >= 0.0),
-       assert(indent == null || indent >= 0.0),
-       assert(endIndent == null || endIndent >= 0.0);
+  })  : assert(height == null || height >= 0.0),
+        assert(thickness == null || thickness >= 0.0),
+        assert(indent == null || indent >= 0.0),
+        assert(endIndent == null || endIndent >= 0.0);
 
   /// The color to use when painting the line.
   final PdfColor? color;
@@ -970,10 +972,10 @@ class VerticalDivider extends StatelessWidget {
     this.endIndent,
     this.color,
     this.borderStyle,
-  }) : assert(width == null || width >= 0.0),
-       assert(thickness == null || thickness >= 0.0),
-       assert(indent == null || indent >= 0.0),
-       assert(endIndent == null || endIndent >= 0.0);
+  })  : assert(width == null || width >= 0.0),
+        assert(thickness == null || thickness >= 0.0),
+        assert(indent == null || indent >= 0.0),
+        assert(endIndent == null || endIndent >= 0.0);
 
   /// The color to use when painting the line.
   final PdfColor? color;

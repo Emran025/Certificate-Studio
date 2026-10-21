@@ -7,7 +7,9 @@ class PersistentAppDatabase implements AppDatabase {
   PersistentAppDatabase._();
 
   static Future<PersistentAppDatabase> create({KeyStorage? keyStorage}) async =>
-      throw UnsupportedError('SQLCipher persistence is not available on Flutter Web.');
+      throw UnsupportedError(
+        'SQLCipher persistence is not available on Flutter Web.',
+      );
 
   @override
   int get version => 0;
@@ -24,7 +26,10 @@ class PersistentAppDatabase implements AppDatabase {
     List<String>? columns,
   }) => _unsupported();
   @override
-  Future<Map<String, Object?>> insert(String table, Map<String, Object?> values) => _unsupported();
+  Future<Map<String, Object?>> insert(
+    String table,
+    Map<String, Object?> values,
+  ) => _unsupported();
   @override
   Future<Map<String, Object?>> upsert(
     String table,
@@ -32,26 +37,35 @@ class PersistentAppDatabase implements AppDatabase {
     String conflictColumn = 'id',
   }) => _unsupported();
   @override
-  Future<void> update(String table, String id, Map<String, Object?> values) => _unsupported();
+  Future<void> update(String table, String id, Map<String, Object?> values) =>
+      _unsupported();
   @override
   Future<void> delete(String table, String id) => _unsupported();
   @override
-  Future<void> deleteWhere(String table, Map<String, Object?> where) => _unsupported();
+  Future<void> deleteWhere(String table, Map<String, Object?> where) =>
+      _unsupported();
   @override
-  Future<void> deleteWhereIn(String table, String column, Iterable<Object?> values) => _unsupported();
+  Future<void> deleteWhereIn(
+    String table,
+    String column,
+    Iterable<Object?> values,
+  ) => _unsupported();
   @override
-  void beginBatch() => throw UnsupportedError('SQLCipher persistence is not available on Flutter Web.');
+  void beginBatch() => throw UnsupportedError(
+    'SQLCipher persistence is not available on Flutter Web.',
+  );
   @override
   Future<void> endBatch() async {}
 
   Future<T> _unsupported<T>() => Future.error(
-        UnsupportedError('SQLCipher persistence is not available on Flutter Web.'),
-      );
+    UnsupportedError('SQLCipher persistence is not available on Flutter Web.'),
+  );
 }
 
 class PersistentKeyStorage implements KeyStorage {
   const PersistentKeyStorage._();
-  static Future<PersistentKeyStorage> create() async => const PersistentKeyStorage._();
+  static Future<PersistentKeyStorage> create() async =>
+      const PersistentKeyStorage._();
   @override
   Future<void> write(String key, String value) async {}
   @override

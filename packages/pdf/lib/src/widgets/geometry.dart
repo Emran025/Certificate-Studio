@@ -34,32 +34,32 @@ class BoxConstraints {
 
   /// Creates box constraints that require the given width or height.
   const BoxConstraints.tightFor({double? width, double? height})
-    : minWidth = width ?? 0.0,
-      maxWidth = width ?? double.infinity,
-      minHeight = height ?? 0.0,
-      maxHeight = height ?? double.infinity;
+      : minWidth = width ?? 0.0,
+        maxWidth = width ?? double.infinity,
+        minHeight = height ?? 0.0,
+        maxHeight = height ?? double.infinity;
 
   /// Creates box constraints that is respected only by the given size.
   BoxConstraints.tight(PdfPoint size)
-    : minWidth = size.x,
-      maxWidth = size.x,
-      minHeight = size.y,
-      maxHeight = size.y;
+      : minWidth = size.x,
+        maxWidth = size.x,
+        minHeight = size.y,
+        maxHeight = size.y;
 
   /// Creates box constraints that expand to fill another box constraints.
   const BoxConstraints.expand({double? width, double? height})
-    : minWidth = width ?? double.infinity,
-      maxWidth = width ?? double.infinity,
-      minHeight = height ?? double.infinity,
-      maxHeight = height ?? double.infinity;
+      : minWidth = width ?? double.infinity,
+        maxWidth = width ?? double.infinity,
+        minHeight = height ?? double.infinity,
+        maxHeight = height ?? double.infinity;
 
   const BoxConstraints.tightForFinite({
     double width = double.infinity,
     double height = double.infinity,
-  }) : minWidth = width != double.infinity ? width : 0.0,
-       maxWidth = width != double.infinity ? width : double.infinity,
-       minHeight = height != double.infinity ? height : 0.0,
-       maxHeight = height != double.infinity ? height : double.infinity;
+  })  : minWidth = width != double.infinity ? width : 0.0,
+        maxWidth = width != double.infinity ? width : double.infinity,
+        minHeight = height != double.infinity ? height : 0.0,
+        maxHeight = height != double.infinity ? height : double.infinity;
 
   /// The minimum width that satisfies the constraints.
   final double minWidth;
@@ -165,12 +165,10 @@ class BoxConstraints {
     return BoxConstraints(
       minWidth: width == null ? minWidth : width.clamp(minWidth, maxWidth),
       maxWidth: width == null ? maxWidth : width.clamp(minWidth, maxWidth),
-      minHeight: height == null
-          ? minHeight
-          : height.clamp(minHeight, maxHeight),
-      maxHeight: height == null
-          ? maxHeight
-          : height.clamp(minHeight, maxHeight),
+      minHeight:
+          height == null ? minHeight : height.clamp(minHeight, maxHeight),
+      maxHeight:
+          height == null ? maxHeight : height.clamp(minHeight, maxHeight),
     );
   }
 
@@ -338,10 +336,10 @@ class EdgeInsets extends EdgeInsetsGeometry {
   const EdgeInsets.fromLTRB(this.left, this.top, this.right, this.bottom);
 
   const EdgeInsets.all(double value)
-    : left = value,
-      top = value,
-      right = value,
-      bottom = value;
+      : left = value,
+        top = value,
+        right = value,
+        bottom = value;
 
   const EdgeInsets.only({
     this.left = 0.0,
@@ -351,10 +349,10 @@ class EdgeInsets extends EdgeInsetsGeometry {
   });
 
   const EdgeInsets.symmetric({double vertical = 0.0, double horizontal = 0.0})
-    : left = horizontal,
-      top = vertical,
-      right = horizontal,
-      bottom = vertical;
+      : left = horizontal,
+        top = vertical,
+        right = horizontal,
+        bottom = vertical;
 
   static const EdgeInsets zero = EdgeInsets.only();
 
@@ -527,10 +525,10 @@ class EdgeInsetsDirectional extends EdgeInsetsGeometry {
   const EdgeInsetsDirectional.symmetric({
     double horizontal = 0.0,
     double vertical = 0.0,
-  }) : start = horizontal,
-       end = horizontal,
-       top = vertical,
-       bottom = vertical;
+  })  : start = horizontal,
+        end = horizontal,
+        top = vertical,
+        bottom = vertical;
 
   /// Creates insets where all the offsets are `value`.
   ///
@@ -543,10 +541,10 @@ class EdgeInsetsDirectional extends EdgeInsetsGeometry {
   /// ```
   /// {@end-tool}
   const EdgeInsetsDirectional.all(double value)
-    : start = value,
-      top = value,
-      end = value,
-      bottom = value;
+      : start = value,
+        top = value,
+        end = value,
+        bottom = value;
 
   /// An [EdgeInsetsDirectional] with zero offsets in each direction.
   ///

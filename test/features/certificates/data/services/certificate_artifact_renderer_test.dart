@@ -89,4 +89,52 @@ void main() {
 
     expect(decodeQrRecord(output)?['certificate_id'], 'qr-test-record');
   });
+
+  test('keeps QR centered in a rectangular field and extractable from PNG', () {
+    final background = img.Image(width: 300, height: 200);
+    img.fill(background, color: img.ColorRgb8(255, 255, 255));
+    final record = <String, dynamic>{
+      'certificate_id': 'rectangular-qr-record',
+      'signature': 'signed-record-for-qr-extraction',
+    };
+    final output = CertificateArtifactRenderer.renderPng(
+      values: const {},
+      fields: [
+        {
+          'position_json': jsonEncode({
+            'x': 190,
+            'y': 110,
+            'width': 80,
+            'height': 50,
+          }),
+          'style_json': jsonEncode({'kind': 'qr'}),
+        },
+      ],
+      record: record,
+      templateBytes: img.encodePng(background),
+      template: const {'width': 300, 'height': 200},
+    );
+
+    final raster = img.decodeImage(Uint8List.fromList(output))!;
+    var minX = raster.width;
+    var minY = raster.height;
+    var maxX = -1;
+    var maxY = -1;
+    for (var y = 0; y < raster.height; y++) {
+      for (var x = 0; x < raster.width; x++) {
+        final pixel = raster.getPixel(x, y);
+        if (pixel.r < 32 && pixel.g < 32 && pixel.b < 32) {
+          minX = x < minX ? x : minX;
+          minY = y < minY ? y : minY;
+          maxX = x > maxX ? x : maxX;
+          maxY = y > maxY ? y : maxY;
+        }
+      }
+    }
+    expect(minX, greaterThanOrEqualTo(380));
+    expect(maxX, lessThan(540));
+    expect(minY, greaterThanOrEqualTo(220));
+    expect(maxY, lessThan(320));
+    expect(decodeQrRecord(output)?['certificate_id'], 'rectangular-qr-record');
+  });
 }

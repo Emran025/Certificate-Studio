@@ -199,23 +199,32 @@ class _CertificateQrPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final white = Paint()..color = Colors.white;
-    final black = Paint()..color = Colors.black;
+    final white = Paint()
+      ..color = Colors.white
+      ..isAntiAlias = false;
+    final black = Paint()
+      ..color = Colors.black
+      ..isAntiAlias = false;
     canvas.drawRect(Offset.zero & size, white);
     const quietModules = 4;
     final module = size.width / (matrix.width + quietModules * 2);
     for (var row = 0; row < matrix.height; row++) {
-      for (var column = 0; column < matrix.width; column++) {
-        if (matrix.get(column, row) == 1) {
+      var runStart = -1;
+      for (var column = 0; column <= matrix.width; column++) {
+        final isBlack = column < matrix.width && matrix.get(column, row) == 1;
+        if (isBlack && runStart < 0) {
+          runStart = column;
+        } else if (!isBlack && runStart >= 0) {
           canvas.drawRect(
             Rect.fromLTWH(
-              (quietModules + column) * module,
+              (quietModules + runStart) * module,
               (quietModules + row) * module,
-              module,
+              (column - runStart) * module,
               module,
             ),
             black,
           );
+          runStart = -1;
         }
       }
     }

@@ -372,8 +372,23 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
       final sizeDelta = horizontalDelta.abs() >= verticalDelta.abs()
           ? horizontalDelta
           : verticalDelta;
+      final maxWidth = fromLeft
+          ? field.x + field.width
+          : _canvasWidth - field.x;
+      final maxHeight = fromTop
+          ? field.y + field.height
+          : _canvasHeight - field.y;
+      final maxSize = math.max(1.0, math.min(maxWidth, maxHeight));
+      final minimumSize = math.min(
+        maxSize,
+        certificateMinimumQrFieldSize(
+          matrixWidth: certificateQrSizingReferenceMatrixWidth,
+          canvasWidth: _canvasWidth,
+          canvasHeight: _canvasHeight,
+        ),
+      );
       final size = (field.width + sizeDelta)
-          .clamp(40, math.min(_canvasWidth - field.x, _canvasHeight - field.y))
+          .clamp(minimumSize, maxSize)
           .toDouble();
       final x = fromLeft ? field.x + field.width - size : field.x;
       final y = fromTop ? field.y + field.height - size : field.y;

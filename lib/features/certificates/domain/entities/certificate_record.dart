@@ -55,8 +55,9 @@ class CertificateRecord {
     }
     for (final entry in data.entries) {
       final value = entry.value?.toString().trim() ?? '';
-      if (value.isNotEmpty && !_isTechnicalOrNumeric(entry.key, value))
+      if (value.isNotEmpty && !_isTechnicalOrNumeric(entry.key, value)) {
         return value;
+      }
     }
     return className?.trim() ?? '';
   }

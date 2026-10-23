@@ -57,8 +57,8 @@ void main() {
     expect(canvasWidget, contains('fontFamilyFallback: ['));
     expect(canvasWidget, contains('encodeVerificationQrPayload(record)'));
     expect(canvasWidget, contains('certificateCapturePixelRatio('));
-    expect(canvasWidget, contains('minimumPixelsPerModule = 3.0'));
-    expect(canvasWidget, contains('maxImageSide = 6000.0'));
+    expect(canvasWidget, contains('certificateQrMinimumPixelsPerModule = 3'));
+    expect(canvasWidget, contains('certificateQrMaxImageSide = 6000'));
     expect(renderer, isNot(contains('Verification hash:')));
   });
 }

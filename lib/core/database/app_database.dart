@@ -118,8 +118,9 @@ class InMemoryAppDatabase implements AppDatabase {
     _ensureReady(table);
     final rows = _tables[table]!;
     final index = rows.indexWhere((row) => row['id'] == id || row['key'] == id);
-    if (index < 0)
+    if (index < 0) {
       throw StateError('No record with id "$id" exists in $table.');
+    }
     rows[index] = {...rows[index], ...values};
   }
 

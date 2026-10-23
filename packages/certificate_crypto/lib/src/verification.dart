@@ -71,8 +71,9 @@ Map<String, dynamic> decodeVerificationQrPayload(String payload) {
   }
   final bytes = base64UrlDecode(payload.substring(legacyQrScheme.length));
   final value = jsonDecode(utf8.decode(bytes));
-  if (value is! Map)
+  if (value is! Map) {
     throw const FormatException('verification QR payload must be an object');
+  }
   return Map<String, dynamic>.from(value);
 }
 
@@ -80,12 +81,14 @@ Future<VerificationResult> verifyQrPayload(
     String payload, List<int> document, SimplePublicKey publicKey) async {
   try {
     final record = decodeVerificationQrPayload(payload);
-    if (record['document_hash'] != await sha256Base64Url(document))
+    if (record['document_hash'] != await sha256Base64Url(document)) {
       return VerificationResult(VerificationStatus.invalidDocument,
           record: record);
-    if (!await verifyVerificationRecord(record, document, publicKey))
+    }
+    if (!await verifyVerificationRecord(record, document, publicKey)) {
       return VerificationResult(VerificationStatus.invalidSignature,
           record: record);
+    }
     return VerificationResult(VerificationStatus.valid, record: record);
   } on FormatException {
     return const VerificationResult(VerificationStatus.invalidPayload);

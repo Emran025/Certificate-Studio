@@ -21,8 +21,9 @@ String canonicalJson(Object? value) {
       buffer.write(']');
     } else if (value is Map) {
       final keys = value.keys.whereType<String>().toList()..sort();
-      if (keys.length != value.length)
+      if (keys.length != value.length) {
         throw ArgumentError('canonical maps require string keys');
+      }
       buffer.write('{');
       for (var i = 0; i < keys.length; i++) {
         if (i > 0) buffer.write(',');

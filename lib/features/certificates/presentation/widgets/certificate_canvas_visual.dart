@@ -199,23 +199,32 @@ class _CertificateQrPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final white = Paint()..color = Colors.white;
-    final black = Paint()..color = Colors.black;
+    final white = Paint()
+      ..color = Colors.white
+      ..isAntiAlias = false;
+    final black = Paint()
+      ..color = Colors.black
+      ..isAntiAlias = false;
     canvas.drawRect(Offset.zero & size, white);
     const quietModules = 4;
     final module = size.width / (matrix.width + quietModules * 2);
     for (var row = 0; row < matrix.height; row++) {
-      for (var column = 0; column < matrix.width; column++) {
-        if (matrix.get(column, row) == 1) {
+      var runStart = -1;
+      for (var column = 0; column <= matrix.width; column++) {
+        final isBlack = column < matrix.width && matrix.get(column, row) == 1;
+        if (isBlack && runStart < 0) {
+          runStart = column;
+        } else if (!isBlack && runStart >= 0) {
           canvas.drawRect(
             Rect.fromLTWH(
-              (quietModules + column) * module,
+              (quietModules + runStart) * module,
               (quietModules + row) * module,
-              module,
+              (column - runStart) * module,
               module,
             ),
             black,
           );
+          runStart = -1;
         }
       }
     }
@@ -504,6 +513,34 @@ Map<String, dynamic> _jsonMap(Object? raw) {
 double _number(Object? value, double fallback) =>
     value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
 
+const double certificateQrMaxImageSide = 6000;
+const double certificateQrMinimumPixelsPerModule = 3;
+const int certificateQrQuietZoneModules = 8;
+const double certificateQrFieldPadding = 20;
+
+// The designer uses this conservative reference QR to prevent users from
+// shrinking a field below the size needed by typical signed verification data.
+final int certificateQrSizingReferenceMatrixWidth = Encoder.encode(
+  List<String>.filled(512, 'x').join(),
+  ErrorCorrectionLevel.l,
+).matrix!.width;
+
+double certificateMinimumQrFieldSize({
+  required int matrixWidth,
+  required double canvasWidth,
+  required double canvasHeight,
+}) {
+  final maxPixelRatio =
+      certificateQrMaxImageSide / math.max(canvasWidth, canvasHeight);
+  final qrPixels =
+      (matrixWidth + certificateQrQuietZoneModules) *
+      certificateQrMinimumPixelsPerModule;
+  // Keep one logical-pixel of headroom so rounding at raster boundaries never
+  // drops a module below the three-pixel scan target.
+  return (qrPixels / maxPixelRatio + certificateQrFieldPadding).ceilToDouble() +
+      1;
+}
+
 double certificateCapturePixelRatio({
   required double templateDpi,
   required double canvasWidth,
@@ -523,24 +560,32 @@ double certificateCapturePixelRatio({
   if (qrField == null) return baseline;
 
   final position = _jsonMap(qrField['position_json']);
-  final qrSize = math.max(
-    1.0,
-    math.min(
-          _number(position['width'], 220),
-          _number(position['height'], 220),
-        ) -
-        20,
+  final fieldSize = math.min(
+    _number(position['width'], 220),
+    _number(position['height'], 220),
   );
+  final qrSize = math.max(1.0, fieldSize - certificateQrFieldPadding);
   final matrixWidth = Encoder.encode(
     encodeVerificationQrPayload(record),
     ErrorCorrectionLevel.l,
   ).matrix!.width;
-  const quietZoneModules = 8;
-  const minimumPixelsPerModule = 3.0;
+  final minimumFieldSize = certificateMinimumQrFieldSize(
+    matrixWidth: matrixWidth,
+    canvasWidth: canvasWidth,
+    canvasHeight: canvasHeight,
+  );
+  if (fieldSize < minimumFieldSize) {
+    throw StateError(
+      'QR code is too small for a scan-safe export. Increase the QR field '
+      'to at least ${minimumFieldSize.round()} canvas units.',
+    );
+  }
   final qrRequired =
-      (matrixWidth + quietZoneModules) * minimumPixelsPerModule / qrSize;
-  const maxImageSide = 6000.0;
-  final maxPixelRatio = maxImageSide / math.max(canvasWidth, canvasHeight);
+      (matrixWidth + certificateQrQuietZoneModules) *
+      certificateQrMinimumPixelsPerModule /
+      qrSize;
+  final maxPixelRatio =
+      certificateQrMaxImageSide / math.max(canvasWidth, canvasHeight);
   return math.min(math.max(baseline, qrRequired), maxPixelRatio).toDouble();
 }
 

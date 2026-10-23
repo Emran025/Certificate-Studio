@@ -133,9 +133,10 @@ class CertificateArtifactRenderer {
     // sizes, padding, and margins instead of being reprojected onto the image.
     final pageWidth = canvasWidth / dpi * 72;
     final pageHeight = canvasHeight / dpi * 72;
-    final qrField = fields.where(_isQrField).isEmpty
-        ? null
-        : fields.where(_isQrField).first;
+    final visibleQrFields = fields.where(
+      (field) => _fieldIsVisible(field) && _isQrField(field),
+    );
+    final qrField = visibleQrFields.isEmpty ? null : visibleQrFields.first;
     document.addPage(
       pw.Page(
         pageFormat: PdfPageFormat(pageWidth, pageHeight),
@@ -158,14 +159,15 @@ class CertificateArtifactRenderer {
                   fonts,
                   defaultFont,
                 ),
-            _pdfQrField(
-              encodeVerificationQrPayload(record),
-              qrField,
-              canvasWidth,
-              canvasHeight,
-              pageWidth,
-              pageHeight,
-            ),
+            if (qrField != null || !fields.any(_isQrField))
+              _pdfQrField(
+                encodeVerificationQrPayload(record),
+                qrField,
+                canvasWidth,
+                canvasHeight,
+                pageWidth,
+                pageHeight,
+              ),
           ],
         ),
       ),
@@ -185,6 +187,44 @@ class CertificateArtifactRenderer {
     final designHeight = _number(template['height'], 1100);
     final logicalWidth = designWidth.round();
     final logicalHeight = designHeight.round();
+    final visibleQrFields = fields.where(
+      (field) => _fieldIsVisible(field) && _isQrField(field),
+    );
+    final qrField = visibleQrFields.isEmpty ? null : visibleQrFields.first;
+    final qrPosition = qrField == null
+        ? <String, dynamic>{}
+        : _jsonMap(qrField['position_json']);
+    final fieldWidth = _number(qrPosition['width'], 220);
+    final fieldHeight = _number(qrPosition['height'], 220);
+    final qrLogicalSize = qrField == null
+        ? math.min(220.0, math.min(designWidth, designHeight) - 32)
+        : math.max(1.0, math.min(fieldWidth, fieldHeight) - 20);
+    final qrPayload = encodeVerificationQrPayload(record);
+    final qrMatrixWidth = Encoder.encode(
+      qrPayload,
+      ErrorCorrectionLevel.l,
+    ).matrix!.width;
+    const quietZoneModules = 8;
+    const minimumPixelsPerModule = 3.0;
+    final qrRequiredScale =
+        (qrMatrixWidth + quietZoneModules) *
+        minimumPixelsPerModule /
+        qrLogicalSize;
+    const maxImageSide = 6000.0;
+    final maxPixelRatio = maxImageSide / math.max(designWidth, designHeight);
+    if (qrRequiredScale > maxPixelRatio) {
+      final minimumFieldSize =
+          ((qrMatrixWidth + quietZoneModules) *
+                      minimumPixelsPerModule /
+                      maxPixelRatio +
+                  20)
+              .ceil();
+      throw StateError(
+        'QR code is too small for a scan-safe PNG export. Increase the QR '
+        'field to at least $minimumFieldSize canvas units.',
+      );
+    }
+    final scale = math.min(math.max(2.0, qrRequiredScale), maxPixelRatio);
     var canvas = img.Image(width: logicalWidth, height: logicalHeight);
     img.fill(canvas, color: img.ColorRgb8(250, 247, 240));
     final source = templateBytes == null
@@ -226,9 +266,8 @@ class CertificateArtifactRenderer {
     }
     // Render every element in the same logical coordinate space used by the
     // designer, then upscale the complete result without changing geometry.
-    const scale = 2;
-    final targetWidth = canvas.width * scale;
-    final targetHeight = canvas.height * scale;
+    final targetWidth = (canvas.width * scale).round();
+    final targetHeight = (canvas.height * scale).round();
     if (canvas.width != targetWidth || canvas.height != targetHeight) {
       canvas = img.copyResize(
         canvas,
@@ -255,28 +294,20 @@ class CertificateArtifactRenderer {
         color: _imageColor(style['color'] as String?),
       );
     }
-    final qrFields = fields.where(_isQrField);
-    final qrField = qrFields.isEmpty ? null : qrFields.first;
-    final qrPosition = qrField == null
-        ? <String, dynamic>{}
-        : _jsonMap(qrField['position_json']);
-    final qrLogicalSize = _number(qrPosition['width'], 220);
-    final qrSize = (qrLogicalSize * logicalScale)
-        .clamp(120, math.min(canvas.width, canvas.height))
-        .round();
+    final qrSize = math.max(1, (qrLogicalSize * logicalScale).round()).toInt();
     final qrX = qrField == null
-        ? canvas.width - qrSize - 32
-        : (_number(qrPosition['x'], 0) * logicalScale).round();
+        ? canvas.width - qrSize - (32 * logicalScale).round()
+        : ((_number(qrPosition['x'], 0) + (fieldWidth - qrLogicalSize) / 2) *
+                  logicalScale)
+              .round();
     final qrY = qrField == null
-        ? canvas.height - qrSize - 32
-        : (_number(qrPosition['y'], 0) * logicalScale).round();
-    _drawQr(
-      canvas,
-      encodeVerificationQrPayload(record),
-      x: qrX,
-      y: qrY,
-      size: qrSize,
-    );
+        ? canvas.height - qrSize - (32 * logicalScale).round()
+        : ((_number(qrPosition['y'], 0) + (fieldHeight - qrLogicalSize) / 2) *
+                  logicalScale)
+              .round();
+    if (qrField != null || !fields.any(_isQrField)) {
+      _drawQr(canvas, qrPayload, x: qrX, y: qrY, size: qrSize);
+    }
     return [...img.encodePng(canvas), ...utf8.encode(_embeddedMarker(record))];
   }
 
@@ -345,13 +376,22 @@ class CertificateArtifactRenderer {
     final y = _number(position['y'], 0) / canvasHeight * pageHeight;
     final width = _number(position['width'], 220) / canvasWidth * pageWidth;
     final height = _number(position['height'], 220) / canvasHeight * pageHeight;
+    final qrSize = math
+        .max(
+          1.0,
+          math.min(
+            width - 20 / canvasWidth * pageWidth,
+            height - 20 / canvasHeight * pageHeight,
+          ),
+        )
+        .toDouble();
     return pw.Positioned(
       left: x,
       top: y,
       child: pw.SizedBox(
         width: width,
         height: height,
-        child: pw.Center(child: _qrWidget(payload, math.min(width, height))),
+        child: pw.Center(child: _qrWidget(payload, qrSize)),
       ),
     );
   }

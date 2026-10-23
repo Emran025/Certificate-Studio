@@ -535,7 +535,10 @@ double certificateMinimumQrFieldSize({
   final qrPixels =
       (matrixWidth + certificateQrQuietZoneModules) *
       certificateQrMinimumPixelsPerModule;
-  return (qrPixels / maxPixelRatio + certificateQrFieldPadding).ceilToDouble();
+  // Keep one logical-pixel of headroom so rounding at raster boundaries never
+  // drops a module below the three-pixel scan target.
+  return (qrPixels / maxPixelRatio + certificateQrFieldPadding).ceilToDouble() +
+      1;
 }
 
 double certificateCapturePixelRatio({

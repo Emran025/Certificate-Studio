@@ -131,10 +131,13 @@ void main() {
         }
       }
     }
-    expect(minX, greaterThanOrEqualTo(380));
-    expect(maxX, lessThan(540));
-    expect(minY, greaterThanOrEqualTo(220));
-    expect(maxY, lessThan(320));
+    final pixelScaleX = raster.width / 300;
+    final pixelScaleY = raster.height / 200;
+    expect(raster.width, greaterThan(600));
+    expect(minX, greaterThanOrEqualTo((190 * pixelScaleX).floor()));
+    expect(maxX, lessThan((270 * pixelScaleX).ceil()));
+    expect(minY, greaterThanOrEqualTo((110 * pixelScaleY).floor()));
+    expect(maxY, lessThan((160 * pixelScaleY).ceil()));
     expect(decodeQrRecord(output)?['certificate_id'], 'rectangular-qr-record');
   });
 }

@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:certificate_crypto/certificate_crypto.dart';
 import 'package:certificate_studio/features/certificates/presentation/widgets/certificate_canvas_visual.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
+import 'package:zxing2/qrcode.dart';
 
 void main() {
   testWidgets('renders Arabic text and QR on the template-sized canvas', (
@@ -178,6 +180,10 @@ void main() {
 
   test('raises output density only for a QR field that needs it', () {
     final record = <String, dynamic>{'certificate_id': 'certificate-1'};
+    final matrixWidth = Encoder.encode(
+      encodeVerificationQrPayload(record),
+      ErrorCorrectionLevel.l,
+    ).matrix!.width;
     final smallQr = <String, Object?>{
       'position_json': jsonEncode({'width': 30, 'height': 30}),
       'style_json': jsonEncode({'kind': 'qr'}),
@@ -208,15 +214,42 @@ void main() {
       1,
     );
     expect(
-      certificateCapturePixelRatio(
+      () => certificateCapturePixelRatio(
         templateDpi: 300,
         canvasWidth: 1000,
         canvasHeight: 700,
         fields: [smallQr],
         record: record,
       ),
-      greaterThan(1),
+      throwsA(isA<StateError>()),
     );
+
+    final minimumFieldSize = certificateMinimumQrFieldSize(
+      matrixWidth: matrixWidth,
+      canvasWidth: 1000,
+      canvasHeight: 700,
+    );
+    final scanSafeQr = <String, Object?>{
+      'position_json': jsonEncode({
+        'width': minimumFieldSize,
+        'height': minimumFieldSize,
+      }),
+      'style_json': jsonEncode({'kind': 'qr'}),
+    };
+    final pixelRatio = certificateCapturePixelRatio(
+      templateDpi: 300,
+      canvasWidth: 1000,
+      canvasHeight: 700,
+      fields: [scanSafeQr],
+      record: record,
+    );
+    expect(
+      (minimumFieldSize - certificateQrFieldPadding) *
+          pixelRatio /
+          (matrixWidth + certificateQrQuietZoneModules),
+      greaterThanOrEqualTo(certificateQrMinimumPixelsPerModule),
+    );
+    expect(pixelRatio, lessThanOrEqualTo(certificateQrMaxImageSide / 1000));
   });
 }
 

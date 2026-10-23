@@ -11,8 +11,9 @@ Future<Map<String, dynamic>> createVerificationRecord(
     SimpleKeyPair keyPair) async {
   final record = Map<String, dynamic>.from(fields);
   for (final field in ['institution_id', 'project_id', 'certificate_id']) {
-    if (record[field] is! String || (record[field] as String).isEmpty)
+    if (record[field] is! String || (record[field] as String).isEmpty) {
       throw ArgumentError('$field is required');
+    }
   }
   record['format'] = certificateRecordFormat;
   record['document_hash'] = await sha256Base64Url(document);
@@ -29,8 +30,9 @@ Future<bool> verifyVerificationRecord(Map<String, dynamic> record,
   try {
     if (record['format'] != certificateRecordFormat) return false;
     for (final field in ['institution_id', 'project_id', 'certificate_id']) {
-      if (record[field] is! String || (record[field] as String).isEmpty)
+      if (record[field] is! String || (record[field] as String).isEmpty) {
         return false;
+      }
     }
     final unsigned = Map<String, dynamic>.from(record)..remove('signature');
     return unsigned['document_hash'] == await sha256Base64Url(document) &&

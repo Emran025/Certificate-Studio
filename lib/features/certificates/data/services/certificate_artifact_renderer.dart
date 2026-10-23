@@ -187,6 +187,44 @@ class CertificateArtifactRenderer {
     final designHeight = _number(template['height'], 1100);
     final logicalWidth = designWidth.round();
     final logicalHeight = designHeight.round();
+    final visibleQrFields = fields.where(
+      (field) => _fieldIsVisible(field) && _isQrField(field),
+    );
+    final qrField = visibleQrFields.isEmpty ? null : visibleQrFields.first;
+    final qrPosition = qrField == null
+        ? <String, dynamic>{}
+        : _jsonMap(qrField['position_json']);
+    final fieldWidth = _number(qrPosition['width'], 220);
+    final fieldHeight = _number(qrPosition['height'], 220);
+    final qrLogicalSize = qrField == null
+        ? math.min(220.0, math.min(designWidth, designHeight) - 32)
+        : math.max(1.0, math.min(fieldWidth, fieldHeight) - 20);
+    final qrPayload = encodeVerificationQrPayload(record);
+    final qrMatrixWidth = Encoder.encode(
+      qrPayload,
+      ErrorCorrectionLevel.l,
+    ).matrix!.width;
+    const quietZoneModules = 8;
+    const minimumPixelsPerModule = 3.0;
+    final qrRequiredScale =
+        (qrMatrixWidth + quietZoneModules) *
+        minimumPixelsPerModule /
+        qrLogicalSize;
+    const maxImageSide = 6000.0;
+    final maxPixelRatio = maxImageSide / math.max(designWidth, designHeight);
+    if (qrRequiredScale > maxPixelRatio) {
+      final minimumFieldSize =
+          ((qrMatrixWidth + quietZoneModules) *
+                      minimumPixelsPerModule /
+                      maxPixelRatio +
+                  20)
+              .ceil();
+      throw StateError(
+        'QR code is too small for a scan-safe PNG export. Increase the QR '
+        'field to at least $minimumFieldSize canvas units.',
+      );
+    }
+    final scale = math.min(math.max(2.0, qrRequiredScale), maxPixelRatio);
     var canvas = img.Image(width: logicalWidth, height: logicalHeight);
     img.fill(canvas, color: img.ColorRgb8(250, 247, 240));
     final source = templateBytes == null
@@ -228,9 +266,8 @@ class CertificateArtifactRenderer {
     }
     // Render every element in the same logical coordinate space used by the
     // designer, then upscale the complete result without changing geometry.
-    const scale = 2;
-    final targetWidth = canvas.width * scale;
-    final targetHeight = canvas.height * scale;
+    final targetWidth = (canvas.width * scale).round();
+    final targetHeight = (canvas.height * scale).round();
     if (canvas.width != targetWidth || canvas.height != targetHeight) {
       canvas = img.copyResize(
         canvas,
@@ -257,18 +294,6 @@ class CertificateArtifactRenderer {
         color: _imageColor(style['color'] as String?),
       );
     }
-    final qrFields = fields.where(
-      (field) => _fieldIsVisible(field) && _isQrField(field),
-    );
-    final qrField = qrFields.isEmpty ? null : qrFields.first;
-    final qrPosition = qrField == null
-        ? <String, dynamic>{}
-        : _jsonMap(qrField['position_json']);
-    final fieldWidth = _number(qrPosition['width'], 220);
-    final fieldHeight = _number(qrPosition['height'], 220);
-    final qrLogicalSize = qrField == null
-        ? math.min(220.0, math.min(designWidth, designHeight) - 32)
-        : math.max(1.0, math.min(fieldWidth, fieldHeight) - 20);
     final qrSize = math.max(1, (qrLogicalSize * logicalScale).round()).toInt();
     final qrX = qrField == null
         ? canvas.width - qrSize - (32 * logicalScale).round()
@@ -281,13 +306,7 @@ class CertificateArtifactRenderer {
                   logicalScale)
               .round();
     if (qrField != null || !fields.any(_isQrField)) {
-      _drawQr(
-        canvas,
-        encodeVerificationQrPayload(record),
-        x: qrX,
-        y: qrY,
-        size: qrSize,
-      );
+      _drawQr(canvas, qrPayload, x: qrX, y: qrY, size: qrSize);
     }
     return [...img.encodePng(canvas), ...utf8.encode(_embeddedMarker(record))];
   }

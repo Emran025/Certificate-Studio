@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:certificate_crypto/certificate_crypto.dart';
 
 Future<void> main(List<String> args) async {
-  if (args.length != 2)
+  if (args.length != 2) {
     throw ArgumentError('usage: interop_driver.dart <create|verify> <path>');
+  }
   final mode = args[0];
   final file = File(args[1]);
   if (mode == 'create') {
@@ -35,15 +36,20 @@ Future<void> main(List<String> args) async {
     });
     final message = base64UrlDecode(input['message'] as String);
     if (!await verifyBytes(
-        message, base64UrlDecode(input['signature'] as String), publicKey))
+        message, base64UrlDecode(input['signature'] as String), publicKey)) {
       exitCode = 1;
+    }
     if (!await verifyVerificationRecord(
         input['record'] as Map<String, dynamic>,
         utf8.encode('cross-language certificate payload'),
-        publicKey)) exitCode = 1;
+        publicKey)) {
+      exitCode = 1;
+    }
     if (!(await verifyQrPayload(input['qr_payload'] as String,
             utf8.encode('cross-language certificate payload'), publicKey))
-        .isValid) exitCode = 1;
+        .isValid) {
+      exitCode = 1;
+    }
   } else {
     throw ArgumentError('unknown mode');
   }

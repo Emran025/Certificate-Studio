@@ -304,7 +304,7 @@ This folder contains a portable snapshot of project data, design, assets, genera
         throw FormatException('The project archive repeats ${entry.name}.');
       }
       final content = entry.content;
-      totalBytes += content.length;
+      totalBytes += content.length.toInt();
       if (totalBytes > maxArchiveBytes) {
         throw const FormatException('The project archive is too large.');
       }

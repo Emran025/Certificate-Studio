@@ -31,13 +31,22 @@ void main() {
 
   test('saves project background bytes on the active platform', () async {
     final path = await saveProjectBackground(
+      projectId: 'project-1',
       fileName: 'background.bin',
       bytes: [1, 2, 3],
     );
 
     expect(
       path,
-      '${tempDirectory.path}${Platform.pathSeparator}project_backgrounds${Platform.pathSeparator}background.bin',
+      contains(
+        '${Platform.pathSeparator}CertificateStudio${Platform.pathSeparator}workspaces${Platform.pathSeparator}',
+      ),
+    );
+    expect(
+      path,
+      endsWith(
+        '${Platform.pathSeparator}assets${Platform.pathSeparator}templates${Platform.pathSeparator}background.bin',
+      ),
     );
     final file = File(path!);
     expect(file.existsSync(), isTrue);

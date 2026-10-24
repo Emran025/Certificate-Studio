@@ -2060,33 +2060,38 @@ Phone number unavailable
 
 ## 44.7 Project Export and Import
 
-A project can be exported to a portable file:
+A project can be exported to a portable `.czip` workspace package. The archive
+contains a versioned `workspace/manifest.json`, checksummed files, and a
+structured snapshot:
 
 ```text
-Export Project
-
-This will include:
-
-✓ Template
-✓ Fonts
-✓ Field layout
-✓ Data mapping
-✓ Project settings
-✓ Security configuration
-
-Generated certificates will NOT be included.
-
-[ Export Project ]
+workspace/
+  manifest.json
+  README.md
+  data/       # project, template/font metadata, recipient rows and settings
+  design/     # field positions, styles and font references
+  assets/     # template, project logo and custom font copies
+  outputs/    # generated PDF and PNG certificate copies
+  verification/
 ```
 
-The resulting file (e.g., Flutter_Course_2026.cstudio) can be transferred to another device.
+The package also carries `data_rows.csv` as an interoperability export and
+legacy root entries so older Certificate Studio versions can import the
+project's basic setup. The structured row snapshot is authoritative; CSV is
+not used to restore the exact record IDs or column metadata.
+
+Project fields, settings, records, custom font bytes, template and logo files,
+generated certificates, and verification records are included. The encrypted
+application database, institution keys and private project signing keys are
+not included. An imported project is attached to the destination institution;
+its project signing key is initialized locally when needed.
 
 Importing on the other device:
 
 ```text
 Import Project
 
-Flutter_Course_2026.cstudio
+Flutter_Course_2026.czip
 
 Project: Flutter Training 2026
 
@@ -2094,12 +2099,15 @@ Template      ✓
 Fonts         ✓
 Layout        ✓
 Mappings      ✓
-Security      ✓
+Generated files ✓
 
 [ Import Project ]
 ```
 
-After import, the project is ready for use on the new device without any manual reconfiguration.
+Before importing, the app verifies the manifest, checksums and required rows.
+Imports never overwrite an existing project; an ID collision is reported so the
+user can choose another destination or resolve the duplicate deliberately.
+Legacy `.czip` and `.json` project exports remain importable.
 
 ## 44.8 Settings
 

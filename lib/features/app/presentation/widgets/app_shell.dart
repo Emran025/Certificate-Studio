@@ -25,6 +25,7 @@ import '../../../templates/presentation/screens/template_picker_screen.dart';
 import '../../../fonts/presentation/screens/fonts_library_screen.dart';
 import '../../../settings/domain/entities/app_settings.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
+import '../../../settings/data/services/workspace_transfer_service.dart';
 import '../controllers/workspace_metrics_bloc.dart';
 import '../../../projects/data/datasources/project_data_source_impl.dart';
 import '../../data/datasources/workspace_data_source_impl.dart';

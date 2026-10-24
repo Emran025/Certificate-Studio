@@ -21,6 +21,7 @@ class FakeArtifactStore implements CertificateArtifactStore {
 
   @override
   Future<String> save({
+    required String projectId,
     required String certificateId,
     required String extension,
     required List<int> bytes,

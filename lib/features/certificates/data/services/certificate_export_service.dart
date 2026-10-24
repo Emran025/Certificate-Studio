@@ -28,8 +28,7 @@ class CertificateExportService implements CertificateExportServiceContract {
   CertificateExportService({
     CertificateArtifactStore? artifactStore,
     this.database,
-  }) : artifactStore =
-           artifactStore ?? SharedPreferencesCertificateArtifactStore();
+  }) : artifactStore = artifactStore ?? WorkspaceCertificateArtifactStore();
 
   final CertificateArtifactStore artifactStore;
   final AppDatabase? database;

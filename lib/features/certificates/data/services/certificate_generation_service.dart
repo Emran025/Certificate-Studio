@@ -57,8 +57,7 @@ class CertificateGenerationService
     this.keyStorage, {
     CertificateArtifactStore? artifactStore,
     this.canvasCapture,
-  }) : artifactStore =
-           artifactStore ?? SharedPreferencesCertificateArtifactStore();
+  }) : artifactStore = artifactStore ?? WorkspaceCertificateArtifactStore();
   final AppDatabase database;
   final KeyStorage keyStorage;
   final CertificateArtifactStore artifactStore;
@@ -287,11 +286,13 @@ class CertificateGenerationService
           }
           final savedArtifacts = await Future.wait([
             artifactStore.save(
+              projectId: projectId,
               certificateId: certificateId,
               extension: 'pdf',
               bytes: pdfBytes,
             ),
             artifactStore.save(
+              projectId: projectId,
               certificateId: certificateId,
               extension: 'png',
               bytes: pngBytes,

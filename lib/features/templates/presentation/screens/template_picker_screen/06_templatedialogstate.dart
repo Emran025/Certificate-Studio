@@ -186,6 +186,7 @@ class _TemplateDialogState extends State<_TemplateDialog> {
         _ => throw StateError('Choose a PNG, JPG, or WEBP image.'),
       };
       final storedPath = await saveProjectBackground(
+        projectId: 'template-library',
         fileName: 'template-${DateTime.now().microsecondsSinceEpoch}.$format',
         bytes: bytes,
       );

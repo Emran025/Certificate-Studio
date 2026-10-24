@@ -55,10 +55,7 @@ void main() {
         final certificate = (await database.query(
           DatabaseTables.certificates,
         )).single;
-        expect(
-          certificate['file_path'],
-          startsWith('artifact://certificates/'),
-        );
+        expect(certificate['file_path'], startsWith('artifact://workspace/'));
         expect(certificate['image_path'], endsWith('.png'));
         expect(
           (await artifacts.read(

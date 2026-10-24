@@ -233,11 +233,13 @@ void main() {
         'project_id': project.id,
         'record_id': 'record-1',
         'file_path': await artifacts.save(
+          projectId: project.id,
           certificateId: 'certificate-1',
           extension: 'pdf',
           bytes: [1],
         ),
         'image_path': await artifacts.save(
+          projectId: project.id,
           certificateId: 'certificate-1',
           extension: 'png',
           bytes: [2],
@@ -262,7 +264,9 @@ void main() {
       expect(await database.query(DatabaseTables.records), isEmpty);
       expect(await database.query(DatabaseTables.certificates), isEmpty);
       expect(
-        await artifacts.read('artifact://certificates/certificate-1.pdf'),
+        await artifacts.read(
+          'artifact://workspace/${base64Url.encode(utf8.encode(project.id)).replaceAll('=', '')}/${base64Url.encode(utf8.encode('certificate-1')).replaceAll('=', '')}.pdf',
+        ),
         isNull,
       );
       await DeleteProject(repository, keyStorage).call(project.id);
@@ -371,11 +375,12 @@ void main() {
   test('artifact store saves, reads and deletes bytes', () async {
     final store = InMemoryCertificateArtifactStore();
     final reference = await store.save(
+      projectId: 'p',
       certificateId: 'c',
       extension: 'pdf',
       bytes: [1, 2, 3],
     );
-    expect(reference, 'artifact://certificates/c.pdf');
+    expect(reference, startsWith('artifact://workspace/'));
     expect(await store.read(reference), [1, 2, 3]);
     await store.delete(reference);
     expect(await store.read(reference), isNull);

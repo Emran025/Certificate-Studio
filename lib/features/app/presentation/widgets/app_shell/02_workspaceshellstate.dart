@@ -75,6 +75,34 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
     }
   }
 
+  Future<void> _importProject() async {
+    final database = widget.database;
+    final institution = widget.institution;
+    if (database == null || institution == null) return;
+    try {
+      final id = await WorkspaceTransferService(
+        database,
+      ).importProject(institution.id);
+      if (!mounted || id == null) return;
+      final imported = await _projectRepository?.getById(id);
+      if (!mounted) return;
+      setState(() {
+        _projectsFuture = _loadProjects();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.text('Project imported successfully.')),
+        ),
+      );
+      if (imported != null) await _openProject(imported);
+    } on Object catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.text('Import failed: $error'))),
+      );
+    }
+  }
+
   Future<void> _openProject(Project project) async {
     if (!mounted) return;
     setState(() {
@@ -149,6 +177,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
         projectsFuture: _projectsFuture,
         metrics: const WorkspaceMetrics.empty(),
         onCreateProject: _openCreateProject,
+        onImportProject: _importProject,
         onVerify: _openVerification,
         onOpenProject: _openProject,
       );
@@ -163,6 +192,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
         metrics: state.metrics,
         metricsError: state.errorMessage,
         onCreateProject: _openCreateProject,
+        onImportProject: _importProject,
         onVerify: _openVerification,
         onOpenProject: _openProject,
       ),

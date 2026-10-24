@@ -9,8 +9,9 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
 import '../../../../core/files/export_file_writer.dart';
 import '../../../../core/files/project_asset_store.dart';
+import '../../../../core/files/certificate_artifact_store.dart';
 import '../../../../core/security/keys/institution_key_manager.dart';
-import '../../../certificates/data/services/template_bytes.dart';
+import 'project_workspace_archive.dart';
 import 'workspace_transfer_csv.dart';
 
 abstract interface class WorkspaceTransferServiceContract {
@@ -21,10 +22,29 @@ abstract interface class WorkspaceTransferServiceContract {
 }
 
 class WorkspaceTransferService implements WorkspaceTransferServiceContract {
-  WorkspaceTransferService(this._database, {this.keyStorage});
+  WorkspaceTransferService(
+    this._database, {
+    this.keyStorage,
+    this.artifactStore,
+  });
 
   final AppDatabase _database;
   final KeyStorage? keyStorage;
+  final CertificateArtifactStore? artifactStore;
+
+  ProjectWorkspaceArchive get _workspaceArchive =>
+      ProjectWorkspaceArchive(_database, artifactStore: artifactStore);
+
+  Future<Uint8List> buildProjectArchiveBytes(String projectId) =>
+      _workspaceArchive.exportProject(projectId);
+
+  Future<String> importWorkspaceArchiveBytes({
+    required String institutionId,
+    required List<int> bytes,
+  }) => _workspaceArchive.importProject(
+    institutionId: institutionId,
+    archiveBytes: bytes,
+  );
 
   static const _profileFormat = 'cstudio-profile-v1';
   static const _profileManifest = 'institution.json';
@@ -35,7 +55,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
   static const _legacyFieldPositionsName = 'field_positions.json';
   static const _dataRowsName = 'data_rows.csv';
   static const _projectMetadataName = 'project.json';
-  static const _spacingName = 'app_spacing.dart';
 
   @override
   Future<String?> exportProfile(String institutionId) async {
@@ -157,75 +176,12 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     if (project == null) {
       throw StateError('The selected project no longer exists.');
     }
-
-    final templateId = project['template_id'] as String?;
-    final template = templateId == null
-        ? null
-        : await _one(DatabaseTables.templates, {'id': templateId});
-    final backgroundPath = template?['file_path']?.toString();
-    final backgroundBytes = backgroundPath == null || backgroundPath.isEmpty
-        ? null
-        : await readTemplateBytes(backgroundPath);
-    if (backgroundBytes == null || backgroundBytes.isEmpty) {
-      throw StateError(
-        'The project does not have a readable background image.',
-      );
-    }
-
-    final fields = await _database.query(
-      DatabaseTables.certificateFields,
-      where: {'project_id': projectId},
-    );
-    final records = await _database.query(
-      DatabaseTables.records,
-      where: {'project_id': projectId},
-    );
-    final archive = Archive()
-      ..addFile(
-        _jsonFile(_projectMetadataName, {
-          'format': _projectFormat,
-          'project': project,
-          'template': template,
-        }),
-      )
-      ..addFile(
-        _jsonFile(_fieldPositionsName, {
-          'format': _projectFormat,
-          'fields': fields,
-        }),
-      )
-      ..addFile(
-        ArchiveFile(
-          _backgroundName(template, project),
-          backgroundBytes.length,
-          backgroundBytes,
-        ),
-      )
-      ..addFile(
-        ArchiveFile(
-          _spacingName,
-          utf8.encode(_appSpacingSource).length,
-          utf8.encode(_appSpacingSource),
-        ),
-      )
-      ..addFile(
-        ArchiveFile(
-          _dataRowsName,
-          utf8.encode(recordsToCsv(records)).length,
-          utf8.encode(recordsToCsv(records)),
-        ),
-      );
-
-    final encoded = ZipEncoder().encode(archive);
-    if (encoded == null || encoded.isEmpty) {
-      throw StateError('The project archive could not be created.');
-    }
     return saveExportBytes(
       dialogTitle: 'Export project',
       fileName:
           '${_safeFileName(project['name']?.toString() ?? 'project')}.czip',
       extension: 'czip',
-      bytes: Uint8List.fromList(encoded),
+      bytes: await buildProjectArchiveBytes(projectId),
     );
   }
 
@@ -233,16 +189,23 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
   Future<String?> importProject(String institutionId) async {
     final file = await _pickFile(['czip', 'json']);
     if (file == null) return null;
+    final bytes = await file.readAsBytes();
     final extension = (file.extension ?? '').toLowerCase();
     if (extension == 'json') {
-      return _importLegacyJson(institutionId, await file.readAsBytes());
+      return _importLegacyJson(institutionId, bytes);
     }
 
-    final archive = ZipDecoder().decodeBytes(await file.readAsBytes());
+    final archive = ZipDecoder().decodeBytes(bytes);
     final entries = <String, List<int>>{
       for (final entry in archive.files)
         if (entry.isFile) entry.name: entry.content,
     };
+    if (entries.containsKey(ProjectWorkspaceArchive.manifestPath)) {
+      return importWorkspaceArchiveBytes(
+        institutionId: institutionId,
+        bytes: bytes,
+      );
+    }
     final metadata = _decodeArchiveJson(entries, _projectMetadataName);
     if (metadata['format'] != _projectFormat) {
       throw const FormatException('Unsupported project archive.');
@@ -258,6 +221,11 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     if (projectId is! String || projectId.isEmpty) {
       throw const FormatException('Project archive has no valid project id.');
     }
+    if (await _one(DatabaseTables.projects, {'id': projectId}) != null) {
+      throw StateError(
+        'A project with this ID already exists; nothing was changed.',
+      );
+    }
 
     final backgroundEntry = entries.entries
         .where((entry) => _isBackground(entry.key))
@@ -265,6 +233,7 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     final backgroundPath = backgroundEntry == null
         ? null
         : await saveProjectBackground(
+            projectId: 'template-library',
             fileName: '${projectId}_${backgroundEntry.key.split('/').last}',
             bytes: backgroundEntry.value,
           );
@@ -274,16 +243,16 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
       );
     }
 
-    await _clearProjectData(projectId);
     final template = metadata['template'];
     if (template is Map && backgroundPath != null) {
       final templateRow = Map<String, Object?>.from(template)
         ..['file_path'] = backgroundPath
+        ..['id'] = 'template-import-${DateTime.now().microsecondsSinceEpoch}'
         ..['updated_at'] = DateTime.now().toUtc().toIso8601String();
-      await _database.upsert(DatabaseTables.templates, templateRow);
+      await _database.insert(DatabaseTables.templates, templateRow);
       project['template_id'] = templateRow['id'];
     }
-    await _database.upsert(DatabaseTables.projects, project);
+    await _database.insert(DatabaseTables.projects, project);
 
     final fieldPayload = _decodeArchiveJson(
       entries,
@@ -320,8 +289,12 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     if (projectId is! String) {
       throw const FormatException('Invalid project id.');
     }
-    await _clearProjectData(projectId);
-    await _database.upsert(DatabaseTables.projects, project);
+    if (await _one(DatabaseTables.projects, {'id': projectId}) != null) {
+      throw StateError(
+        'A project with this ID already exists; nothing was changed.',
+      );
+    }
+    await _database.insert(DatabaseTables.projects, project);
     for (final table in [
       DatabaseTables.records,
       DatabaseTables.certificateFields,
@@ -329,21 +302,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
       await _upsertRows(table, decoded[table], projectId);
     }
     return projectId;
-  }
-
-  Future<void> _clearProjectData(String projectId) async {
-    await _database.deleteWhere(DatabaseTables.verificationRecords, {
-      'project_id': projectId,
-    });
-    await _database.deleteWhere(DatabaseTables.certificates, {
-      'project_id': projectId,
-    });
-    for (final table in [
-      DatabaseTables.records,
-      DatabaseTables.certificateFields,
-    ]) {
-      await _database.deleteWhere(table, {'project_id': projectId});
-    }
   }
 
   Future<void> _upsertRows(
@@ -354,10 +312,12 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
     if (value is! List) return;
     for (final raw in value) {
       if (raw is! Map) continue;
-      await _database.upsert(table, {
-        ...Map<String, Object?>.from(raw),
-        'project_id': projectId,
-      });
+      final row = {...Map<String, Object?>.from(raw), 'project_id': projectId};
+      final id = row['id'];
+      if (id is String && await _one(table, {'id': id}) != null) {
+        throw StateError('A row with ID $id already exists; import stopped.');
+      }
+      await _database.insert(table, row);
     }
   }
 
@@ -429,15 +389,6 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
       throw FormatException('Invalid $name.');
     }
     return Map<String, Object?>.from(decoded);
-  }
-
-  String _backgroundName(
-    Map<String, Object?>? template,
-    Map<String, Object?> project,
-  ) {
-    final format = template?['format']?.toString().toLowerCase();
-    final extension = ['png', 'jpg', 'jpeg'].contains(format) ? format! : 'png';
-    return 'background.$extension';
   }
 
   bool _isBackground(String name) {

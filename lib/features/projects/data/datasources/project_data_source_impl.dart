@@ -1,14 +1,14 @@
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
 import '../../../../core/files/certificate_artifact_store.dart';
+import '../../../../core/files/project_workspace_storage.dart';
 import 'project_data_source.dart';
 
 class ProjectDataSourceImpl implements ProjectDataSource {
   ProjectDataSourceImpl(
     this._database, {
     CertificateArtifactStore? artifactStore,
-  }) : _artifactStore =
-           artifactStore ?? SharedPreferencesCertificateArtifactStore();
+  }) : _artifactStore = artifactStore ?? WorkspaceCertificateArtifactStore();
 
   final AppDatabase _database;
   final CertificateArtifactStore _artifactStore;
@@ -71,5 +71,6 @@ class ProjectDataSourceImpl implements ProjectDataSource {
     } finally {
       await _database.endBatch();
     }
+    await deleteProjectWorkspace(id);
   }
 }

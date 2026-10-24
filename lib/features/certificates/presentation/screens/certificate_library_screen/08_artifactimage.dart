@@ -12,7 +12,7 @@ class _ArtifactImage extends StatelessWidget {
       );
     }
     return FutureBuilder<Uint8List?>(
-      future: SharedPreferencesCertificateArtifactStore().read(reference!),
+      future: WorkspaceCertificateArtifactStore().read(reference!),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());

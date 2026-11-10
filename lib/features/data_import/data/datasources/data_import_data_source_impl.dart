@@ -1,6 +1,7 @@
 import 'dart:convert';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
+import '../../domain/entities/field_rule.dart';
 import '../../domain/entities/imported_table.dart';
 import '../../../../shared/utils/field_identifier.dart';
 import 'data_import_data_source.dart';
@@ -18,6 +19,14 @@ class DataImportDataSourceImpl implements DataImportDataSource {
       await _database.upsert(DatabaseTables.settings, {
         'key': _columnsKey(projectId),
         'value_json': jsonEncode(table.columns),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }, conflictColumn: 'key');
+      await _database.upsert(DatabaseTables.settings, {
+        'key': _fieldRulesKey(projectId),
+        'value_json': jsonEncode({
+          for (final entry in table.fieldRules.entries)
+            entry.key: entry.value.toJson(),
+        }),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, conflictColumn: 'key');
       for (var index = 0; index < table.rows.length; index++) {
@@ -78,5 +87,31 @@ class DataImportDataSourceImpl implements DataImportDataSource {
         : const [];
   }
 
+  @override
+  Future<Map<String, FieldRule>> getRecordFieldRules(String projectId) async {
+    final rows = await _database.query(
+      DatabaseTables.settings,
+      where: {'key': _fieldRulesKey(projectId)},
+      columns: ['value_json'],
+    );
+    if (rows.isEmpty) return const {};
+    final raw = rows.first['value_json'];
+    if (raw is! String || raw.isEmpty) return const {};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return const {};
+      return {
+        for (final entry in decoded.entries)
+          if (entry.value is Map)
+            entry.key.toString(): FieldRule.fromJson(
+              Map<String, Object?>.from(entry.value as Map),
+            ),
+      };
+    } on FormatException {
+      return const {};
+    }
+  }
+
   String _columnsKey(String projectId) => 'records-columns:$projectId';
+  String _fieldRulesKey(String projectId) => 'records-field-rules:$projectId';
 }

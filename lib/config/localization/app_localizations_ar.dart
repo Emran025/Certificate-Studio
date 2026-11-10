@@ -150,6 +150,23 @@ const _ar = <String, String>{
   'Detected fixed values': 'اختر إحدى القيم المكتشفة',
   'Value must be between {min} and {max}.':
       'يجب أن تكون القيمة بين {min} و {max}.',
+  'Edit field rules': 'تعديل قيود الحقول',
+  'Field rules': 'قيود الحقول',
+  'Configure the type and accepted values for every field.':
+      'اضبط نوع كل حقل والقيم المسموح بها عند إضافة سجل.',
+  'Field type': 'نوع الحقل',
+  'Free text': 'نص حر',
+  'Number': 'رقم',
+  'Choice list': 'قائمة خيارات',
+  'Minimum value': 'الحد الأدنى',
+  'Maximum value': 'الحد الأعلى',
+  'Allowed values': 'القيم المسموحة',
+  'Enter one option per line.': 'أدخل خيارًا واحدًا في كل سطر.',
+  'Text fields accept any value.': 'الحقول النصية تقبل أي قيمة.',
+  'Enter valid numeric bounds.': 'أدخل حدين رقميين صالحين.',
+  'Minimum value must be less than or equal to maximum value.':
+      'يجب ألا يزيد الحد الأدنى على الحد الأعلى.',
+  'Add at least one allowed value.': 'أدخل قيمة مسموحة واحدة على الأقل.',
   'Editable record rows': 'صفوف الطلاب القابلة للتعديل',
   'Add record row': 'إضافة صف طالب',
   'Delete record row': 'حذف صف الطالب',

@@ -80,6 +80,106 @@ void main() {
     ]);
   });
 
+  testWidgets('field rules dialog applies custom bounds and allowed values', (
+    tester,
+  ) async {
+    var table = const ImportedTable(
+      columns: ['grade', 'status'],
+      rows: [
+        {'grade': '88', 'status': 'pass'},
+        {'grade': '91', 'status': 'fail'},
+      ],
+    );
+    await pumpDesktop(tester, host((next) => table = next, table));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Edit field rules'));
+    await tester.pumpAndSettle();
+    expect(find.text('Field rules'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('field-rule-min-grade')), '70');
+    await tester.enterText(find.byKey(const Key('field-rule-max-grade')), '90');
+    await tester.enterText(
+      find.byKey(const Key('field-rule-choices-status')),
+      'pass\nmerit',
+    );
+    await tester.tap(find.text('Save').last);
+    await tester.pumpAndSettle();
+
+    expect(table.fieldRules.keys, containsAll(['grade', 'status']));
+    expect(table.fieldRules['grade']?.min, 70);
+    expect(table.fieldRules['grade']?.max, 90);
+    expect(table.fieldRules['status']?.choices, ['pass', 'merit']);
+
+    await tester.tap(actionButton('Add record row'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, '95');
+    await tester.tap(find.text('Save').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Value must be between 70 and 90.'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, '85');
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('merit').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save').last);
+    await tester.pumpAndSettle();
+
+    expect(table.rows.last, {'grade': '85', 'status': 'merit'});
+  });
+
+  testWidgets('field rules dialog saves rules for every project column', (
+    tester,
+  ) async {
+    const columns = ['id', 'grade', 'status', 'hours', 'section', 'age'];
+    var table = const ImportedTable(
+      columns: columns,
+      rows: [
+        {
+          'id': 'A001',
+          'grade': '85',
+          'status': 'pass',
+          'hours': '3',
+          'section': 'A',
+          'age': '17',
+        },
+        {
+          'id': 'A002',
+          'grade': '92',
+          'status': 'fail',
+          'hours': '4',
+          'section': 'B',
+          'age': '18',
+        },
+      ],
+    );
+    await pumpDesktop(tester, host((next) => table = next, table));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Edit field rules'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save').last);
+    await tester.pumpAndSettle();
+
+    expect(table.fieldRules.keys, containsAll(columns));
+    expect(table.fieldRules.length, columns.length);
+  });
+
+  testWidgets('field rules dialog is optional and button fits a phone screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    const table = ImportedTable(columns: ['name'], rows: []);
+    await tester.pumpWidget(host((_) {}, table));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit field rules'), findsOneWidget);
+    expect(find.text('Field rules'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Delete field removes it from columns and every row', (
     tester,
   ) async {
@@ -154,5 +254,10 @@ void main() {
       tester.widget<IconButton>(iconButton('Add record row')).onPressed,
       isNull,
     );
+    final rulesButton = find.ancestor(
+      of: find.text('Edit field rules'),
+      matching: find.byType(TextButton),
+    );
+    expect(tester.widget<TextButton>(rulesButton).onPressed, isNull);
   });
 }

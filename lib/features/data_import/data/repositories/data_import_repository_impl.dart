@@ -73,8 +73,14 @@ class DataImportRepositoryImpl implements DataImportRepository {
   @override
   Future<ImportedTable> getForProject(String projectId) async {
     final rows = await _dataSource.getRecordRows(projectId);
+    final fieldRules = await _dataSource.getRecordFieldRules(projectId);
     final maps = <Map<String, String>>[];
-    final columns = await _dataSource.getRecordColumns(projectId);
+    // Existing projects may have row data without a saved column list. In
+    // that case the data source can return an unmodifiable empty list, while
+    // this loader needs to derive columns from the stored rows below.
+    final columns = List<String>.of(
+      await _dataSource.getRecordColumns(projectId),
+    );
     for (final row in rows) {
       final storedColumns = row['columns_json'];
       if (storedColumns is String && storedColumns.isNotEmpty) {
@@ -105,6 +111,7 @@ class DataImportRepositoryImpl implements DataImportRepository {
     }
     return ImportedTable(
       columns: columns,
+      fieldRules: fieldRules,
       rows: [
         for (final row in maps)
           {for (final column in columns) column: row[column] ?? ''},

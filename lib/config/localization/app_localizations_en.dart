@@ -151,6 +151,23 @@ const _en = <String, String>{
   'Detected fixed values': 'Choose one of the detected values',
   'Value must be between {min} and {max}.':
       'Value must be between {min} and {max}.',
+  'Edit field rules': 'Edit field rules',
+  'Field rules': 'Field rules',
+  'Configure the type and accepted values for every field.':
+      'Configure the type and accepted values for every field.',
+  'Field type': 'Field type',
+  'Free text': 'Free text',
+  'Number': 'Number',
+  'Choice list': 'Choice list',
+  'Minimum value': 'Minimum value',
+  'Maximum value': 'Maximum value',
+  'Allowed values': 'Allowed values',
+  'Enter one option per line.': 'Enter one option per line.',
+  'Text fields accept any value.': 'Text fields accept any value.',
+  'Enter valid numeric bounds.': 'Enter valid numeric bounds.',
+  'Minimum value must be less than or equal to maximum value.':
+      'Minimum value must be less than or equal to maximum value.',
+  'Add at least one allowed value.': 'Add at least one allowed value.',
   'Editable record rows': 'Editable record rows',
   'Add record row': 'Add record row',
   'Delete record row': 'Delete record row',

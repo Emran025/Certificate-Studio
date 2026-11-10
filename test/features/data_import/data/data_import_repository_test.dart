@@ -4,6 +4,7 @@ import 'package:certificate_studio/features/data_import/data/repositories/data_i
 import 'package:flutter_test/flutter_test.dart';
 import 'package:certificate_studio/features/data_import/data/datasources/data_import_data_source_impl.dart';
 import 'package:certificate_studio/features/data_import/domain/entities/imported_table.dart';
+import 'package:certificate_studio/features/data_import/domain/entities/field_rule.dart';
 
 void main() {
   test('parses pasted tab-separated data and normalizes duplicate headers', () {
@@ -34,6 +35,37 @@ void main() {
     expect(restored.rows, [
       {'class': 'A001', 'name': 'Ahmed Ali', 'grade': '95'},
     ]);
+  });
+
+  test('persists and reloads field rules for a project', () async {
+    final database = InMemoryAppDatabase();
+    await database.open();
+    final repository = DataImportRepositoryImpl(
+      DataImportDataSourceImpl(database),
+    );
+    final table = ImportedTable(
+      columns: ['grade', 'status'],
+      rows: [
+        {'grade': '85', 'status': 'pass'},
+      ],
+      fieldRules: {
+        'grade': const FieldRule(kind: FieldRuleKind.number, min: 70, max: 95),
+        'status': const FieldRule(
+          kind: FieldRuleKind.choice,
+          choices: ['pass', 'fail'],
+        ),
+      },
+    );
+
+    await repository.saveForProject('project-1', table);
+    final restored = await repository.getForProject('project-1');
+
+    expect(restored.fieldRules.keys, containsAll(['grade', 'status']));
+    expect(restored.fieldRules['grade']?.kind, FieldRuleKind.number);
+    expect(restored.fieldRules['grade']?.min, 70);
+    expect(restored.fieldRules['grade']?.max, 95);
+    expect(restored.fieldRules['status']?.kind, FieldRuleKind.choice);
+    expect(restored.fieldRules['status']?.choices, ['pass', 'fail']);
   });
 
   test(

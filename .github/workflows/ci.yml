@@ -42,7 +42,7 @@ jobs:
           fi
           while IFS= read -r path; do
             changed+=("$path")
-          done < <("${diff_command[@]}" 'lib/**/*.dart' 'test/**/*.dart')
+          done < <("${diff_command[@]}" 'lib/**/*.dart' 'test/**/*.dart' 'tool/**/*.dart')
           if [ "${#changed[@]}" -gt 0 ]; then
             dart format --output=none --set-exit-if-changed "${changed[@]}"
           else
@@ -76,3 +76,102 @@ jobs:
         with:
           name: certificate-studio-linux
           path: build/linux/x64/release/bundle
+
+  windows-generation-smoke:
+    name: Build and test Windows Release installer
+    needs: editor
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.5
+          cache: true
+      - name: Resolve Flutter dependencies
+        run: flutter pub get
+      - name: Build release-mode generation smoke app
+        run: flutter build windows --release --target=tool/windows_generation_release_smoke.dart --dart-define=use_arabic=true
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+      - name: Package smoke app with the release installer script
+        shell: pwsh
+        run: |
+          & scripts/windows/package-installer.ps1 -AppVersion 'release-smoke' -OutputBaseFilename 'certificate-studio-windows-release-smoke-setup'
+      - name: Install, generate, uninstall, and verify retained user data
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $appData = Join-Path $env:APPDATA 'com.example\certificate_studio'
+          New-Item -ItemType Directory -Path $appData -Force | Out-Null
+          $databaseSentinel = Join-Path $appData 'certificate_studio.sqlcipher.db'
+          $keySentinel = Join-Path $appData 'flutter_secure_storage.dat'
+          $preferencesFile = Join-Path $appData 'shared_preferences.json'
+          Set-Content -Path $databaseSentinel -Value 'preserve-database' -NoNewline
+          Set-Content -Path $keySentinel -Value 'preserve-key' -NoNewline
+
+          $setup = Join-Path $env:GITHUB_WORKSPACE 'certificate-studio-windows-release-smoke-setup.exe'
+          $installDir = Join-Path $env:ProgramFiles 'Certificate Studio'
+          $app = Join-Path $installDir 'certificate_studio.exe'
+          $uninstaller = Join-Path $installDir 'unins000.exe'
+
+          function Install-SmokeApp {
+            if (-not (Test-Path $setup)) { throw "Setup file was not found: $setup" }
+            $process = Start-Process -FilePath $setup -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -PassThru -Wait
+            if ($process.ExitCode -ne 0) { throw "Setup install failed: $($process.ExitCode)" }
+            if (-not (Test-Path $app)) { throw 'Installed app executable was not found.' }
+          }
+
+          function Assert-UserDataPreserved {
+            param([switch] $ExpectArtifacts, [string] $ExpectedPreferencesHash)
+            foreach ($path in @($databaseSentinel, $keySentinel)) {
+              if (-not (Test-Path $path)) { throw "User data was removed: $path" }
+            }
+            if ($ExpectArtifacts -and -not (Test-Path $preferencesFile)) {
+              throw "Generated certificate artifacts were removed: $preferencesFile"
+            }
+            if ($ExpectedPreferencesHash) {
+              $actualHash = (Get-FileHash -Path $preferencesFile -Algorithm SHA256).Hash
+              if ($actualHash -ne $ExpectedPreferencesHash) {
+                throw 'The installer changed generated certificate artifacts in AppData.'
+              }
+            }
+          }
+
+          function Run-GenerationSmoke([int] $iteration) {
+            $report = Join-Path $env:RUNNER_TEMP "certificate-generation-smoke-$iteration.json"
+            Remove-Item $report -Force -ErrorAction SilentlyContinue
+            $env:CERTIFICATE_STUDIO_SMOKE_REPORT = $report
+            $process = Start-Process -FilePath $app -PassThru -Wait
+            if (-not (Test-Path $report)) {
+              throw "Smoke app did not write its report (exit $($process.ExitCode))."
+            }
+            $json = Get-Content -Path $report -Raw
+            Write-Host $json
+            $result = $json | ConvertFrom-Json
+            if ($process.ExitCode -ne 0 -or -not $result.passed) {
+              throw "Certificate generation failed in release mode: $json"
+            }
+            if (-not $result.releaseMode) { throw 'The smoke executable was not built in Release mode.' }
+            if ($result.expected -ne 9 -or $result.generated -ne 9 -or $result.failed -ne 0) {
+              throw "Expected nine successful certificates: $json"
+            }
+          }
+
+          Install-SmokeApp
+          Assert-UserDataPreserved
+          Run-GenerationSmoke 1
+          Assert-UserDataPreserved -ExpectArtifacts
+          $firstPreferencesHash = (Get-FileHash -Path $preferencesFile -Algorithm SHA256).Hash
+          $firstUninstall = Start-Process -FilePath $uninstaller -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -PassThru -Wait
+          if ($firstUninstall.ExitCode -ne 0) { throw "Uninstall failed: $($firstUninstall.ExitCode)" }
+          Assert-UserDataPreserved -ExpectArtifacts -ExpectedPreferencesHash $firstPreferencesHash
+
+          Install-SmokeApp
+          Assert-UserDataPreserved -ExpectArtifacts -ExpectedPreferencesHash $firstPreferencesHash
+          Run-GenerationSmoke 2
+          Assert-UserDataPreserved -ExpectArtifacts
+          $secondPreferencesHash = (Get-FileHash -Path $preferencesFile -Algorithm SHA256).Hash
+          $secondUninstall = Start-Process -FilePath $uninstaller -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -PassThru -Wait
+          if ($secondUninstall.ExitCode -ne 0) { throw "Second uninstall failed: $($secondUninstall.ExitCode)" }
+          Assert-UserDataPreserved -ExpectArtifacts -ExpectedPreferencesHash $secondPreferencesHash

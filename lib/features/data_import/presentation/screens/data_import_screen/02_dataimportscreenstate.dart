@@ -71,9 +71,6 @@ class _DataImportScreenState extends State<DataImportScreen> {
     builder: (context, state) {
       final table = state.table;
       final saving = state.isSaving;
-      final previewHeight = MediaQuery.sizeOf(
-        context,
-      ).height.clamp(360.0, 560.0).toDouble();
       return Scaffold(
         body: state.status == DataImportStatus.loading
             ? const Center(child: CircularProgressIndicator())
@@ -120,13 +117,10 @@ class _DataImportScreenState extends State<DataImportScreen> {
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: AppSpacing.md),
-                        SizedBox(
-                          height: previewHeight,
-                          child: DataPreview(
-                            table: table,
-                            disabled: saving,
-                            onChanged: _updateTable,
-                          ),
+                        DataPreview(
+                          table: table,
+                          disabled: saving,
+                          onChanged: _updateTable,
                         ),
                         const SizedBox(height: AppSpacing.xl),
                       ] else

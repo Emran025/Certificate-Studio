@@ -213,6 +213,7 @@ class DataPreview extends StatelessWidget {
     child: ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
@@ -249,13 +250,19 @@ class DataPreview extends StatelessWidget {
               },
             ),
           ),
-          Expanded(
+          Flexible(
+            fit: FlexFit.loose,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final compact = constraints.maxWidth < AppBreakpoints.tablet;
+                final boundedHeight = constraints.hasBoundedHeight;
                 if (compact) {
                   return ListView.separated(
                     padding: const EdgeInsets.all(AppSpacing.sm),
+                    shrinkWrap: !boundedHeight,
+                    physics: boundedHeight
+                        ? null
+                        : const NeverScrollableScrollPhysics(),
                     itemCount: table.rows.take(50).length,
                     separatorBuilder: (_, _) =>
                         const SizedBox(height: AppSpacing.sm),
@@ -282,6 +289,9 @@ class DataPreview extends StatelessWidget {
                     width: tableWidth,
                     child: SingleChildScrollView(
                       scrollDirection: Axis.vertical,
+                      physics: boundedHeight
+                          ? null
+                          : const NeverScrollableScrollPhysics(),
                       child: DataTable(
                         horizontalMargin: AppSpacing.md,
                         columnSpacing: AppSpacing.md,

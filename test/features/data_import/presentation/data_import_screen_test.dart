@@ -67,6 +67,7 @@ void main() {
 
     await _openImportScreen(tester, database);
 
+    expect(tester.takeException(), isNull);
     expect(
       find.text('Unsupported operation: Cannot add to an unmodifiable list'),
       findsNothing,

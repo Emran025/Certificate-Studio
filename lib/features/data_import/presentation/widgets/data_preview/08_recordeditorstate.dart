@@ -123,9 +123,14 @@ class _RecordEditorState extends State<_RecordEditor> {
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: TextField(
         controller: _controllers[column],
-        keyboardType: profile.kind == _FieldKind.number
-            ? const TextInputType.numberWithOptions(decimal: true)
-            : null,
+        keyboardType: switch (profile.kind) {
+          _FieldKind.number => const TextInputType.numberWithOptions(
+            decimal: true,
+          ),
+          _FieldKind.phone => TextInputType.phone,
+          _FieldKind.link => TextInputType.url,
+          _ => TextInputType.text,
+        },
         decoration: InputDecoration(labelText: column, helperText: hint),
       ),
     );

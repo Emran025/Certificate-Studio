@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import '../../domain/entities/imported_table.dart';
+import '../../domain/entities/field_rule.dart';
 
 sealed class DataImportEvent {
   const DataImportEvent();
@@ -25,6 +26,13 @@ final class TableUpdatedRequested extends DataImportEvent {
   const TableUpdatedRequested(this.table);
 
   final ImportedTable table;
+}
+
+final class ExternalLinkRequested extends DataImportEvent {
+  const ExternalLinkRequested({required this.kind, required this.value});
+
+  final FieldRuleKind kind;
+  final String value;
 }
 
 final class DataImportErrorReported extends DataImportEvent {

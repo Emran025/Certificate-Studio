@@ -6,11 +6,13 @@ class DataPreview extends StatelessWidget {
     required this.table,
     required this.disabled,
     required this.onChanged,
+    this.onOpenExternal,
   });
 
   final ImportedTable table;
   final bool disabled;
   final ValueChanged<ImportedTable> onChanged;
+  final void Function(FieldRuleKind kind, String value)? onOpenExternal;
 
   Map<String, _FieldProfile> get _profiles => {
     for (var index = 0; index < table.columns.length; index++)
@@ -32,10 +34,22 @@ class DataPreview extends StatelessWidget {
         kind: _FieldKind.choice,
         choices: rule.choices,
       ),
+      FieldRuleKind.phone => const _FieldProfile(kind: _FieldKind.phone),
+      FieldRuleKind.link => const _FieldProfile(kind: _FieldKind.link),
     };
   }
 
   _FieldProfile _profileFor(String column, int columnIndex) {
+    final normalized = column.trim().toLowerCase().replaceAll(
+      RegExp(r'[\s_\-]+'),
+      '',
+    );
+    if (_isPhoneColumn(normalized)) {
+      return const _FieldProfile(kind: _FieldKind.phone);
+    }
+    if (_isLinkColumn(normalized)) {
+      return const _FieldProfile(kind: _FieldKind.link);
+    }
     if (columnIndex == 0 && _isIdentifierColumn(column)) {
       return const _FieldProfile(kind: _FieldKind.text);
     }
@@ -70,6 +84,32 @@ class DataPreview extends StatelessWidget {
     }
     return const _FieldProfile(kind: _FieldKind.text);
   }
+
+  bool _isPhoneColumn(String normalized) =>
+      normalized.contains('phone') ||
+      normalized.contains('mobile') ||
+      normalized.contains('cellphone') ||
+      normalized.contains('telephone') ||
+      normalized.contains('whatsapp') ||
+      normalized == 'tel' ||
+      normalized.contains('هاتف') ||
+      normalized.contains('جوال') ||
+      normalized.contains('موبايل') ||
+      normalized.contains('واتساب') ||
+      normalized.contains('تلفون');
+
+  bool _isLinkColumn(String normalized) =>
+      normalized.contains('link') ||
+      normalized == 'url' ||
+      normalized.endsWith('url') ||
+      normalized.contains('website') ||
+      normalized == 'web' ||
+      normalized.contains('webpage') ||
+      normalized == 'site' ||
+      normalized.contains('homepage') ||
+      normalized.contains('رابط') ||
+      normalized.contains('وصلة') ||
+      normalized.contains('موقع');
 
   bool _isIdentifierColumn(String column) {
     final normalized = column.trim().toLowerCase().replaceAll(
@@ -182,6 +222,10 @@ class DataPreview extends StatelessWidget {
                   (entry.key == oldName ? name : entry.key): entry.value,
               },
           ],
+          fieldRules: {
+            for (final entry in table.fieldRules.entries)
+              (entry.key == oldName ? name : entry.key): entry.value,
+          },
         ),
       );
     }
@@ -205,6 +249,20 @@ class DataPreview extends StatelessWidget {
         },
       ),
     );
+  }
+
+  void _openExternal(String column, String value, {VoidCallback? fallback}) {
+    final kind = _profiles[column]?.kind;
+    final fieldKind = switch (kind) {
+      _FieldKind.phone => FieldRuleKind.phone,
+      _FieldKind.link => FieldRuleKind.link,
+      _ => null,
+    };
+    if (fieldKind == null || value.trim().isEmpty || onOpenExternal == null) {
+      fallback?.call();
+      return;
+    }
+    onOpenExternal!.call(fieldKind, value);
   }
 
   @override
@@ -276,6 +334,11 @@ class DataPreview extends StatelessWidget {
                       onEditColumn: (column) => _editColumn(context, column),
                       onDeleteColumn: (column) =>
                           _deleteColumn(context, column),
+                      onOpenExternal: (column) => _openExternal(
+                        column,
+                        table.rows[index][column] ?? '',
+                        fallback: () => _editRow(context, index),
+                      ),
                     ),
                   );
                 }
@@ -348,18 +411,37 @@ class DataPreview extends StatelessWidget {
                                     Text(table.rows[index][column] ?? ''),
                                     onTap: disabled
                                         ? null
-                                        : () => _editRow(context, index),
+                                        : () => _openExternal(
+                                            column,
+                                            table.rows[index][column] ?? '',
+                                            fallback: () =>
+                                                _editRow(context, index),
+                                          ),
                                   ),
                                 DataCell(
-                                  IconButton(
-                                    tooltip: context.l10n.text(
-                                      'Delete record row',
-                                    ),
-                                    onPressed: disabled
-                                        ? null
-                                        : () => _deleteRow(index),
-                                    icon: const Icon(Icons.delete_outline),
-                                    visualDensity: VisualDensity.compact,
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        tooltip: context.l10n.text(
+                                          'Edit record',
+                                        ),
+                                        onPressed: disabled
+                                            ? null
+                                            : () => _editRow(context, index),
+                                        icon: const Icon(Icons.edit_outlined),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                      IconButton(
+                                        tooltip: context.l10n.text(
+                                          'Delete record row',
+                                        ),
+                                        onPressed: disabled
+                                            ? null
+                                            : () => _deleteRow(index),
+                                        icon: const Icon(Icons.delete_outline),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],

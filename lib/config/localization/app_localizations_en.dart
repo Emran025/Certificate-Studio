@@ -77,6 +77,22 @@ const _en = <String, String>{
   'View': 'View',
   'Export PNG': 'Export PNG',
   'Export PDF': 'Export PDF',
+  'Share PDF': 'Share PDF',
+  'Share using another app': 'Share using another app',
+  'WhatsApp': 'WhatsApp',
+  'WhatsApp Business': 'WhatsApp Business',
+  'WhatsApp recipient routing is best-effort; verify the chat and PDF before sending.':
+      'WhatsApp recipient routing is best-effort; verify the chat and PDF before sending.',
+  'WhatsApp share requested. Recipient routing is best-effort; verify the chat and PDF before sending.':
+      'WhatsApp share requested. Recipient routing is best-effort; verify the chat and PDF before sending.',
+  'A valid international phone number is required.':
+      'A valid international phone number is required.',
+  'Sharing was cancelled.': 'Sharing was cancelled.',
+  'This PDF is unavailable.': 'This PDF is unavailable.',
+  'WhatsApp is not installed.': 'WhatsApp is not installed.',
+  'The PDF could not be shared.': 'The PDF could not be shared.',
+  'Direct WhatsApp sharing is available on Android only.':
+      'Direct WhatsApp sharing is available on Android only.',
   'Export PNG ZIP': 'Export PNG ZIP',
   'Export PDF ZIP': 'Export PDF ZIP',
   'No certificates match your search.': 'No certificates match your search.',
@@ -159,6 +175,14 @@ const _en = <String, String>{
   'Free text': 'Free text',
   'Number': 'Number',
   'Choice list': 'Choice list',
+  'Phone number': 'Phone number',
+  'Link': 'Link',
+  'Phone numbers open in the phone app.':
+      'Phone numbers open in the phone app.',
+  'Links open in the browser.': 'Links open in the browser.',
+  'This value cannot be opened.': 'This value cannot be opened.',
+  'No app could open this value.': 'No app could open this value.',
+  'Could not open this value.': 'Could not open this value.',
   'Minimum value': 'Minimum value',
   'Maximum value': 'Maximum value',
   'Allowed values': 'Allowed values',

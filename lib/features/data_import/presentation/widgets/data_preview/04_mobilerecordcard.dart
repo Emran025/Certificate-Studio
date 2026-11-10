@@ -10,6 +10,7 @@ class _MobileRecordCard extends StatelessWidget {
     required this.onDelete,
     required this.onEditColumn,
     required this.onDeleteColumn,
+    required this.onOpenExternal,
   });
 
   final Map<String, String> row;
@@ -20,6 +21,7 @@ class _MobileRecordCard extends StatelessWidget {
   final VoidCallback onDelete;
   final ValueChanged<String> onEditColumn;
   final ValueChanged<String> onDeleteColumn;
+  final ValueChanged<String> onOpenExternal;
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +78,7 @@ class _MobileRecordCard extends StatelessWidget {
                     disabled: disabled,
                     onEdit: () => onEditColumn(columns[index]),
                     onDelete: () => onDeleteColumn(columns[index]),
+                    onOpenExternal: () => onOpenExternal(columns[index]),
                   ),
                   if (index < columns.length - 1) const Divider(height: 1),
                 ],

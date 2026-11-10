@@ -7,6 +7,7 @@ class _CertificateCard extends StatelessWidget {
     required this.onSelected,
     required this.onOpen,
     required this.onVerify,
+    required this.onShare,
     required this.onExport,
   });
   final _LibraryCertificate certificate;
@@ -14,6 +15,7 @@ class _CertificateCard extends StatelessWidget {
   final ValueChanged<bool> onSelected;
   final VoidCallback onOpen;
   final VoidCallback onVerify;
+  final VoidCallback onShare;
   final ValueChanged<String> onExport;
   @override
   Widget build(BuildContext context) => Card(
@@ -87,6 +89,13 @@ class _CertificateCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.xs),
+                  if (certificate.pdfReference != null)
+                    IconButton(
+                      tooltip: context.l10n.text('Share PDF'),
+                      onPressed: onShare,
+                      icon: const Icon(Icons.share_outlined),
+                    ),
+                  const SizedBox(width: AppSpacing.xxs),
                   IconButton(
                     tooltip: context.l10n.text('Verify'),
                     onPressed: onVerify,

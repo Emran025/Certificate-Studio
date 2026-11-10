@@ -76,6 +76,22 @@ const _ar = <String, String>{
   'View': 'عرض',
   'Export PNG': 'تصدير PNG',
   'Export PDF': 'تصدير PDF',
+  'Share PDF': 'مشاركة PDF',
+  'Share using another app': 'المشاركة باستخدام تطبيق آخر',
+  'WhatsApp': 'واتساب',
+  'WhatsApp Business': 'واتساب للأعمال',
+  'WhatsApp recipient routing is best-effort; verify the chat and PDF before sending.':
+      'توجيه المستلم في واتساب غير مضمون؛ تحقق من المحادثة وملف PDF قبل الإرسال.',
+  'WhatsApp share requested. Recipient routing is best-effort; verify the chat and PDF before sending.':
+      'تم طلب المشاركة عبر واتساب. توجيه المستلم غير مضمون؛ تحقق من المحادثة وملف PDF قبل الإرسال.',
+  'A valid international phone number is required.':
+      'يلزم رقم هاتف دولي صالح للمشاركة المباشرة.',
+  'Sharing was cancelled.': 'أُلغيت المشاركة.',
+  'This PDF is unavailable.': 'ملف PDF هذا غير متاح.',
+  'WhatsApp is not installed.': 'تطبيق واتساب غير مثبت على هذا الجهاز.',
+  'The PDF could not be shared.': 'تعذرت مشاركة ملف PDF.',
+  'Direct WhatsApp sharing is available on Android only.':
+      'المشاركة المباشرة إلى واتساب متاحة على Android فقط.',
   'Export PNG ZIP': 'تصدير PNG ZIP',
   'Export PDF ZIP': 'تصدير PDF ZIP',
   'No certificates match your search.': 'لا توجد شهادات تطابق بحثك.',
@@ -158,6 +174,14 @@ const _ar = <String, String>{
   'Free text': 'نص حر',
   'Number': 'رقم',
   'Choice list': 'قائمة خيارات',
+  'Phone number': 'رقم هاتف',
+  'Link': 'رابط',
+  'Phone numbers open in the phone app.': 'تفتح أرقام الهاتف في تطبيق الاتصال.',
+  'Links open in the browser.': 'تفتح الروابط في المتصفح.',
+  'This value cannot be opened.':
+      'تعذر فتح هذه القيمة؛ تحقق من الرقم أو الرابط.',
+  'No app could open this value.': 'لا يوجد تطبيق متاح لفتح هذه القيمة.',
+  'Could not open this value.': 'تعذر فتح الرقم أو الرابط.',
   'Minimum value': 'الحد الأدنى',
   'Maximum value': 'الحد الأعلى',
   'Allowed values': 'القيم المسموحة',

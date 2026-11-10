@@ -10,6 +10,7 @@ import '../../domain/entities/imported_table.dart';
 import '../../domain/usecases/import_excel.dart';
 import '../../domain/usecases/paste_table.dart';
 import '../../domain/usecases/update_imported_table.dart';
+import '../../domain/usecases/open_external_link.dart';
 
 class DataImportBloc extends Bloc<DataImportEvent, DataImportState> {
   DataImportBloc({
@@ -18,16 +19,19 @@ class DataImportBloc extends Bloc<DataImportEvent, DataImportState> {
     required ImportExcel importExcel,
     required Future<ImportedTable> Function() loadTable,
     required UpdateImportedTable updateImportedTable,
+    OpenExternalLink? openExternalLink,
   }) : _projectId = projectId,
        _pasteTable = pasteTable,
        _importExcel = importExcel,
        _loadTable = loadTable,
        _updateImportedTable = updateImportedTable,
+       _openExternalLink = openExternalLink,
        super(const DataImportState()) {
     on<DataImportRequested>(_onLoad);
     on<PasteTableRequested>(_onPaste);
     on<ExcelImportRequested>(_onExcel);
     on<TableUpdatedRequested>(_onTableUpdated);
+    on<ExternalLinkRequested>(_onExternalLinkRequested);
     on<DataImportErrorReported>(
       (event, emit) => emit(
         DataImportState(
@@ -43,6 +47,28 @@ class DataImportBloc extends Bloc<DataImportEvent, DataImportState> {
   final ImportExcel _importExcel;
   final Future<ImportedTable> Function() _loadTable;
   final UpdateImportedTable _updateImportedTable;
+  final OpenExternalLink? _openExternalLink;
+
+  Future<void> _onExternalLinkRequested(
+    ExternalLinkRequested event,
+    Emitter<DataImportState> emit,
+  ) async {
+    final openExternalLink = _openExternalLink;
+    if (openExternalLink == null) return;
+    final result = await openExternalLink(kind: event.kind, value: event.value);
+    result.fold<void>(
+      success: (_) => emit(
+        DataImportState(status: DataImportStatus.loaded, table: state.table),
+      ),
+      failure: (message) => emit(
+        DataImportState(
+          status: DataImportStatus.loaded,
+          table: state.table,
+          errorMessage: message,
+        ),
+      ),
+    );
+  }
 
   Future<void> _onLoad(
     DataImportRequested event,

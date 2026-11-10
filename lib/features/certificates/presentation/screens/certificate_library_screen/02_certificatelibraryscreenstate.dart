@@ -2,6 +2,7 @@ part of '../certificate_library_screen.dart';
 
 class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
   late final CertificateLibraryBloc _certificatesBloc;
+  late final CertificateSharingBloc _sharingBloc;
   late final CertificateExportServiceContract _exporter;
   String _query = '';
   final Set<String> _selected = {};
@@ -10,17 +11,30 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
   void initState() {
     super.initState();
     _exporter = CertificateExportService(database: widget.database);
+    final dataImportRepository = DataImportRepositoryImpl(
+      DataImportDataSourceImpl(widget.database),
+    );
     _certificatesBloc = CertificateLibraryBloc(
       GetCertificates(
         CertificateRepositoryImpl(CertificateDataSourceImpl(widget.database)),
       ),
       widget.projectId,
+      getImportedTable: GetImportedTable(dataImportRepository),
     )..add(const CertificatesRequested());
+    _sharingBloc = CertificateSharingBloc(
+      ShareCertificatePdf(
+        CertificateSharingRepositoryImpl(
+          artifactStore: SharedPreferencesCertificateArtifactStore(),
+          dataSource: CertificateShareDataSourceImpl(),
+        ),
+      ),
+    );
   }
 
   @override
   void dispose() {
     _certificatesBloc.close();
+    _sharingBloc.close();
     super.dispose();
   }
 
@@ -367,8 +381,154 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
       .replaceAll(RegExp(r'_+'), '_')
       .replaceAll(RegExp(r'^_+|_+$'), '');
 
+  Future<void> _sharePdf(
+    _LibraryCertificate certificate,
+    List<String> phoneFields,
+  ) async {
+    final reference = certificate.pdfReference;
+    if (reference == null || reference.isEmpty) return;
+    final phoneNumber = const NormalizePhoneNumber().call(
+      _phoneNumberFor(certificate, phoneFields),
+    );
+    final target = await showModalBottomSheet<ShareTarget>(
+      context: context,
+      useSafeArea: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Text(
+                  sheetContext.l10n.text('Share PDF'),
+                  style: Theme.of(sheetContext).textTheme.titleMedium,
+                ),
+              ),
+              if (!kIsWeb &&
+                  defaultTargetPlatform == TargetPlatform.android &&
+                  phoneNumber != null) ...[
+                ListTile(
+                  leading: const Icon(Icons.chat_outlined),
+                  title: Text(sheetContext.l10n.text('WhatsApp')),
+                  subtitle: Text(
+                    sheetContext.l10n.text(
+                      'WhatsApp recipient routing is best-effort; verify the chat and PDF before sending.',
+                    ),
+                  ),
+                  onTap: () =>
+                      Navigator.pop(sheetContext, ShareTarget.whatsApp),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.business_outlined),
+                  title: Text(sheetContext.l10n.text('WhatsApp Business')),
+                  subtitle: Text(
+                    sheetContext.l10n.text(
+                      'WhatsApp recipient routing is best-effort; verify the chat and PDF before sending.',
+                    ),
+                  ),
+                  onTap: () =>
+                      Navigator.pop(sheetContext, ShareTarget.whatsAppBusiness),
+                ),
+              ],
+              ListTile(
+                leading: const Icon(Icons.share_outlined),
+                title: Text(sheetContext.l10n.text('Share using another app')),
+                onTap: () => Navigator.pop(sheetContext, ShareTarget.system),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted || target == null) return;
+    _sharingBloc.add(
+      CertificatePdfShareRequested(
+        pdfReference: reference,
+        fileName: _fileName(certificate),
+        target: target,
+        phoneNumber: phoneNumber,
+      ),
+    );
+  }
+
+  String? _phoneNumberFor(
+    _LibraryCertificate certificate,
+    List<String> configuredPhoneFields,
+  ) {
+    final candidates =
+        <String>{
+          ...configuredPhoneFields,
+          ...certificate.data.keys.where(_looksLikePhoneField),
+        }.toList()..sort(
+          (first, second) =>
+              _phoneFieldPriority(first).compareTo(_phoneFieldPriority(second)),
+        );
+    for (final field in candidates) {
+      final value = certificate.valueFor(field)?.trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return null;
+  }
+
+  bool _looksLikePhoneField(String name) {
+    final normalized = name.trim().toLowerCase().replaceAll(
+      RegExp(r'[\s_\-]+'),
+      '',
+    );
+    return normalized.contains('phone') ||
+        normalized.contains('mobile') ||
+        normalized.contains('telephone') ||
+        normalized == 'tel' ||
+        normalized.contains('whatsapp') ||
+        normalized.contains('هاتف') ||
+        normalized.contains('جوال') ||
+        normalized.contains('موبايل') ||
+        normalized.contains('تلفون') ||
+        normalized.contains('واتساب');
+  }
+
+  int _phoneFieldPriority(String name) {
+    final normalized = name.toLowerCase();
+    if (normalized.contains('whatsapp') || normalized.contains('واتساب')) {
+      return 0;
+    }
+    if (normalized.contains('mobile') ||
+        normalized.contains('cell') ||
+        normalized.contains('جوال') ||
+        normalized.contains('موبايل')) {
+      return 1;
+    }
+    return 2;
+  }
+
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) =>
+      BlocListener<CertificateSharingBloc, CertificateSharingState>(
+        bloc: _sharingBloc,
+        listener: (context, state) {
+          if (state.status == CertificateSharingStatus.idle ||
+              state.status == CertificateSharingStatus.sharing ||
+              (state.status == CertificateSharingStatus.success &&
+                  state.message == null)) {
+            return;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                context.l10n.text(
+                  state.message ?? 'The PDF could not be shared.',
+                ),
+              ),
+            ),
+          );
+          _sharingBloc.add(const ShareFeedbackCleared());
+        },
+        child: _buildLibrary(context),
+      );
+
+  Widget _buildLibrary(BuildContext context) => Scaffold(
     body: BlocBuilder<CertificateLibraryBloc, CertificateLibraryState>(
       bloc: _certificatesBloc,
       builder: (context, state) {
@@ -519,6 +679,10 @@ class _CertificateLibraryScreenState extends State<CertificateLibraryScreen> {
                               ),
                             ),
                             onVerify: () => _verify(certificates[index]),
+                            onShare: () => _sharePdf(
+                              certificates[index],
+                              state.phoneFields,
+                            ),
                             onExport: (extension) =>
                                 _exportSingle(certificates[index], extension),
                           ),

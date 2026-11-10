@@ -28,6 +28,7 @@ const _ar = <String, String>{
       'امسح رمز QR بجهازك والصق بيانات cstudio:// هنا.',
   'QR payload': 'بيانات QR',
   'Verify QR payload': 'التحقق من بيانات QR',
+  'Back': 'رجوع',
   'Certificate ID': 'معرّف الشهادة',
   'Additional lookup method for certificates already available in this offline workspace.':
       'طريقة بحث إضافية للشهادات المتاحة في مساحة العمل غير المتصلة.',

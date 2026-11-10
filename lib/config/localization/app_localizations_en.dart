@@ -28,6 +28,7 @@ const _en = <String, String>{
       'Scan the QR code with your device and paste its cstudio:// payload here.',
   'QR payload': 'QR payload',
   'Verify QR payload': 'Verify QR payload',
+  'Back': 'Back',
   'Certificate ID': 'Certificate ID',
   'Additional lookup method for certificates already available in this offline workspace.':
       'Additional lookup method for certificates already available in this offline workspace.',

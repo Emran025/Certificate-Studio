@@ -116,8 +116,9 @@ jobs:
           $uninstaller = Join-Path $installDir 'unins000.exe'
 
           function Install-SmokeApp {
-            & $setup /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
-            if ($LASTEXITCODE -ne 0) { throw "Setup install failed: $LASTEXITCODE" }
+            if (-not (Test-Path $setup)) { throw "Setup file was not found: $setup" }
+            $process = Start-Process -FilePath $setup -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -PassThru -Wait
+            if ($process.ExitCode -ne 0) { throw "Setup install failed: $($process.ExitCode)" }
             if (-not (Test-Path $app)) { throw 'Installed app executable was not found.' }
           }
 
@@ -162,8 +163,8 @@ jobs:
           Run-GenerationSmoke 1
           Assert-UserDataPreserved -ExpectArtifacts
           $firstPreferencesHash = (Get-FileHash -Path $preferencesFile -Algorithm SHA256).Hash
-          & $uninstaller /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
-          if ($LASTEXITCODE -ne 0) { throw "Uninstall failed: $LASTEXITCODE" }
+          $firstUninstall = Start-Process -FilePath $uninstaller -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -PassThru -Wait
+          if ($firstUninstall.ExitCode -ne 0) { throw "Uninstall failed: $($firstUninstall.ExitCode)" }
           Assert-UserDataPreserved -ExpectArtifacts -ExpectedPreferencesHash $firstPreferencesHash
 
           Install-SmokeApp
@@ -171,6 +172,6 @@ jobs:
           Run-GenerationSmoke 2
           Assert-UserDataPreserved -ExpectArtifacts
           $secondPreferencesHash = (Get-FileHash -Path $preferencesFile -Algorithm SHA256).Hash
-          & $uninstaller /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
-          if ($LASTEXITCODE -ne 0) { throw "Second uninstall failed: $LASTEXITCODE" }
+          $secondUninstall = Start-Process -FilePath $uninstaller -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -PassThru -Wait
+          if ($secondUninstall.ExitCode -ne 0) { throw "Second uninstall failed: $($secondUninstall.ExitCode)" }
           Assert-UserDataPreserved -ExpectArtifacts -ExpectedPreferencesHash $secondPreferencesHash

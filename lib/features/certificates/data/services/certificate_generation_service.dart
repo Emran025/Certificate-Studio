@@ -157,6 +157,8 @@ class CertificateGenerationService
     // backgrounds are reused unchanged; lower-density images are enhanced only
     // to the effective 300-DPI resolution required by the designer canvas.
     final templateDpi = _number(template['dpi'], 96).clamp(1, 1200);
+    final backgroundCanvasWidth = _number(template['width'], 1000);
+    final backgroundCanvasHeight = _number(template['height'], 700);
     final captureBackgroundBytes =
         canvasCapture == null || templateBytes == null
         ? templateBytes
@@ -164,8 +166,8 @@ class CertificateGenerationService
                 () => CertificateArtifactRenderer.preparePdfBackground(
                   templateBytes,
                   targetPixelRatio: 300 / templateDpi,
-                  canvasWidth: _number(template['width'], 1000),
-                  canvasHeight: _number(template['height'], 700),
+                  canvasWidth: backgroundCanvasWidth,
+                  canvasHeight: backgroundCanvasHeight,
                 ),
               ) ??
               templateBytes;

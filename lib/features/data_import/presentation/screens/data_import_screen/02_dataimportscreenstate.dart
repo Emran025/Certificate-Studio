@@ -15,7 +15,7 @@ class _DataImportScreenState extends State<DataImportScreen> {
       pasteTable: PasteTable(repository),
       importExcel: ImportExcel(repository),
       loadTable: () => repository.getForProject(widget.projectId),
-      saveTable: (table) => repository.saveForProject(widget.projectId, table),
+      updateImportedTable: UpdateImportedTable(repository),
     )..add(const DataImportRequested());
   }
 

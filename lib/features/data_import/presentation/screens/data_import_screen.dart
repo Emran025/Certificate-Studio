@@ -12,6 +12,7 @@ import '../../data/repositories/data_import_repository_impl.dart';
 import '../../domain/entities/imported_table.dart';
 import '../../domain/usecases/import_excel.dart';
 import '../../domain/usecases/paste_table.dart';
+import '../../domain/usecases/update_imported_table.dart';
 import '../bloc/data_import_bloc.dart';
 import '../widgets/data_preview.dart';
 import '../../data/datasources/data_import_data_source_impl.dart';

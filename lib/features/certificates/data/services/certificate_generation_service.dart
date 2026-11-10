@@ -251,13 +251,11 @@ class CertificateGenerationService
                   final style = _decodeJsonMap(field['style_json']);
                   return style['kind'] == 'qr' && style['visible'] != false;
                 })
-                ? await Isolate.run(
-                    () => CertificateArtifactRenderer.redrawQrOnPng(
-                      imageBytes: capturedBytes,
-                      record: signedRecord,
-                      fields: fields,
-                      template: template,
-                    ),
+                ? await _redrawQrOnPngInIsolate(
+                    imageBytes: capturedBytes,
+                    record: signedRecord,
+                    fields: fields,
+                    template: template,
                   )
                 : capturedBytes;
             pdfBytes = await CertificateArtifactRenderer.renderPdfFromPng(
@@ -516,5 +514,19 @@ Future<List<int>?> _preparePdfBackgroundInIsolate(
     targetPixelRatio: targetPixelRatio,
     canvasWidth: canvasWidth,
     canvasHeight: canvasHeight,
+  ),
+);
+
+Future<List<int>> _redrawQrOnPngInIsolate({
+  required List<int> imageBytes,
+  required Map<String, dynamic> record,
+  required List<Map<String, Object?>> fields,
+  required Map<String, Object?> template,
+}) => Isolate.run(
+  () => CertificateArtifactRenderer.redrawQrOnPng(
+    imageBytes: imageBytes,
+    record: record,
+    fields: fields,
+    template: template,
   ),
 );

@@ -13,7 +13,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test(
-    'generates with a non-sendable native database outside the image isolate',
+    'generates with a native database through background and QR isolates',
     () async {
       final database = _DatabaseWithNativeHandle();
       await database.open();
@@ -41,6 +41,21 @@ void main() {
           'template_id': 'template-1',
           'project_key_reference': 'project-1',
           'version': 1,
+          'created_at': now,
+          'updated_at': now,
+        });
+        await database.insert(DatabaseTables.certificateFields, {
+          'id': 'field-qr',
+          'project_id': 'project-1',
+          'class_name': 'qr',
+          'source': 'qr',
+          'position_json': jsonEncode({
+            'x': 100,
+            'y': 100,
+            'width': 300,
+            'height': 300,
+          }),
+          'style_json': jsonEncode({'kind': 'qr', 'visible': true}),
           'created_at': now,
           'updated_at': now,
         });

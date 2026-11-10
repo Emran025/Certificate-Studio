@@ -143,32 +143,7 @@ jobs:
         if: matrix.target == 'windows'
         shell: pwsh
         run: |
-          $iss = @"
-          [Setup]
-          AppId={{A6C1C3D8-7D1B-4AC6-9CB7-4D1F7F0A1E01}}
-          AppName=Certificate Studio
-          AppVersion=${{ github.ref_name }}
-          DefaultDirName={autopf}\Certificate Studio
-          DefaultGroupName=Certificate Studio
-          OutputDir=.
-          OutputBaseFilename=certificate-studio-windows-${{ github.ref_name }}-setup
-          Compression=lzma
-          SolidCompression=yes
-          ArchitecturesInstallIn64BitMode=x64
-          UninstallDisplayName=Certificate Studio
-
-          [Files]
-          Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
-
-          [Icons]
-          Name: "{autoprograms}\Certificate Studio"; Filename: "{app}\certificate_studio.exe"
-          Name: "{autodesktop}\Certificate Studio"; Filename: "{app}\certificate_studio.exe"
-
-          [Run]
-          Filename: "{app}\certificate_studio.exe"; Description: "Launch Certificate Studio"; Flags: nowait postinstall skipifsilent
-          "@
-          Set-Content -Path certificate-studio.iss -Value $iss -Encoding ASCII
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" certificate-studio.iss
+          & scripts/windows/package-installer.ps1 -AppVersion '${{ github.ref_name }}' -OutputBaseFilename 'certificate-studio-windows-${{ github.ref_name }}-setup'
       - name: Package macOS
         if: matrix.target == 'macos'
         run: |

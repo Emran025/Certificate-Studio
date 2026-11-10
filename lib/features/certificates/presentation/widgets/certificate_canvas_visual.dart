@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:certificate_crypto/certificate_crypto.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -449,7 +450,9 @@ class CertificateCanvasSnapshotHostState
       if (renderObject is! RenderRepaintBoundary) {
         throw StateError('The certificate canvas is not ready to capture.');
       }
-      if (renderObject.debugNeedsPaint) {
+      // This debug-only getter reads an assert-only local and throws in
+      // profile/release builds if accessed without a debug-mode guard.
+      if (kDebugMode && renderObject.debugNeedsPaint) {
         await WidgetsBinding.instance.endOfFrame;
       }
 

@@ -1,5 +1,8 @@
 part of '../screens/certificate_designer_screen.dart';
 
+const _minimumDesignerFontSize = 8.0;
+const _maximumDesignerFontSize = 512.0;
+
 class _PropertiesPanel extends StatelessWidget {
   const _PropertiesPanel({
     required this.field,
@@ -7,12 +10,14 @@ class _PropertiesPanel extends StatelessWidget {
     required this.fontFamilies,
     required this.onChanged,
     required this.onDelete,
+    required this.onFontSizeEditingChanged,
   });
   final _DesignerField? field;
   final List<String> columns;
   final List<String> fontFamilies;
   final ValueChanged<_DesignerField> onChanged;
   final VoidCallback onDelete;
+  final ValueChanged<bool> onFontSizeEditingChanged;
   @override
   Widget build(BuildContext context) {
     final selected = field;
@@ -150,8 +155,12 @@ class _PropertiesPanel extends StatelessWidget {
               key: ValueKey('${selected.id}-font-size'),
               label: context.l10n.text('Font size'),
               value: selected.fontSize,
+              minValue: _minimumDesignerFontSize,
+              maxValue: _maximumDesignerFontSize,
+              updateOnValidInput: true,
+              onEditingChanged: onFontSizeEditingChanged,
               onChanged: (value) =>
-                  onChanged(selected.copyWith(fontSize: value.clamp(8, 180))),
+                  onChanged(selected.copyWith(fontSize: value)),
             ),
             const SizedBox(height: AppSpacing.sm),
             DropdownButtonFormField<String>(
@@ -381,10 +390,18 @@ class _NumberInput extends StatefulWidget {
     required this.label,
     required this.value,
     required this.onChanged,
+    this.minValue,
+    this.maxValue,
+    this.updateOnValidInput = false,
+    this.onEditingChanged,
   });
   final String label;
   final double value;
   final ValueChanged<double> onChanged;
+  final double? minValue;
+  final double? maxValue;
+  final bool updateOnValidInput;
+  final ValueChanged<bool>? onEditingChanged;
   @override
   State<_NumberInput> createState() => _NumberInputState();
 }
@@ -405,6 +422,9 @@ class _NumberInputState extends State<_NumberInput> {
   void _handleFocusChange() {
     if (!_focusNode.hasFocus) {
       _commit();
+      widget.onEditingChanged?.call(false);
+    } else {
+      widget.onEditingChanged?.call(true);
     }
   }
 
@@ -413,8 +433,8 @@ class _NumberInputState extends State<_NumberInput> {
       : value.toString();
 
   void _commit() {
-    final value = _pendingValue ?? double.tryParse(_controller.text.trim());
-    if (value == null) {
+    final candidate = _pendingValue ?? double.tryParse(_controller.text.trim());
+    if (candidate == null) {
       _controller.value = TextEditingValue(
         text: _formatValue(widget.value),
         selection: TextSelection.collapsed(
@@ -423,6 +443,7 @@ class _NumberInputState extends State<_NumberInput> {
       );
       return;
     }
+    final value = _constrain(candidate);
     _pendingValue = null;
     widget.onChanged(value);
     final text = _formatValue(value);
@@ -432,6 +453,14 @@ class _NumberInputState extends State<_NumberInput> {
         selection: TextSelection.collapsed(offset: text.length),
       );
     }
+  }
+
+  double _constrain(double value) {
+    final minimum = widget.minValue;
+    if (minimum != null && value < minimum) value = minimum;
+    final maximum = widget.maxValue;
+    if (maximum != null && value > maximum) value = maximum;
+    return value;
   }
 
   @override
@@ -465,7 +494,11 @@ class _NumberInputState extends State<_NumberInput> {
     keyboardType: const TextInputType.numberWithOptions(decimal: true),
     textInputAction: TextInputAction.done,
     onChanged: (text) {
-      _pendingValue = double.tryParse(text.trim());
+      final value = double.tryParse(text.trim());
+      _pendingValue = value;
+      if (widget.updateOnValidInput && value != null) {
+        widget.onChanged(_constrain(value));
+      }
     },
     onEditingComplete: _commit,
   );

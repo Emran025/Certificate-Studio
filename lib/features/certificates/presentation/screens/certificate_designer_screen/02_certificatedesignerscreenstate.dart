@@ -12,6 +12,8 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
   bool _saving = false;
   bool _hasUnsavedChanges = false;
   bool _isPopping = false;
+  bool _fontSizeEditing = false;
+  bool _fontSizeUndoCaptured = false;
   String _saveLabel = 'Not saved';
   final Set<String> _loadedFontFamilies = {};
   String _projectFontFamily = 'Cairo';
@@ -423,9 +425,21 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
     );
   }
 
+  void _setFontSizeEditing(bool editing) {
+    _fontSizeEditing = editing;
+    if (editing) _fontSizeUndoCaptured = false;
+  }
+
   void _updateFields(List<_DesignerField> next) {
     if (_sameFields(_fields, next)) return;
-    _undoStack.add(List<_DesignerField>.from(_fields));
+    if (_fontSizeEditing) {
+      if (!_fontSizeUndoCaptured) {
+        _undoStack.add(List<_DesignerField>.from(_fields));
+        _fontSizeUndoCaptured = true;
+      }
+    } else {
+      _undoStack.add(List<_DesignerField>.from(_fields));
+    }
     _redoStack.clear();
     setState(() {
       _fields = next;
@@ -488,6 +502,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
       fontFamilies: _fontFamilies,
       onChanged: _replaceField,
       onDelete: _deleteSelected,
+      onFontSizeEditingChanged: _setFontSizeEditing,
     );
     final canvas = _template == null
         ? const Center(

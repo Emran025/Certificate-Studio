@@ -8,6 +8,7 @@ class _WorkspaceContent extends StatelessWidget {
     required this.metrics,
     this.metricsError,
     required this.onCreateProject,
+    required this.onImportProject,
     required this.onVerify,
     required this.onOpenProject,
   });
@@ -19,6 +20,7 @@ class _WorkspaceContent extends StatelessWidget {
   final String? metricsError;
   final VoidCallback onVerify;
   final VoidCallback onCreateProject;
+  final VoidCallback onImportProject;
   final ValueChanged<Project> onOpenProject;
 
   @override
@@ -67,7 +69,7 @@ class _WorkspaceContent extends StatelessWidget {
                       AppSecondaryButton(
                         label: context.l10n.text('importProject'),
                         icon: Icons.file_upload_outlined,
-                        onPressed: () {},
+                        onPressed: onImportProject,
                       ),
                     ];
                     if (constraints.maxWidth < AppBreakpoints.mobile) {

@@ -8,6 +8,7 @@ class WorkspaceShell extends StatefulWidget {
     this.keyStorage,
     this.appSettings = const AppSettings(),
     this.onSettingsChanged,
+    this.workspaceTransferService,
   });
 
   final AppDatabase? database;
@@ -15,6 +16,7 @@ class WorkspaceShell extends StatefulWidget {
   final KeyStorage? keyStorage;
   final AppSettings appSettings;
   final ValueChanged<AppSettings>? onSettingsChanged;
+  final WorkspaceTransferServiceContract? workspaceTransferService;
 
   @override
   State<WorkspaceShell> createState() => _WorkspaceShellState();

@@ -9,6 +9,7 @@ import 'data_import_state.dart';
 import '../../domain/entities/imported_table.dart';
 import '../../domain/usecases/import_excel.dart';
 import '../../domain/usecases/paste_table.dart';
+import '../../domain/usecases/update_imported_table.dart';
 
 class DataImportBloc extends Bloc<DataImportEvent, DataImportState> {
   DataImportBloc({
@@ -16,12 +17,12 @@ class DataImportBloc extends Bloc<DataImportEvent, DataImportState> {
     required PasteTable pasteTable,
     required ImportExcel importExcel,
     required Future<ImportedTable> Function() loadTable,
-    required Future<ImportedTable> Function(ImportedTable table) saveTable,
+    required UpdateImportedTable updateImportedTable,
   }) : _projectId = projectId,
        _pasteTable = pasteTable,
        _importExcel = importExcel,
        _loadTable = loadTable,
-       _saveTable = saveTable,
+       _updateImportedTable = updateImportedTable,
        super(const DataImportState()) {
     on<DataImportRequested>(_onLoad);
     on<PasteTableRequested>(_onPaste);
@@ -41,7 +42,7 @@ class DataImportBloc extends Bloc<DataImportEvent, DataImportState> {
   final PasteTable _pasteTable;
   final ImportExcel _importExcel;
   final Future<ImportedTable> Function() _loadTable;
-  final Future<ImportedTable> Function(ImportedTable table) _saveTable;
+  final UpdateImportedTable _updateImportedTable;
 
   Future<void> _onLoad(
     DataImportRequested event,
@@ -90,7 +91,10 @@ class DataImportBloc extends Bloc<DataImportEvent, DataImportState> {
     TableUpdatedRequested event,
     Emitter<DataImportState> emit,
   ) async {
-    await _save(emit, () => _saveTable(event.table));
+    await _save(
+      emit,
+      () => _updateImportedTable(projectId: _projectId, table: event.table),
+    );
   }
 
   final String _projectId;

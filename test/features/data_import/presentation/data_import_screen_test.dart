@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:certificate_studio/config/localization/app_localizations.dart';
 import 'package:certificate_studio/core/database/app_database.dart';
 import 'package:certificate_studio/core/database/database_tables.dart';
@@ -99,4 +101,35 @@ void main() {
       expect(find.text('95'), findsOneWidget);
     },
   );
+
+  testWidgets('field rules dialog saves through the feature BLoC', (
+    tester,
+  ) async {
+    final database = await _existingProjectWithRows([
+      {'data_json': '{"grade":"85"}'},
+    ]);
+    addTearDown(database.close);
+
+    await _openImportScreen(tester, database);
+    await tester.tap(find.text('Edit field rules'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('field-rule-min-grade')), '70');
+    await tester.enterText(find.byKey(const Key('field-rule-max-grade')), '90');
+    await tester.tap(find.text('Save').last);
+    await tester.pumpAndSettle();
+
+    final storedSettings = await database.query(
+      DatabaseTables.settings,
+      where: {'key': 'records-field-rules:project-1'},
+      columns: ['value_json'],
+    );
+    expect(storedSettings, hasLength(1));
+    final storedRules =
+        jsonDecode(storedSettings.single['value_json']! as String)
+            as Map<String, dynamic>;
+    final gradeRule = storedRules['grade'] as Map<String, dynamic>;
+    expect(gradeRule['kind'], 'number');
+    expect(gradeRule['min'], 70.0);
+    expect(gradeRule['max'], 90.0);
+  });
 }

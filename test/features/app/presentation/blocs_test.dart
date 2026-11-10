@@ -11,9 +11,11 @@ import 'package:certificate_studio/features/certificates/domain/repositories/cer
 import 'package:certificate_studio/features/certificates/domain/usecases/get_certificates.dart';
 import 'package:certificate_studio/features/certificates/presentation/bloc/certificate_library_bloc.dart';
 import 'package:certificate_studio/features/data_import/domain/entities/imported_table.dart';
+import 'package:certificate_studio/features/data_import/domain/entities/field_rule.dart';
 import 'package:certificate_studio/features/data_import/domain/repositories/data_import_repository.dart';
 import 'package:certificate_studio/features/data_import/domain/usecases/import_excel.dart';
 import 'package:certificate_studio/features/data_import/domain/usecases/paste_table.dart';
+import 'package:certificate_studio/features/data_import/domain/usecases/update_imported_table.dart';
 import 'package:certificate_studio/features/data_import/presentation/bloc/data_import_bloc.dart';
 import 'package:certificate_studio/features/fonts/domain/entities/font_asset.dart';
 import 'package:certificate_studio/features/fonts/domain/repositories/font_repository.dart';
@@ -139,18 +141,19 @@ void main() {
   test(
     'DataImportBloc covers load, paste, table update, excel and errors',
     () async {
-      var saved = const ImportedTable(
+      final saved = const ImportedTable(
         columns: ['name'],
         rows: [
           {'name': 'Initial'},
         ],
       );
+      final repository = FakeImportRepository(() => saved);
       final bloc = DataImportBloc(
         projectId: 'project-1',
-        pasteTable: PasteTable(FakeImportRepository(() => saved)),
-        importExcel: ImportExcel(FakeImportRepository(() => saved)),
+        pasteTable: PasteTable(repository),
+        importExcel: ImportExcel(repository),
         loadTable: () async => saved,
-        saveTable: (table) async => saved = table,
+        updateImportedTable: UpdateImportedTable(repository),
       );
       addTearDown(bloc.close);
       bloc.add(const DataImportRequested());
@@ -161,11 +164,20 @@ void main() {
       expect(bloc.state.status, DataImportStatus.loaded);
       bloc.add(
         TableUpdatedRequested(
-          const ImportedTable(columns: ['email'], rows: []),
+          const ImportedTable(
+            columns: ['email'],
+            rows: [],
+            fieldRules: {
+              'email': FieldRule(kind: FieldRuleKind.number, min: 1, max: 10),
+            },
+          ),
         ),
       );
       await Future<void>.delayed(Duration.zero);
-      expect(saved.columns, ['email']);
+      expect(repository.lastProjectId, 'project-1');
+      expect(repository.lastSavedTable?.columns, ['email']);
+      expect(repository.lastSavedTable?.fieldRules['email']?.max, 10);
+      expect(bloc.state.table.fieldRules['email']?.max, 10);
       bloc.add(ExcelImportRequested(Uint8List.fromList([1, 2])));
       await Future<void>.delayed(Duration.zero);
       expect(bloc.state.status, DataImportStatus.failure);
@@ -316,15 +328,26 @@ class FakeInstitutionRepository implements InstitutionRepository {
 class FakeImportRepository implements DataImportRepository {
   FakeImportRepository(this.result);
   final ImportedTable Function() result;
+  String? lastProjectId;
+  ImportedTable? lastSavedTable;
+  ImportedTable? _saved;
+
+  ImportedTable _current() => _saved ?? result();
+
   @override
-  ImportedTable parseTable(String rawText) => result();
+  ImportedTable parseTable(String rawText) => _current();
   @override
-  ImportedTable parseExcel(List<int> bytes) => result();
+  ImportedTable parseExcel(List<int> bytes) => _current();
   @override
-  Future<ImportedTable> saveForProject(String id, ImportedTable table) async =>
-      table;
+  Future<ImportedTable> saveForProject(String id, ImportedTable table) async {
+    lastProjectId = id;
+    lastSavedTable = table;
+    _saved = table;
+    return table;
+  }
+
   @override
-  Future<ImportedTable> getForProject(String id) async => result();
+  Future<ImportedTable> getForProject(String id) async => _current();
 }
 
 class FakeProjectRepository implements ProjectRepository {

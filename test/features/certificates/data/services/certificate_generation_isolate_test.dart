@@ -89,5 +89,5 @@ void main() {
 class _DatabaseWithNativeHandle extends InMemoryAppDatabase {
   final sqlite.Database _nativeHandle = sqlite.sqlite3.openInMemory();
 
-  void closeNativeHandle() => _nativeHandle.dispose();
+  void closeNativeHandle() => _nativeHandle.close();
 }

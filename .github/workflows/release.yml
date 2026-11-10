@@ -120,9 +120,14 @@ jobs:
 
           mkdir -p deb/DEBIAN deb/usr/bin
           cp -a build/linux/x64/release/bundle/. deb/usr/bin/
+          package_version="$(awk '/^version:/ {print $2; exit}' pubspec.yaml)"
+          package_version="${package_version%%+*}"
+          if [[ "${GITHUB_REF_TYPE:-branch}" == "tag" ]]; then
+            package_version="${GITHUB_REF_NAME#v}"
+          fi
           cat > deb/DEBIAN/control <<EOF
           Package: certificate-studio
-          Version: ${GITHUB_REF_NAME#v}
+          Version: ${package_version}
           Section: office
           Priority: optional
           Architecture: amd64

@@ -41,7 +41,13 @@ void main() {
     expect(service, contains('canvasCapture != null'));
     expect(service, contains('preparePdfBackground('));
     expect(service, contains('targetPixelRatio: 300 / templateDpi'));
-    expect(service, contains('await Isolate.run('));
+    expect(service, contains('_preparePdfBackgroundInIsolate('));
+    expect(service, contains('_redrawQrOnPngInIsolate('));
+    expect(
+      service,
+      contains('Future<List<int>?> _preparePdfBackgroundInIsolate('),
+    );
+    expect(service, contains('Future<List<int>> _redrawQrOnPngInIsolate('));
     expect(service, contains('CertificateArtifactRenderer.redrawQrOnPng('));
     expect(
       service.indexOf('final captureBackgroundBytes') <

@@ -162,13 +162,11 @@ class CertificateGenerationService
     final captureBackgroundBytes =
         canvasCapture == null || templateBytes == null
         ? templateBytes
-        : await Isolate.run(
-                () => CertificateArtifactRenderer.preparePdfBackground(
-                  templateBytes,
-                  targetPixelRatio: 300 / templateDpi,
-                  canvasWidth: backgroundCanvasWidth,
-                  canvasHeight: backgroundCanvasHeight,
-                ),
+        : await _preparePdfBackgroundInIsolate(
+                templateBytes,
+                targetPixelRatio: 300 / templateDpi,
+                canvasWidth: backgroundCanvasWidth,
+                canvasHeight: backgroundCanvasHeight,
               ) ??
               templateBytes;
 
@@ -506,3 +504,17 @@ class CertificateGenerationService
   String _normalizeKey(String value) =>
       value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '_');
 }
+
+Future<List<int>?> _preparePdfBackgroundInIsolate(
+  List<int> templateBytes, {
+  required double targetPixelRatio,
+  required double canvasWidth,
+  required double canvasHeight,
+}) => Isolate.run(
+  () => CertificateArtifactRenderer.preparePdfBackground(
+    templateBytes,
+    targetPixelRatio: targetPixelRatio,
+    canvasWidth: canvasWidth,
+    canvasHeight: canvasHeight,
+  ),
+);

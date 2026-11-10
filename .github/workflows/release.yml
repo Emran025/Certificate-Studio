@@ -5,6 +5,12 @@ on:
     tags:
       - 'v*.*.*'
   workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Optional release tag used to label a non-publishing preview, e.g. v0.0.5.'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -13,6 +19,8 @@ jobs:
   build:
     name: Build ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
+    env:
+      RELEASE_VERSION: ${{ inputs.release_version || github.ref_name }}
     strategy:
       fail-fast: false
       matrix:
@@ -89,7 +97,7 @@ jobs:
         shell: bash
         run: |
           cp build/app/outputs/flutter-apk/app-release.apk \
-            certificate-studio-android-${{ github.ref_name }}.apk
+            "certificate-studio-android-${RELEASE_VERSION}.apk"
 
       - name: Package Linux
         if: matrix.target == 'linux'
@@ -116,7 +124,7 @@ jobs:
           sudo apt-get install -y wget
           wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
           chmod +x appimagetool
-          ./appimagetool --appimage-extract-and-run CertificateStudio.AppDir certificate-studio-linux-${{ github.ref_name }}.AppImage
+          ./appimagetool --appimage-extract-and-run CertificateStudio.AppDir "certificate-studio-linux-${RELEASE_VERSION}.AppImage"
 
           mkdir -p deb/DEBIAN deb/usr/bin
           cp -a build/linux/x64/release/bundle/. deb/usr/bin/
@@ -134,7 +142,7 @@ jobs:
           Maintainer: Certificate Studio
           Description: Offline-first certificate authoring and verification workspace
           EOF
-          dpkg-deb --build deb certificate-studio-linux-${{ github.ref_name }}.deb
+          dpkg-deb --build deb "certificate-studio-linux-${RELEASE_VERSION}.deb"
       - name: Install Windows installer tool
         if: matrix.target == 'windows'
         shell: pwsh
@@ -143,7 +151,7 @@ jobs:
         if: matrix.target == 'windows'
         shell: pwsh
         run: |
-          & scripts/windows/package-installer.ps1 -AppVersion '${{ github.ref_name }}' -OutputBaseFilename 'certificate-studio-windows-${{ github.ref_name }}-setup'
+          & scripts/windows/package-installer.ps1 -AppVersion $env:RELEASE_VERSION -OutputBaseFilename "certificate-studio-windows-$($env:RELEASE_VERSION)-setup"
       - name: Package macOS
         if: matrix.target == 'macos'
         run: |
@@ -152,7 +160,7 @@ jobs:
             -srcfolder build/macos/Build/Products/Release/certificate_studio.app \
             -ov \
             -format UDZO \
-            certificate-studio-macos-${{ github.ref_name }}.dmg
+            "certificate-studio-macos-${RELEASE_VERSION}.dmg"
       - uses: actions/upload-artifact@v4
         with:
           name: certificate-studio-${{ matrix.platform }}

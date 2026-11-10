@@ -109,6 +109,8 @@ const _en = <String, String>{
       'Write a sample to compare how every imported font renders it.',
   'Preview text': 'Preview text',
   'Generate certificates': 'Generate certificates',
+  'Create signed certificates for this project.':
+      'Create signed certificates for this project.',
   'Create signed PDF and high-resolution PNG certificates with offline verification records.':
       'Create signed PDF and high-resolution PNG certificates with offline verification records.',
   'Ready to generate': 'Ready to generate',

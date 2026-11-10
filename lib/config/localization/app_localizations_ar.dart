@@ -108,6 +108,8 @@ const _ar = <String, String>{
       'اكتب نصًا تجريبيًا لمقارنة طريقة عرضه بكل خط مستورد.',
   'Preview text': 'نص المعاينة',
   'Generate certificates': 'إنشاء الشهادات',
+  'Create signed certificates for this project.':
+      'أنشئ شهادات موقّعة لهذا المشروع.',
   'Create signed PDF and high-resolution PNG certificates with offline verification records.':
       'أنشئ شهادات PDF موقعة وصور PNG عالية الدقة مع سجلات تحقق دون اتصال.',
   'Ready to generate': 'جاهز للإنشاء',

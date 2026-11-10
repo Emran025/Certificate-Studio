@@ -13,11 +13,19 @@ void main() {
     expect(arabic.isArabic, isTrue);
     expect(arabic.text('home'), 'الرئيسية');
     expect(arabic.text('Verify'), 'تحقق');
+    expect(
+      arabic.text('Create signed certificates for this project.'),
+      'أنشئ شهادات موقّعة لهذا المشروع.',
+    );
   });
 
   test('falls back to English for unsupported device languages', () {
     const english = AppLocalizations(Locale('fr'));
     expect(english.isArabic, isFalse);
     expect(english.text('home'), 'Home');
+    expect(
+      english.text('Create signed certificates for this project.'),
+      'Create signed certificates for this project.',
+    );
   });
 }

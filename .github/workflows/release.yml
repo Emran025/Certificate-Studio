@@ -81,14 +81,27 @@ jobs:
         name: Install Linux desktop dependencies
         run: |
           mirror_file=/etc/apt/apt-mirrors.txt
-          if [ -f "$mirror_file" ]; then
-            sudo sed -i '/azure\.archive\.ubuntu\.com/d' "$mirror_file"
-            echo "APT mirrors after removing the intermittent Azure mirror:"
-            sudo cat "$mirror_file"
-          else
+          if [ ! -f "$mirror_file" ]; then
             echo "APT mirror list was not found: $mirror_file" >&2
             exit 1
           fi
+          selected_mirror=
+          for candidate in \
+            https://mirror.math.princeton.edu/pub/ubuntu/ \
+            https://mirrors.edge.kernel.org/ubuntu/; do
+            echo "Testing Ubuntu mirror: $candidate"
+            if curl -fsS --connect-timeout 5 --max-time 15 "${candidate}dists/noble/InRelease" -o /dev/null; then
+              selected_mirror="$candidate"
+              break
+            fi
+          done
+          if [ -z "$selected_mirror" ]; then
+            echo "No tested Ubuntu mirror is reachable; refusing a slow apt retry." >&2
+            exit 1
+          fi
+          printf '%s\tpriority:1\n' "$selected_mirror" | sudo tee "$mirror_file" >/dev/null
+          echo "Selected Ubuntu mirror: $selected_mirror"
+          cat "$mirror_file"
           sudo timeout 180s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 update
           sudo timeout 300s env DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev
       - if: matrix.target != 'linux' && matrix.target != 'android'

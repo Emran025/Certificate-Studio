@@ -10,12 +10,17 @@ import '../../../data_import/domain/usecases/get_imported_table.dart';
 
 class CertificateLibraryBloc
     extends Bloc<CertificateLibraryEvent, CertificateLibraryState> {
-  CertificateLibraryBloc(
-    this._getCertificates,
-    this._projectId, {
+  factory CertificateLibraryBloc(
+    GetCertificates getCertificates,
+    String? projectId, {
     GetImportedTable? getImportedTable,
-  }) : _getImportedTable = getImportedTable,
-       super(const CertificateLibraryState()) {
+  }) => CertificateLibraryBloc._(getCertificates, projectId, getImportedTable);
+
+  CertificateLibraryBloc._(
+    this._getCertificates,
+    this._projectId,
+    this._getImportedTable,
+  ) : super(const CertificateLibraryState()) {
     on<CertificatesRequested>(_load);
   }
   final GetCertificates _getCertificates;

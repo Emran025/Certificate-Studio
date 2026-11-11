@@ -7,13 +7,21 @@ import '../../domain/usecases/normalize_phone_number.dart';
 import '../datasources/certificate_share_data_source.dart';
 
 class CertificateSharingRepositoryImpl implements CertificateSharingRepository {
-  CertificateSharingRepositoryImpl({
+  factory CertificateSharingRepositoryImpl({
     required CertificateArtifactStore artifactStore,
     required CertificateShareDataSource dataSource,
     NormalizePhoneNumber normalizePhoneNumber = const NormalizePhoneNumber(),
-  }) : _artifactStore = artifactStore,
-       _dataSource = dataSource,
-       _normalizePhoneNumber = normalizePhoneNumber;
+  }) => CertificateSharingRepositoryImpl._(
+    artifactStore,
+    dataSource,
+    normalizePhoneNumber,
+  );
+
+  CertificateSharingRepositoryImpl._(
+    this._artifactStore,
+    this._dataSource,
+    this._normalizePhoneNumber,
+  );
 
   final CertificateArtifactStore _artifactStore;
   final CertificateShareDataSource _dataSource;

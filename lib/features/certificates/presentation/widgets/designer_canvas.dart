@@ -115,6 +115,7 @@ class _CanvasField extends StatelessWidget {
     width: field.width,
     height: field.height,
     child: GestureDetector(
+      dragStartBehavior: DragStartBehavior.down,
       onTap: onSelect,
       onPanStart: (_) => onSelect(),
       onPanUpdate: (details) => onMove(details.delta),
@@ -174,6 +175,7 @@ class _ResizeHandle extends StatelessWidget {
   Widget build(BuildContext context) => Align(
     alignment: alignment,
     child: GestureDetector(
+      dragStartBehavior: DragStartBehavior.down,
       onPanUpdate: (details) => onDrag(details.delta),
       child: Container(
         width: 12,

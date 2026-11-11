@@ -349,12 +349,9 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
   void _moveField(String id, Offset delta) {
     final field = _fields.firstWhere((item) => item.id == id);
     final next = field.copyWith(
-      x: (field.x + delta.dx / _zoom)
-          .clamp(0, _canvasWidth - field.width)
-          .toDouble(),
-      y: (field.y + delta.dy / _zoom)
-          .clamp(0, _canvasHeight - field.height)
-          .toDouble(),
+      // The gesture's local delta is already expressed in canvas coordinates.
+      x: (field.x + delta.dx).clamp(0, _canvasWidth - field.width).toDouble(),
+      y: (field.y + delta.dy).clamp(0, _canvasHeight - field.height).toDouble(),
     );
     _replaceField(next);
   }
@@ -366,8 +363,8 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
     required bool fromTop,
   }) {
     final field = _fields.firstWhere((item) => item.id == id);
-    final dx = delta.dx / _zoom;
-    final dy = delta.dy / _zoom;
+    final dx = delta.dx;
+    final dy = delta.dy;
     if (field.qr) {
       final horizontalDelta = fromLeft ? -dx : dx;
       final verticalDelta = fromTop ? -dy : dy;

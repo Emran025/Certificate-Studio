@@ -2,6 +2,7 @@ import '../../../../config/localization/app_localizations.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 

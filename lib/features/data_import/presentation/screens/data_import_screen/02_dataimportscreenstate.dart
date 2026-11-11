@@ -16,6 +16,7 @@ class _DataImportScreenState extends State<DataImportScreen> {
       importExcel: ImportExcel(repository),
       loadTable: () => repository.getForProject(widget.projectId),
       updateImportedTable: UpdateImportedTable(repository),
+      openExternalLink: OpenExternalLink(const ExternalLinkRepositoryImpl()),
     )..add(const DataImportRequested());
   }
 
@@ -121,6 +122,9 @@ class _DataImportScreenState extends State<DataImportScreen> {
                           table: table,
                           disabled: saving,
                           onChanged: _updateTable,
+                          onOpenExternal: (kind, value) => _bloc.add(
+                            ExternalLinkRequested(kind: kind, value: value),
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                       ] else

@@ -7,6 +7,7 @@ class _MobileRecordField extends StatelessWidget {
     required this.disabled,
     required this.onEdit,
     required this.onDelete,
+    required this.onOpenExternal,
   });
 
   final String column;
@@ -14,6 +15,7 @@ class _MobileRecordField extends StatelessWidget {
   final bool disabled;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onOpenExternal;
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +32,13 @@ class _MobileRecordField extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             flex: 3,
-            child: Text(
-              value.isEmpty ? '—' : value,
-              textAlign: TextAlign.end,
-              softWrap: true,
+            child: InkWell(
+              onTap: disabled || value.isEmpty ? null : onOpenExternal,
+              child: Text(
+                value.isEmpty ? '—' : value,
+                textAlign: TextAlign.end,
+                softWrap: true,
+              ),
             ),
           ),
           IconButton(

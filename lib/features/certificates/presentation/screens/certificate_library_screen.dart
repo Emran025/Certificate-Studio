@@ -1,6 +1,6 @@
 import '../../../../config/localization/app_localizations.dart';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,6 +18,17 @@ import '../../domain/entities/certificate_record.dart';
 import '../../domain/usecases/get_certificates.dart';
 import '../bloc/certificate_library_bloc.dart';
 import '../../data/datasources/certificate_data_source_impl.dart';
+import '../../../data_import/data/datasources/data_import_data_source_impl.dart';
+import '../../../data_import/data/repositories/data_import_repository_impl.dart';
+import '../../../data_import/domain/usecases/get_imported_table.dart';
+import '../../../sharing/data/datasources/certificate_share_data_source_impl.dart';
+import '../../../sharing/data/repositories/certificate_sharing_repository_impl.dart';
+import '../../../sharing/domain/entities/share_target.dart';
+import '../../../sharing/domain/usecases/normalize_phone_number.dart';
+import '../../../sharing/domain/usecases/share_certificate_pdf.dart';
+import '../../../sharing/presentation/bloc/certificate_sharing_bloc.dart';
+import '../../../sharing/presentation/bloc/certificate_sharing_event.dart';
+import '../../../sharing/presentation/bloc/certificate_sharing_state.dart';
 
 part 'certificate_library_screen/01_certificatelibraryscreen.dart';
 part 'certificate_library_screen/02_certificatelibraryscreenstate.dart';

@@ -98,6 +98,10 @@ class _FieldRulesDialogState extends State<_FieldRulesDialog> {
             kind: FieldRuleKind.choice,
             choices: choices,
           );
+        case _FieldKind.phone:
+          rules[column] = const FieldRule(kind: FieldRuleKind.phone);
+        case _FieldKind.link:
+          rules[column] = const FieldRule(kind: FieldRuleKind.link);
       }
     }
     Navigator.of(context).pop(rules);
@@ -171,6 +175,14 @@ class _FieldRulesDialogState extends State<_FieldRulesDialog> {
               value: _FieldKind.choice,
               child: Text(context.l10n.text('Choice list')),
             ),
+            DropdownMenuItem(
+              value: _FieldKind.phone,
+              child: Text(context.l10n.text('Phone number')),
+            ),
+            DropdownMenuItem(
+              value: _FieldKind.link,
+              child: Text(context.l10n.text('Link')),
+            ),
           ],
           onChanged: (value) {
             if (value == null) return;
@@ -234,6 +246,14 @@ class _FieldRulesDialogState extends State<_FieldRulesDialog> {
         if (_kinds[column] == _FieldKind.text) ...[
           const SizedBox(height: AppSpacing.sm),
           Text(context.l10n.text('Text fields accept any value.')),
+        ],
+        if (_kinds[column] == _FieldKind.phone) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text(context.l10n.text('Phone numbers open in the phone app.')),
+        ],
+        if (_kinds[column] == _FieldKind.link) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text(context.l10n.text('Links open in the browser.')),
         ],
       ],
     ),

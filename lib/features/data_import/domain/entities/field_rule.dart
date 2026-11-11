@@ -1,4 +1,4 @@
-enum FieldRuleKind { text, number, choice }
+enum FieldRuleKind { text, number, choice, phone, link }
 
 class FieldRule {
   const FieldRule({
@@ -23,7 +23,7 @@ class FieldRule {
   factory FieldRule.fromJson(Map<String, Object?> json) {
     final rawKind = json['kind'];
     final kind = FieldRuleKind.values.firstWhere(
-      (candidate) => candidate.name == rawKind,
+      (candidate) => candidate.name == rawKind?.toString(),
       orElse: () => FieldRuleKind.text,
     );
     final rawChoices = json['choices'];

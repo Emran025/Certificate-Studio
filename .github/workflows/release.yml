@@ -19,6 +19,7 @@ jobs:
   build:
     name: Build ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     env:
       RELEASE_VERSION: ${{ inputs.release_version || github.ref_name }}
     strategy:
@@ -79,8 +80,8 @@ jobs:
       - if: matrix.target == 'linux'
         name: Install Linux desktop dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev
       - if: matrix.target != 'linux' && matrix.target != 'android'
         name: Install Flutter desktop prerequisites (non-Linux)
         shell: bash

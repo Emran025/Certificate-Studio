@@ -80,8 +80,17 @@ jobs:
       - if: matrix.target == 'linux'
         name: Install Linux desktop dependencies
         run: |
-          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
-          sudo env DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev
+          mirror_file=/etc/apt/apt-mirrors.txt
+          if [ -f "$mirror_file" ]; then
+            sudo sed -i '/azure\.archive\.ubuntu\.com/d' "$mirror_file"
+            echo "APT mirrors after removing the intermittent Azure mirror:"
+            sudo cat "$mirror_file"
+          else
+            echo "APT mirror list was not found: $mirror_file" >&2
+            exit 1
+          fi
+          sudo timeout 180s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 update
+          sudo timeout 300s env DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev
       - if: matrix.target != 'linux' && matrix.target != 'android'
         name: Install Flutter desktop prerequisites (non-Linux)
         shell: bash
@@ -121,9 +130,7 @@ jobs:
           exec "$(dirname "$0")/usr/bin/certificate_studio" "$@"
           EOF
           chmod +x CertificateStudio.AppDir/AppRun
-          sudo apt-get update
-          sudo apt-get install -y wget
-          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+          curl -fsSL --retry 3 --connect-timeout 10 --max-time 120 https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -o appimagetool
           chmod +x appimagetool
           ./appimagetool --appimage-extract-and-run CertificateStudio.AppDir "certificate-studio-linux-${RELEASE_VERSION}.AppImage"
 

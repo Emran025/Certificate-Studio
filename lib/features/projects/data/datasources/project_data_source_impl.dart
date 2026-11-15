@@ -41,6 +41,17 @@ class ProjectDataSourceImpl implements ProjectDataSource {
 
   @override
   Future<void> deleteProjectCascade(String id) async {
+    final records = await _database.query(
+      DatabaseTables.records,
+      where: {'project_id': id},
+      columns: ['id'],
+    );
+    for (final record in records) {
+      final recordId = record['id']?.toString();
+      if (recordId == null || recordId.isEmpty) continue;
+      await _deleteOptionalWhere('generation_items', {'record_id': recordId});
+    }
+    await _deleteOptionalWhere('generation_jobs', {'project_id': id});
     final certificates = await _database.query(
       DatabaseTables.certificates,
       where: {'project_id': id},
@@ -70,6 +81,21 @@ class ProjectDataSourceImpl implements ProjectDataSource {
       await deleteProject(id);
     } finally {
       await _database.endBatch();
+    }
+  }
+
+  Future<void> _deleteOptionalWhere(
+    String table,
+    Map<String, Object?> where,
+  ) async {
+    try {
+      await _database.deleteWhere(table, where);
+    } on Object catch (error) {
+      final message = error.toString().toLowerCase();
+      if (!message.contains('no such table') &&
+          !message.contains('unknown table')) {
+        rethrow;
+      }
     }
   }
 }

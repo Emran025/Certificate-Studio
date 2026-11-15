@@ -214,7 +214,8 @@ class DataImportRepositoryImpl implements DataImportRepository {
         var fallback = '$name $suffix';
         while (targets.contains(fallback) ||
             existingColumns.any(
-              (column) => _normalizeHeader(column) == _normalizeHeader(fallback),
+              (column) =>
+                  _normalizeHeader(column) == _normalizeHeader(fallback),
             )) {
           suffix++;
           fallback = '$name $suffix';

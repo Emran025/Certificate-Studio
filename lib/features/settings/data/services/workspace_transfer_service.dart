@@ -332,6 +332,21 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
   }
 
   Future<void> _clearProjectData(String projectId) async {
+    final records = await _database.query(
+      DatabaseTables.records,
+      where: {'project_id': projectId},
+      columns: ['id'],
+    );
+    // generation_items existed in older database versions and references both
+    // records and certificates. Remove it before either parent table. The
+    // table is optional in current databases, so missing-table errors are
+    // intentionally ignored for backward-compatible imports.
+    for (final record in records) {
+      final recordId = record['id']?.toString();
+      if (recordId == null || recordId.isEmpty) continue;
+      await _deleteOptionalWhere('generation_items', {'record_id': recordId});
+    }
+    await _deleteOptionalWhere('generation_jobs', {'project_id': projectId});
     await _database.deleteWhere(DatabaseTables.verificationRecords, {
       'project_id': projectId,
     });
@@ -343,6 +358,21 @@ class WorkspaceTransferService implements WorkspaceTransferServiceContract {
       DatabaseTables.certificateFields,
     ]) {
       await _database.deleteWhere(table, {'project_id': projectId});
+    }
+  }
+
+  Future<void> _deleteOptionalWhere(
+    String table,
+    Map<String, Object?> where,
+  ) async {
+    try {
+      await _database.deleteWhere(table, where);
+    } on Object catch (error) {
+      final message = error.toString().toLowerCase();
+      if (!message.contains('no such table') &&
+          !message.contains('unknown table')) {
+        rethrow;
+      }
     }
   }
 

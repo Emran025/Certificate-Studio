@@ -133,6 +133,7 @@ class DataImportDataSourceImpl implements DataImportDataSource {
     String recordId,
     Set<String> artifactReferences,
   ) async {
+    await _deleteOptionalWhere('generation_items', {'record_id': recordId});
     await _deleteCertificatesForRecord(recordId, artifactReferences);
     await _database.delete(DatabaseTables.records, recordId);
   }
@@ -158,6 +159,21 @@ class DataImportDataSourceImpl implements DataImportDataSource {
         'certificate_id': certificateId,
       });
       await _database.delete(DatabaseTables.certificates, certificateId);
+    }
+  }
+
+  Future<void> _deleteOptionalWhere(
+    String table,
+    Map<String, Object?> where,
+  ) async {
+    try {
+      await _database.deleteWhere(table, where);
+    } on Object catch (error) {
+      final message = error.toString().toLowerCase();
+      if (!message.contains('no such table') &&
+          !message.contains('unknown table')) {
+        rethrow;
+      }
     }
   }
 

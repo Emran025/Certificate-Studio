@@ -40,6 +40,12 @@ class _RecordingDataImportRepository implements DataImportRepository {
   Future<ImportedTable> saveForProject(
     String projectId,
     ImportedTable table,
+  ) async => throw UnimplementedError();
+
+  @override
+  Future<ImportedTable> updateForProject(
+    String projectId,
+    ImportedTable table,
   ) async {
     savedProjectId = projectId;
     savedTable = table;

@@ -148,17 +148,21 @@ class DataPreview extends StatelessWidget {
     );
     if (!context.mounted || values == null) return;
     final rows = [...table.rows];
+    final recordIds = [...table.recordIds];
     if (rowIndex == null) {
       rows.add(values);
+      recordIds.add(null);
     } else {
       rows[rowIndex] = values;
     }
-    onChanged(table.copyWith(rows: rows));
+    onChanged(table.copyWith(rows: rows, recordIds: recordIds));
   }
 
   void _deleteRow(int index) {
     final rows = [...table.rows]..removeAt(index);
-    onChanged(table.copyWith(rows: rows));
+    final recordIds = [...table.recordIds];
+    if (index < recordIds.length) recordIds.removeAt(index);
+    onChanged(table.copyWith(rows: rows, recordIds: recordIds));
   }
 
   Future<void> _editColumn(BuildContext context, [String? oldName]) async {

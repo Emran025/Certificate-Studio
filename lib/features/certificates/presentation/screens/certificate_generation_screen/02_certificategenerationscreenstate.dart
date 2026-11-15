@@ -32,17 +32,13 @@ class _CertificateGenerationScreenState
     );
   }
 
-  Future<void> _generate() async {
+  Future<void> _generate({bool regenerateAll = false}) async {
     setState(() {
       _running = true;
       _result = null;
       _completed = 0;
+      _total = 0;
     });
-    final records = await widget.database.query(
-      DatabaseTables.records,
-      where: {'project_id': widget.projectId},
-    );
-    setState(() => _total = records.length);
     try {
       final result =
           await CertificateGenerationService(
@@ -52,6 +48,7 @@ class _CertificateGenerationScreenState
           ).generate(
             projectId: widget.projectId,
             institutionId: widget.institutionId,
+            regenerateAll: regenerateAll,
             onProgress: (completed, total) {
               if (mounted) {
                 setState(() {
@@ -178,10 +175,26 @@ class _CertificateGenerationScreenState
                                 ),
                               ),
                               if (!_running)
-                                FilledButton.icon(
-                                  onPressed: _generate,
-                                  icon: const Icon(Icons.play_arrow),
-                                  label: Text(context.l10n.text('Generate')),
+                                Wrap(
+                                  spacing: AppSpacing.sm,
+                                  runSpacing: AppSpacing.xs,
+                                  children: [
+                                    FilledButton.icon(
+                                      onPressed: _generate,
+                                      icon: const Icon(Icons.play_arrow),
+                                      label: Text(
+                                        context.l10n.text('Generate missing'),
+                                      ),
+                                    ),
+                                    OutlinedButton.icon(
+                                      onPressed: () =>
+                                          _generate(regenerateAll: true),
+                                      icon: const Icon(Icons.refresh),
+                                      label: Text(
+                                        context.l10n.text('Regenerate all'),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                             ],
                           ),
@@ -220,6 +233,14 @@ class _CertificateGenerationScreenState
                               'Job ${result.jobId} · ${result.status}',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
+                            if (result.status == 'up-to-date') ...[
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                context.l10n.text(
+                                  'All records already have certificates.',
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: AppSpacing.md),
                             FilledButton.icon(
                               onPressed: result.generated == 0

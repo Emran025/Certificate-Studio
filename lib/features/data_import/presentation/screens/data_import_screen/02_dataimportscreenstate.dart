@@ -111,6 +111,13 @@ class _DataImportScreenState extends State<DataImportScreen> {
                         onImport: _import,
                         errorMessage: state.errorMessage,
                       ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        context.l10n.text(
+                          'New rows are appended; existing records are kept. Matching columns are reused and new columns are added.',
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                       const SizedBox(height: AppSpacing.xl),
                       if (table.columns.isNotEmpty) ...[
                         Text(

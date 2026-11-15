@@ -130,6 +130,10 @@ const _ar = <String, String>{
   'Create signed PDF and high-resolution PNG certificates with offline verification records.':
       'أنشئ شهادات PDF موقعة وصور PNG عالية الدقة مع سجلات تحقق دون اتصال.',
   'Ready to generate': 'جاهز للإنشاء',
+  'Generate missing': 'إنشاء غير المُنشأ فقط',
+  'Regenerate all': 'إعادة إنشاء الكل',
+  'All records already have certificates.':
+      'جميع السجلات لديها شهادات منشأة بالفعل.',
   'Generating certificates…': 'جارٍ إنشاء الشهادات…',
   'Open certificate library': 'فتح مكتبة الشهادات',
   'Certificate is authentic': 'الشهادة أصلية وموثقة',
@@ -147,6 +151,8 @@ const _ar = <String, String>{
   'Add record data': 'إضافة بيانات الطلاب',
   'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.':
       'استورد ملف ‎.xlsx أو الصق جدولًا. سيصبح الصف الأول أسماء الأعمدة.',
+  'New rows are appended; existing records are kept. Matching columns are reused and new columns are added.':
+      'تُضاف الصفوف الجديدة مع الاحتفاظ بالبيانات السابقة. تُطابق الأعمدة الموجودة وتُضاف الحقول الجديدة تلقائيًا.',
   'Paste table data': 'لصق بيانات الجدول',
   'Choose Excel file': 'اختيار ملف Excel',
   'Paste from clipboard': 'لصق من الحافظة',
@@ -305,6 +311,13 @@ const _ar = <String, String>{
   'Template': 'القالب',
   'Text alignment': 'محاذاة النص',
   'Text color (#RRGGBB)': 'لون النص (#RRGGBB)',
+  'Pick color from template image': 'اختيار لون من صورة القالب',
+  'Choose a point in the template to sample its color.':
+      'انقر على نقطة في القالب لالتقاط لونها.',
+  'Use selected color': 'استخدام اللون المحدد',
+  'Unable to load template image for color picking.':
+      'تعذّر تحميل صورة القالب لاختيار اللون.',
+  'The template image could not be decoded.': 'تعذّر قراءة ألوان صورة القالب.',
   'Text direction': 'اتجاه النص',
   'Total': 'الإجمالي',
   'Type': 'النوع',

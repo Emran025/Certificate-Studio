@@ -477,6 +477,11 @@ class UseCaseImportRepository implements DataImportRepository {
     ImportedTable value,
   ) async => value;
   @override
+  Future<ImportedTable> updateForProject(
+    String projectId,
+    ImportedTable value,
+  ) async => value;
+  @override
   Future<ImportedTable> getForProject(String projectId) async => table;
 }
 

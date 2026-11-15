@@ -9,5 +9,5 @@ class UpdateImportedTable {
   Future<ImportedTable> call({
     required String projectId,
     required ImportedTable table,
-  }) => _repository.saveForProject(projectId, table);
+  }) => _repository.updateForProject(projectId, table);
 }

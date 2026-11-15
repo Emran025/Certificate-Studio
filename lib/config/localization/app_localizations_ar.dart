@@ -130,6 +130,10 @@ const _ar = <String, String>{
   'Create signed PDF and high-resolution PNG certificates with offline verification records.':
       'أنشئ شهادات PDF موقعة وصور PNG عالية الدقة مع سجلات تحقق دون اتصال.',
   'Ready to generate': 'جاهز للإنشاء',
+  'Generate missing': 'إنشاء غير المُنشأ فقط',
+  'Regenerate all': 'إعادة إنشاء الكل',
+  'All records already have certificates.':
+      'جميع السجلات لديها شهادات منشأة بالفعل.',
   'Generating certificates…': 'جارٍ إنشاء الشهادات…',
   'Open certificate library': 'فتح مكتبة الشهادات',
   'Certificate is authentic': 'الشهادة أصلية وموثقة',
@@ -147,10 +151,32 @@ const _ar = <String, String>{
   'Add record data': 'إضافة بيانات الطلاب',
   'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.':
       'استورد ملف ‎.xlsx أو الصق جدولًا. سيصبح الصف الأول أسماء الأعمدة.',
+  'New rows are appended; existing records are kept. Matching columns are reused and new columns are added.':
+      'تُضاف الصفوف الجديدة مع الاحتفاظ بالبيانات السابقة. تُطابق الأعمدة الموجودة وتُضاف الحقول الجديدة تلقائيًا.',
   'Paste table data': 'لصق بيانات الجدول',
   'Choose Excel file': 'اختيار ملف Excel',
   'Paste from clipboard': 'لصق من الحافظة',
   'Import data': 'استيراد البيانات',
+  'Review import changes': 'مراجعة تغييرات الاستيراد',
+  'Review duplicate rows and choose how to merge them.':
+      'راجع الصفوف المكررة واختر طريقة دمجها.',
+  'new rows': 'صفوف جديدة',
+  'duplicates': 'تكرارات',
+  'new columns': 'أعمدة جديدة',
+  'matching columns': 'أعمدة متطابقة',
+  'Exact duplicate': 'تكرار مطابق تمامًا',
+  'Same identity, different values': 'نفس الهوية مع قيم مختلفة',
+  'Keep existing': 'الاحتفاظ بالقديم',
+  'Use imported': 'استخدام المستورد',
+  'Keep both': 'الاحتفاظ بالاثنين',
+  'Keep all as new': 'إضافة الكل كجديد',
+  'Cancel import': 'إلغاء الاستيراد',
+  'Apply choices': 'تطبيق الاختيارات',
+  'Import without duplicates': 'استيراد بدون التكرارات',
+  'Existing': 'البيانات الموجودة',
+  'Imported': 'البيانات المستوردة',
+  'No duplicate rows found. The new rows will be added safely.':
+      'لم يتم العثور على صفوف مكررة. ستتم إضافة الصفوف الجديدة بأمان.',
   'Data preview': 'معاينة البيانات',
   'Fields': 'الحقول',
   'fields detected': '{count} حقول مكتشفة',
@@ -305,6 +331,13 @@ const _ar = <String, String>{
   'Template': 'القالب',
   'Text alignment': 'محاذاة النص',
   'Text color (#RRGGBB)': 'لون النص (#RRGGBB)',
+  'Pick color from template image': 'اختيار لون من صورة القالب',
+  'Choose a point in the template to sample its color.':
+      'انقر على نقطة في القالب لالتقاط لونها.',
+  'Use selected color': 'استخدام اللون المحدد',
+  'Unable to load template image for color picking.':
+      'تعذّر تحميل صورة القالب لاختيار اللون.',
+  'The template image could not be decoded.': 'تعذّر قراءة ألوان صورة القالب.',
   'Text direction': 'اتجاه النص',
   'Total': 'الإجمالي',
   'Type': 'النوع',

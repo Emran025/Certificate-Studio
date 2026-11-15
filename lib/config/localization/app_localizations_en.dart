@@ -131,6 +131,10 @@ const _en = <String, String>{
   'Create signed PDF and high-resolution PNG certificates with offline verification records.':
       'Create signed PDF and high-resolution PNG certificates with offline verification records.',
   'Ready to generate': 'Ready to generate',
+  'Generate missing': 'Generate missing',
+  'Regenerate all': 'Regenerate all',
+  'All records already have certificates.':
+      'All records already have certificates.',
   'Generating certificates…': 'Generating certificates…',
   'Open certificate library': 'Open certificate library',
   'Certificate is authentic': 'Certificate is authentic',
@@ -148,10 +152,32 @@ const _en = <String, String>{
   'Add record data': 'Add record data',
   'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.':
       'Import an .xlsx workbook or paste a spreadsheet. The first row becomes the column names.',
+  'New rows are appended; existing records are kept. Matching columns are reused and new columns are added.':
+      'New rows are appended; existing records are kept. Matching columns are reused and new columns are added.',
   'Paste table data': 'Paste table data',
   'Choose Excel file': 'Choose Excel file',
   'Paste from clipboard': 'Paste from clipboard',
   'Import data': 'Import data',
+  'Review import changes': 'Review import changes',
+  'Review duplicate rows and choose how to merge them.':
+      'Review duplicate rows and choose how to merge them.',
+  'new rows': 'new rows',
+  'duplicates': 'duplicates',
+  'new columns': 'new columns',
+  'matching columns': 'matching columns',
+  'Exact duplicate': 'Exact duplicate',
+  'Same identity, different values': 'Same identity, different values',
+  'Keep existing': 'Keep existing',
+  'Use imported': 'Use imported',
+  'Keep both': 'Keep both',
+  'Keep all as new': 'Keep all as new',
+  'Cancel import': 'Cancel import',
+  'Apply choices': 'Apply choices',
+  'Import without duplicates': 'Import without duplicates',
+  'Existing': 'Existing',
+  'Imported': 'Imported',
+  'No duplicate rows found. The new rows will be added safely.':
+      'No duplicate rows found. The new rows will be added safely.',
   'Data preview': 'Data preview',
   'Fields': 'Fields',
   'fields detected': '{count} fields detected',
@@ -215,6 +241,14 @@ const _en = <String, String>{
   'Dark': 'Dark',
   'Brand color': 'Brand color',
   'Open color picker': 'Open color picker',
+  'Pick color from template image': 'Pick color from template image',
+  'Choose a point in the template to sample its color.':
+      'Choose a point in the template to sample its color.',
+  'Use selected color': 'Use selected color',
+  'Unable to load template image for color picking.':
+      'Unable to load template image for color picking.',
+  'The template image could not be decoded.':
+      'The template image could not be decoded.',
   'Primary color': 'Primary color',
   'Choose custom color': 'Choose custom color',
   'Electronic signature': 'Electronic signature',

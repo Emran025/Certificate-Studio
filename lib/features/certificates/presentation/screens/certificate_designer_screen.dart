@@ -5,11 +5,13 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image/image.dart' as image;
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
 import '../../data/services/template_bytes.dart';
 import '../widgets/certificate_canvas_visual.dart';
+import '../utils/template_color_sampler.dart';
 import '../../../templates/presentation/template_file_support.dart';
 import '../../../../shared/themes/app_colors.dart';
 import '../../../../shared/themes/app_spacing.dart';

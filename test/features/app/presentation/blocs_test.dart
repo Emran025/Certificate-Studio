@@ -347,6 +347,10 @@ class FakeImportRepository implements DataImportRepository {
   }
 
   @override
+  Future<ImportedTable> updateForProject(String id, ImportedTable table) =>
+      saveForProject(id, table);
+
+  @override
   Future<ImportedTable> getForProject(String id) async => _current();
 }
 

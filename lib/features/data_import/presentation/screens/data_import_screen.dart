@@ -10,6 +10,7 @@ import '../../../../shared/themes/app_spacing.dart';
 import '../../../../shared/widgets/design_system.dart';
 import '../../data/repositories/data_import_repository_impl.dart';
 import '../../data/repositories/external_link_repository_impl.dart';
+import '../../domain/entities/import_merge_plan.dart';
 import '../../domain/entities/imported_table.dart';
 import '../../domain/usecases/import_excel.dart';
 import '../../domain/usecases/paste_table.dart';
@@ -17,6 +18,7 @@ import '../../domain/usecases/update_imported_table.dart';
 import '../../domain/usecases/open_external_link.dart';
 import '../bloc/data_import_bloc.dart';
 import '../widgets/data_preview.dart';
+import '../widgets/import_conflict_dialog.dart';
 import '../../data/datasources/data_import_data_source_impl.dart';
 
 part 'data_import_screen/01_dataimportscreen.dart';

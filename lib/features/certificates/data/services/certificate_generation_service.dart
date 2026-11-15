@@ -46,6 +46,7 @@ abstract interface class CertificateGenerationServiceContract {
   Future<CertificateGenerationResult> generate({
     required String projectId,
     required String institutionId,
+    bool regenerateAll = false,
     void Function(int completed, int total)? onProgress,
   });
 }
@@ -72,9 +73,10 @@ class CertificateGenerationService
   Future<CertificateGenerationResult> generate({
     required String projectId,
     required String institutionId,
+    bool regenerateAll = false,
     void Function(int completed, int total)? onProgress,
   }) async {
-    final records = await database.query(
+    final allRecords = await database.query(
       DatabaseTables.records,
       where: {'project_id': projectId},
       columns: ['id', 'class_name', 'data_json'],
@@ -140,7 +142,7 @@ class CertificateGenerationService
     final issueDate = DateTime.now().toUtc().toIso8601String().split('T').first;
     final jobId =
         'generation-$projectId-${DateTime.now().microsecondsSinceEpoch}';
-    if (records.isEmpty) {
+    if (allRecords.isEmpty) {
       return CertificateGenerationResult(
         jobId: jobId,
         status: 'empty',
@@ -152,6 +154,28 @@ class CertificateGenerationService
         ],
       );
     }
+    final completedRecordIds = regenerateAll
+        ? <String>{}
+        : await _completedRecordIds(projectId);
+    final records = regenerateAll
+        ? allRecords
+        : allRecords
+              .where(
+                (record) =>
+                    !completedRecordIds.contains(record['id']?.toString()),
+              )
+              .toList();
+    if (records.isEmpty) {
+      return CertificateGenerationResult(
+        jobId: jobId,
+        status: 'up-to-date',
+        total: 0,
+        generated: 0,
+        failed: 0,
+        errors: const [],
+      );
+    }
+    onProgress?.call(0, records.length);
 
     // Prepare the source image once for the whole batch. Existing high-density
     // backgrounds are reused unchanged; lower-density images are enhanced only
@@ -382,6 +406,40 @@ class CertificateGenerationService
       'template': template,
       'preparedBackgroundBytes': null,
     });
+  }
+
+  Future<Set<String>> _completedRecordIds(String projectId) async {
+    final certificates = await database.query(
+      DatabaseTables.certificates,
+      where: {'project_id': projectId, 'status': 'signed'},
+      columns: ['record_id', 'file_path', 'image_path'],
+    );
+    final completed = <String>{};
+    for (final certificate in certificates) {
+      final recordId = certificate['record_id']?.toString();
+      final pdfPath = certificate['file_path']?.toString();
+      final imagePath = certificate['image_path']?.toString();
+      if (recordId == null ||
+          recordId.isEmpty ||
+          pdfPath == null ||
+          pdfPath.isEmpty ||
+          imagePath == null ||
+          imagePath.isEmpty) {
+        continue;
+      }
+      try {
+        final artifacts = await Future.wait([
+          artifactStore.read(pdfPath),
+          artifactStore.read(imagePath),
+        ]);
+        if (artifacts.every((bytes) => bytes != null && bytes.isNotEmpty)) {
+          completed.add(recordId);
+        }
+      } on Object {
+        // Treat unreadable artifacts as missing so the user can repair them.
+      }
+    }
+    return completed;
   }
 
   Future<Map<String, List<int>>> _loadProjectFontBytes(

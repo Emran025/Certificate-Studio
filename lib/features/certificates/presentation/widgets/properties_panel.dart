@@ -9,6 +9,7 @@ class _PropertiesPanel extends StatelessWidget {
     required this.columns,
     required this.fontFamilies,
     required this.onChanged,
+    required this.onPickTemplateColor,
     required this.onDelete,
     required this.onFontSizeEditingChanged,
   });
@@ -16,6 +17,7 @@ class _PropertiesPanel extends StatelessWidget {
   final List<String> columns;
   final List<String> fontFamilies;
   final ValueChanged<_DesignerField> onChanged;
+  final Future<String?> Function() onPickTemplateColor;
   final VoidCallback onDelete;
   final ValueChanged<bool> onFontSizeEditingChanged;
   @override
@@ -235,6 +237,7 @@ class _PropertiesPanel extends StatelessWidget {
             _ColorInput(
               value: selected.color,
               onChanged: (color) => onChanged(selected.copyWith(color: color)),
+              onPickTemplateColor: onPickTemplateColor,
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -250,10 +253,15 @@ class _PropertiesPanel extends StatelessWidget {
 }
 
 class _ColorInput extends StatelessWidget {
-  const _ColorInput({required this.value, required this.onChanged});
+  const _ColorInput({
+    required this.value,
+    required this.onChanged,
+    required this.onPickTemplateColor,
+  });
 
   final String value;
   final ValueChanged<String> onChanged;
+  final Future<String?> Function() onPickTemplateColor;
 
   Color _parse(String value) {
     final hex = value.replaceFirst('#', '');
@@ -357,31 +365,183 @@ class _ColorInput extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: () => _openPicker(context),
-    borderRadius: BorderRadius.circular(4),
-    child: InputDecorator(
-      decoration: InputDecoration(
-        labelText: context.l10n.text('Text color'),
-        suffixIcon: const Icon(Icons.arrow_drop_down),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 22,
-            height: 22,
-            decoration: BoxDecoration(
-              color: _parse(value),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.black26),
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: InkWell(
+          onTap: () => _openPicker(context),
+          borderRadius: BorderRadius.circular(4),
+          child: InputDecorator(
+            decoration: InputDecoration(
+              labelText: context.l10n.text('Text color'),
+              suffixIcon: const Icon(Icons.arrow_drop_down),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: _parse(value),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.black26),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(value.toUpperCase()),
+              ],
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(value.toUpperCase()),
-        ],
+        ),
       ),
-    ),
+      IconButton(
+        tooltip: context.l10n.text('Pick color from template image'),
+        onPressed: () async {
+          final color = await onPickTemplateColor();
+          if (color != null) onChanged(color);
+        },
+        icon: const Icon(Icons.colorize),
+      ),
+    ],
   );
+}
+
+class _TemplateColorPickerDialog extends StatefulWidget {
+  const _TemplateColorPickerDialog({
+    required this.imageBytes,
+    required this.decodedImage,
+  });
+
+  final Uint8List imageBytes;
+  final image.Image decodedImage;
+
+  @override
+  State<_TemplateColorPickerDialog> createState() =>
+      _TemplateColorPickerDialogState();
+}
+
+class _TemplateColorPickerDialogState
+    extends State<_TemplateColorPickerDialog> {
+  String? _selectedHex;
+
+  Color _parse(String hex) =>
+      Color(int.parse('FF${hex.replaceFirst('#', '')}', radix: 16));
+
+  @override
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final width = math
+        .min(680.0, screenSize.width - 64)
+        .clamp(240.0, 680.0)
+        .toDouble();
+    final imageHeight = math
+        .min(420.0, screenSize.height - 280)
+        .clamp(180.0, 420.0)
+        .toDouble();
+    return AppDialog(
+      title: Text(context.l10n.text('Pick color from template image')),
+      icon: Icons.colorize,
+      width: width,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.text('Cancel')),
+        ),
+        FilledButton(
+          onPressed: _selectedHex == null
+              ? null
+              : () => Navigator.of(context).pop(_selectedHex),
+          child: Text(context.l10n.text('Use selected color')),
+        ),
+      ],
+      child: SizedBox(
+        width: width,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              context.l10n.text(
+                'Choose a point in the template to sample its color.',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              height: imageHeight,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final canvasSize = Size(
+                    constraints.maxWidth,
+                    constraints.maxHeight,
+                  );
+                  final sourceSize = Size(
+                    widget.decodedImage.width.toDouble(),
+                    widget.decodedImage.height.toDouble(),
+                  );
+                  final fitted = applyBoxFit(
+                    BoxFit.contain,
+                    sourceSize,
+                    canvasSize,
+                  );
+                  final imageRect = Alignment.center.inscribe(
+                    fitted.destination,
+                    Offset.zero & canvasSize,
+                  );
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTapUp: (details) {
+                      final point = details.localPosition;
+                      if (!imageRect.contains(point)) return;
+                      final x = (point.dx - imageRect.left) / imageRect.width;
+                      final y = (point.dy - imageRect.top) / imageRect.height;
+                      setState(() {
+                        _selectedHex = templatePixelHexColor(
+                          widget.decodedImage,
+                          x,
+                          y,
+                        );
+                      });
+                    },
+                    child: Stack(
+                      clipBehavior: Clip.hardEdge,
+                      children: [
+                        Positioned.fromRect(
+                          rect: imageRect,
+                          child: Image.memory(
+                            widget.imageBytes,
+                            fit: BoxFit.fill,
+                            filterQuality: FilterQuality.none,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (_selectedHex != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: _parse(_selectedHex!),
+                      border: Border.all(color: Colors.black26),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(_selectedHex!),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _NumberInput extends StatefulWidget {

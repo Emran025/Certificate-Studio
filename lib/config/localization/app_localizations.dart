@@ -46,6 +46,20 @@ class AppLocalizations {
       if (key.startsWith('Unable to load projects: ')) {
         return 'تعذر تحميل المشاريع: ${key.substring('Unable to load projects: '.length)}';
       }
+      if (key.startsWith('Duplicate spreadsheet column names: ')) {
+        final names = key
+            .substring('Duplicate spreadsheet column names: '.length)
+            .split('. ')
+            .first;
+        return 'توجد عناوين أعمدة مكررة في الملف ($names). غيّر أسماء الأعمدة المكررة أو احذفها ثم أعد الاستيراد.';
+      }
+      if (key.startsWith('Import fields conflict with existing fields: ')) {
+        final names = key
+            .substring('Import fields conflict with existing fields: '.length)
+            .split('. ')
+            .first;
+        return 'تتعارض بعض أعمدة الملف مع الحقول الموجودة ($names). غيّر أسماء الأعمدة المتعارضة أو احذفها ثم أعد الاستيراد.';
+      }
       if (key.startsWith('Generation failed: ')) {
         return 'فشل الإنشاء: ${key.substring('Generation failed: '.length)}';
       }
@@ -90,6 +104,7 @@ class AppLocalizations {
         final parts = key.substring('Job '.length).split(' · ');
         final statusMap = {
           'completed': 'مكتمل',
+          'up-to-date': 'مكتمل ولا توجد شهادات ناقصة',
           'failed': 'فشل',
           'running': 'قيد التشغيل',
           'pending': 'قيد الانتظار',

@@ -8,6 +8,7 @@ import 'package:certificate_studio/features/certificates/data/services/certifica
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   const runNativeGenerationTests = bool.fromEnvironment(
     'RUN_NATIVE_GENERATION_TESTS',
   );
@@ -39,21 +40,45 @@ void main() {
           projectId: 'project-1',
           institutionId: 'institution-1',
         );
+        await database.insert(DatabaseTables.records, {
+          'id': 'record-2',
+          'project_id': 'project-1',
+          'class_name': 'A001',
+          'data_json': jsonEncode({'name': 'Sara Ali', 'course': 'Flutter'}),
+          'row_number': 2,
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        });
         final second = await service.generate(
           projectId: 'project-1',
           institutionId: 'institution-1',
         );
+        final third = await service.generate(
+          projectId: 'project-1',
+          institutionId: 'institution-1',
+          regenerateAll: true,
+        );
+        final fourth = await service.generate(
+          projectId: 'project-1',
+          institutionId: 'institution-1',
+        );
 
-        expect(first.status, 'completed');
+        expect(first.status, 'completed', reason: first.errors.join('\n'));
         expect(first.generated, 1);
         expect(second.generated, 1);
-        expect(await database.query(DatabaseTables.certificates), hasLength(1));
+        expect(second.total, 1);
+        expect(third.generated, 2);
+        expect(third.total, 2);
+        expect(fourth.status, 'up-to-date');
+        expect(fourth.generated, 0);
+        expect(await database.query(DatabaseTables.certificates), hasLength(2));
         expect(
           await database.query(DatabaseTables.verificationRecords),
-          hasLength(1),
+          hasLength(2),
         );
         final certificate = (await database.query(
           DatabaseTables.certificates,
+          where: {'record_id': 'record-1'},
         )).single;
         expect(
           certificate['file_path'],
@@ -88,6 +113,53 @@ void main() {
     expect(result.failed, 0);
     expect(result.errors, isNotEmpty);
   });
+
+  test(
+    'skips a persisted certificate whose PDF and PNG artifacts exist',
+    () async {
+      final database = InMemoryAppDatabase();
+      await database.open();
+      final artifacts = InMemoryCertificateArtifactStore();
+      await database.insert(DatabaseTables.records, {
+        'id': 'record-ready',
+        'project_id': 'project-ready',
+        'class_name': 'A001',
+        'data_json': jsonEncode({'name': 'Sara'}),
+        'row_number': 1,
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      final pdfPath = await artifacts.save(
+        certificateId: 'certificate-ready',
+        extension: 'pdf',
+        bytes: [37, 80, 68, 70],
+      );
+      final imagePath = await artifacts.save(
+        certificateId: 'certificate-ready',
+        extension: 'png',
+        bytes: [137, 80, 78, 71],
+      );
+      await database.insert(DatabaseTables.certificates, {
+        'id': 'certificate-ready',
+        'project_id': 'project-ready',
+        'record_id': 'record-ready',
+        'file_path': pdfPath,
+        'image_path': imagePath,
+        'status': 'signed',
+      });
+
+      final result = await CertificateGenerationService(
+        database,
+        InMemoryKeyStorage(),
+        artifactStore: artifacts,
+      ).generate(projectId: 'project-ready', institutionId: 'institution-1');
+
+      expect(result.status, 'up-to-date');
+      expect(result.total, 0);
+      expect(result.generated, 0);
+      expect(await database.query(DatabaseTables.certificates), hasLength(1));
+    },
+  );
 
   test(
     'does not generate a certificate with a missing selected background',

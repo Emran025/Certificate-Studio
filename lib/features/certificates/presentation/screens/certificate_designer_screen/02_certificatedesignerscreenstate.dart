@@ -427,6 +427,42 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
     if (editing) _fontSizeUndoCaptured = false;
   }
 
+  Future<String?> _pickTemplateColor() async {
+    final bytes = await readTemplateBytes(_templatePath);
+    if (!mounted) return null;
+    if (bytes == null || bytes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n.text(
+              'Unable to load template image for color picking.',
+            ),
+          ),
+        ),
+      );
+      return null;
+    }
+    final imageBytes = Uint8List.fromList(bytes);
+    final decoded = image.decodeImage(imageBytes);
+    if (decoded == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n.text('The template image could not be decoded.'),
+          ),
+        ),
+      );
+      return null;
+    }
+    return showDialog<String>(
+      context: context,
+      builder: (_) => _TemplateColorPickerDialog(
+        imageBytes: imageBytes,
+        decodedImage: decoded,
+      ),
+    );
+  }
+
   void _updateFields(List<_DesignerField> next) {
     if (_sameFields(_fields, next)) return;
     if (_fontSizeEditing) {
@@ -498,6 +534,7 @@ class _CertificateDesignerScreenState extends State<CertificateDesignerScreen>
       columns: _columns,
       fontFamilies: _fontFamilies,
       onChanged: _replaceField,
+      onPickTemplateColor: _pickTemplateColor,
       onDelete: _deleteSelected,
       onFontSizeEditingChanged: _setFontSizeEditing,
     );

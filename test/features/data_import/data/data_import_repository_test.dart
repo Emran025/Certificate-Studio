@@ -66,7 +66,7 @@ void main() {
   });
 
   test(
-    'duplicate spreadsheet headers are reported and do not save rows',
+    'duplicate spreadsheet headers are disambiguated and saved safely',
     () async {
       final database = InMemoryAppDatabase();
       await database.open();
@@ -75,17 +75,67 @@ void main() {
       );
       final table = repository.parseTable('Name\tName\nAhmed\tA. Ali');
 
-      await expectLater(
-        repository.saveForProject('project-1', table),
-        throwsA(
-          isA<FormatException>().having(
-            (error) => error.message,
-            'message',
-            contains('Duplicate spreadsheet column names'),
-          ),
-        ),
+      final restored = await repository.saveForProject('project-1', table);
+
+      expect(restored.columns, ['Name', 'Name 2']);
+      expect(restored.rows, [
+        {'Name': 'Ahmed', 'Name 2': 'A. Ali'},
+      ]);
+    },
+  );
+
+  test('re-import works after all rows were deleted', () async {
+    final database = InMemoryAppDatabase();
+    await database.open();
+    final repository = DataImportRepositoryImpl(
+      DataImportDataSourceImpl(database),
+    );
+
+    await repository.saveForProject(
+      'project-1',
+      repository.parseTable('Name\tGrade\nAhmed\t95'),
+    );
+    final existing = await repository.getForProject('project-1');
+    await repository.updateForProject(
+      'project-1',
+      existing.copyWith(rows: const [], recordIds: const []),
+    );
+
+    final restored = await repository.saveForProject(
+      'project-1',
+      repository.parseTable('name\tGrade\nSara\t91'),
+    );
+
+    expect(restored.columns, ['Name', 'Grade']);
+    expect(restored.rows, [
+      {'Name': 'Sara', 'Grade': '91'},
+    ]);
+  });
+
+  test(
+    'repairs legacy duplicate column definitions instead of failing',
+    () async {
+      final database = InMemoryAppDatabase();
+      await database.open();
+      final repository = DataImportRepositoryImpl(
+        DataImportDataSourceImpl(database),
       );
-      expect(await database.query('records'), isEmpty);
+
+      await database.upsert('settings', {
+        'key': 'records-columns:project-1',
+        'value_json': '["Name", "name", "Grade"]',
+        'updated_at': DateTime.now().toIso8601String(),
+      }, conflictColumn: 'key');
+
+      final restored = await repository.saveForProject(
+        'project-1',
+        repository.parseTable('NAME\tGrade\nSara\t91'),
+      );
+
+      expect(restored.columns, ['Name', 'Grade']);
+      expect(restored.rows, [
+        {'Name': 'Sara', 'Grade': '91'},
+      ]);
     },
   );
 

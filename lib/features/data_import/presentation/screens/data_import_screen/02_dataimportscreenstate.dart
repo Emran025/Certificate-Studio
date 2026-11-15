@@ -2,20 +2,21 @@ part of '../data_import_screen.dart';
 
 class _DataImportScreenState extends State<DataImportScreen> {
   late final DataImportBloc _bloc;
+  late final DataImportRepositoryImpl _repository;
   final _controller = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    final repository = DataImportRepositoryImpl(
+    _repository = DataImportRepositoryImpl(
       DataImportDataSourceImpl(widget.database),
     );
     _bloc = DataImportBloc(
       projectId: widget.projectId,
-      pasteTable: PasteTable(repository),
-      importExcel: ImportExcel(repository),
-      loadTable: () => repository.getForProject(widget.projectId),
-      updateImportedTable: UpdateImportedTable(repository),
+      pasteTable: PasteTable(_repository),
+      importExcel: ImportExcel(_repository),
+      loadTable: () => _repository.getForProject(widget.projectId),
+      updateImportedTable: UpdateImportedTable(_repository),
       openExternalLink: OpenExternalLink(const ExternalLinkRepositoryImpl()),
     )..add(const DataImportRequested());
   }
@@ -58,11 +59,56 @@ class _DataImportScreenState extends State<DataImportScreen> {
       );
       return;
     }
-    _bloc.add(ExcelImportRequested(bytes));
+    try {
+      await _prepareImport(_repository.parseExcel(bytes));
+    } on Object catch (error) {
+      _bloc.add(DataImportErrorReported(error.toString()));
+    }
     _controller.clear();
   }
 
-  void _import() => _bloc.add(PasteTableRequested(_controller.text));
+  Future<void> _import() async {
+    try {
+      await _prepareImport(_repository.parseTable(_controller.text));
+    } on Object catch (error) {
+      _bloc.add(DataImportErrorReported(error.toString()));
+    }
+  }
+
+  Future<void> _prepareImport(ImportedTable incoming) async {
+    if (incoming.columns.isEmpty) {
+      _bloc.add(
+        const DataImportErrorReported(
+          'The table does not contain column names.',
+        ),
+      );
+      return;
+    }
+    if (incoming.rows.isEmpty) {
+      _bloc.add(
+        const DataImportErrorReported(
+          'The table does not contain any recipient rows.',
+        ),
+      );
+      return;
+    }
+    final existing = await _repository.getForProject(widget.projectId);
+    if (!mounted) return;
+    final plan = ImportMergePlanner.plan(
+      existing: existing,
+      incoming: incoming,
+    );
+    final decisions = await showImportConflictDialog(context, plan);
+    if (!mounted || decisions == null) return;
+    _bloc.add(
+      TableUpdatedRequested(
+        plan.apply(
+          decisions,
+          defaultDecision: ImportMergeDecision.keepExisting,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(
